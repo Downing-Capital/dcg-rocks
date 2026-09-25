@@ -575,104 +575,172 @@ function subStatus(s){return s.doneDate?'Done':(s.status||'Not Started');}
 
 /* ============================================================
    Persistence — localStorage immediate + Supabase debounced
+   ------------------------------------------------------------
+   Sync model (v2):
+   - BASE = last workbook we know the server holds. Kept in memory
+     and in localStorage so it survives reloads.
+   - Merges are 3-way: for any item both sides hold, if our copy is
+     unchanged since BASE we take the server's version (a teammate's
+     edit); if we changed it, ours wins. New items from either side
+     are kept; deletes propagate via tombstones (WB.deleted).
+   - Writes are conditional on the server's updated_at, so two
+     people saving at once can't silently overwrite each other: the
+     loser re-reads, re-merges and retries.
+   - A "pending" flag in localStorage marks edits not yet confirmed
+     by the server; on next load they are merged in, not discarded.
    ============================================================ */
 var _saveTimer=null,_booted=false,_lastRemoteSig=null;
+var BASE=null,_remoteTs=null,_tsSupported=true,_pushing=false,_pushAgain=false,_lastErr=false;
+var STORE_BASE=STORE+'_base',STORE_PENDING=STORE+'_pending';
+function clone(o){return o==null?o:JSON.parse(JSON.stringify(o));}
 function setSync(state,msg){
   var n=$('#sync');if(!n)return;n.className='sync'+(state==='err'?' err':state==='load'?' load':'');
-  $('#sync-txt').textContent=msg||(state==='err'?'Sync error':state==='load'?'Saving…':'Saved');
+  $('#sync-txt').textContent=msg||(state==='err'?'Sync error — retrying':state==='load'?'Saving…':'Saved');
 }
+function setPending(on){try{if(on)localStorage.setItem(STORE_PENDING,'1');else localStorage.removeItem(STORE_PENDING);}catch(e){}}
+function isPending(){try{return localStorage.getItem(STORE_PENDING)==='1';}catch(e){return false;}}
+function setBase(wbData,ts){
+  BASE=clone(wbData);if(ts!==undefined)_remoteTs=ts;
+  try{localStorage.setItem(STORE_BASE,JSON.stringify({ts:_remoteTs,data:BASE}));}catch(e){}
+}
+function loadStoredBase(){try{var raw=localStorage.getItem(STORE_BASE);if(!raw)return null;var o=JSON.parse(raw);return o&&o.data?toWB(o.data):null;}catch(e){return null;}}
 function save(){
   if(!_booted)return;
   WB._v=DATA_VERSION;
   try{localStorage.setItem(STORE,JSON.stringify(WB));}catch(e){}
+  setPending(true);
   if(!SB_ENABLED)return;
   setSync('load');
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(function(){_saveTimer=null;pushMergedSave();},800);
 }
+function sbHeaders(extra){return Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},extra||{});}
+/* Write WB to the server. Resolves 'ok' | 'conflict' | 'err'.
+   With a known server timestamp we PATCH only if the row is unchanged
+   since we read it (compare-and-swap). Otherwise fall back to upsert. */
 function pushSupabase(opts){
   opts=opts||{};
-  fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
-    method:'POST',keepalive:!!opts.keepalive,
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-    body:JSON.stringify({id:SB_ID,data:WB,updated_at:new Date().toISOString()})
-  }).then(function(r){setSync(r.ok?'ok':'err');}).catch(function(){setSync('err');});
-}
-function flushSave(){if(_saveTimer){clearTimeout(_saveTimer);_saveTimer=null;if(SB_ENABLED)pushSupabase({keepalive:true});}}
-function loadSupabase(){
-  /* returns {ok:true,data:obj|null} on success, {ok:false} on error */
-  if(!SB_ENABLED)return Promise.resolve({ok:true,data:null});
-  return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?id=eq.'+SB_ID+'&select=data',{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
-  }).then(function(r){if(!r.ok)return {ok:false};return r.json().then(function(j){return {ok:true,data:(j&&j[0]&&j[0].data)?j[0].data:null};});})
-    .catch(function(){return {ok:false};});
-}
-/* ============================================================
-   Concurrent-edit safety: merge local with latest remote before
-   pushing, so teammates' additions are never overwritten.
-   Strategy: union lists by id (local wins on items it holds),
-   recurse into sub-rocks & comments, union id-less lists (logs)
-   distinctly. Deletes do not propagate (re-delete if needed).
-   ============================================================ */
-function isEditing(){var a=document&&document.activeElement;return !!(a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable));}
-function mergeById(local,remote){
-  var map={},order=[];
-  (remote||[]).forEach(function(it){if(it&&it.id){map[it.id]=it;order.push(it.id);}});
-  (local||[]).forEach(function(it){if(it&&it.id){if(!(it.id in map))order.push(it.id);map[it.id]=it;}});
-  return order.map(function(id){return map[id];});
-}
-function mergeFlat(local,remote){
-  var map={},order=[],seen={};
-  function take(it,isLocal){
-    if(it&&it.id){if(!(it.id in map))order.push('#'+it.id);if(isLocal||!(it.id in map))map[it.id]=it;}
-    else{var k=JSON.stringify(it);if(!seen[k]){seen[k]=1;order.push('$'+k);map['$'+k]=it;}}
+  var ts=new Date().toISOString();
+  var snapshot=clone(WB);
+  var body=JSON.stringify({id:SB_ID,data:snapshot,updated_at:ts});
+  function done(){setBase(snapshot,ts);return 'ok';}
+  function upsert(){
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{method:'POST',keepalive:!!opts.keepalive,
+      headers:sbHeaders({'Prefer':'resolution=merge-duplicates'}),body:body})
+      .then(function(r){return r.ok?done():'err';});
   }
-  (remote||[]).forEach(function(it){take(it,false);});
-  (local||[]).forEach(function(it){take(it,true);});
-  return order.map(function(t){return t.charAt(0)==='#'?map[t.slice(1)]:map[t];});
+  if(_tsSupported&&_remoteTs){
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?id=eq.'+encodeURIComponent(SB_ID)+'&updated_at=eq.'+encodeURIComponent(_remoteTs),{
+      method:'PATCH',keepalive:!!opts.keepalive,headers:sbHeaders({'Prefer':'return=representation'}),body:body
+    }).then(function(r){
+      if(!r.ok)return upsert(); /* unexpected (e.g. column type) -> old behaviour */
+      return r.json().then(function(rows){
+        if(Array.isArray(rows)&&rows.length){ts=rows[0].updated_at||ts;return done();}
+        return 'conflict';     /* someone saved since our read */
+      });
+    }).catch(function(){return 'err';});
+  }
+  return upsert().catch(function(){return 'err';});
 }
-function mergeByKey(local,remote,key){
-  var map={},order=[];
-  (remote||[]).forEach(function(it){var k=it&&it[key];if(k!=null){if(!(k in map))order.push(k);map[k]=it;}});
-  (local||[]).forEach(function(it){var k=it&&it[key];if(k!=null){if(!(k in map))order.push(k);map[k]=it;}});
-  return order.map(function(k){return map[k];});
+/* On tab hide / close: only a safe (compare-and-swap) push, and only if small
+   enough for a keepalive request. Anything else stays "pending" locally and is
+   merged in on next load. Never pushes an unmerged copy over the server. */
+function flushSave(){
+  if(!_saveTimer||!SB_ENABLED)return;
+  clearTimeout(_saveTimer);_saveTimer=null;
+  if(document.visibilityState==='hidden'&&!_pushing){
+    var size=0;try{size=JSON.stringify(WB).length;}catch(e){}
+    if(_tsSupported&&_remoteTs&&size<60000){pushSupabase({keepalive:true}).then(function(res){if(res==='ok')setPending(false);});}
+    else pushMergedSave();
+  }
 }
-function mergeRocks(local,remote){
-  var loc={};(local||[]).forEach(function(r){if(r&&r.id)loc[r.id]=r;});
-  var rem={};(remote||[]).forEach(function(r){if(r&&r.id)rem[r.id]=r;});
-  var order=[],seen={};
-  (remote||[]).forEach(function(r){if(r&&r.id&&!seen[r.id]){seen[r.id]=1;order.push(r.id);}});
-  (local||[]).forEach(function(r){if(r&&r.id&&!seen[r.id]){seen[r.id]=1;order.push(r.id);}});
-  return order.map(function(id){
-    var l=loc[id],r=rem[id];
-    if(l&&r){var m=Object.assign({},l);m.subrocks=mergeById(l.subrocks||[],r.subrocks||[]);m.comments=mergeFlat(l.comments||[],r.comments||[]);return m;}
+function loadSupabase(){
+  /* returns {ok:true,data:obj|null,ts:string|null} on success, {ok:false} on error */
+  if(!SB_ENABLED)return Promise.resolve({ok:true,data:null,ts:null});
+  function get(sel){
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?id=eq.'+encodeURIComponent(SB_ID)+'&select='+sel+'&_='+Date.now(),{headers:sbHeaders(),cache:'no-store'});
+  }
+  return get(_tsSupported?'data,updated_at':'data').then(function(r){
+    if(!r.ok&&_tsSupported){_tsSupported=false;return get('data');}
+    return r;
+  }).then(function(r){
+    if(!r.ok)return {ok:false};
+    return r.json().then(function(j){var row=j&&j[0];return {ok:true,data:(row&&row.data)?row.data:null,ts:(row&&row.updated_at)||null};});
+  }).catch(function(){return {ok:false};});
+}
+function isEditing(){var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
+
+/* ---- 3-way merge helpers ----
+   pick(l,r,b,strip): choose between local and remote copies of the same item.
+   If local is unchanged since base -> remote (teammate's edit or no change).
+   If local changed -> local. No base entry -> local (legacy behaviour). */
+function canon(o){if(Array.isArray(o))return o.map(canon);if(o&&typeof o==='object'){var r={};Object.keys(o).sort().forEach(function(k){if(o[k]!==undefined)r[k]=canon(o[k]);});return r;}return o;}
+function sig(o){try{return JSON.stringify(canon(o));}catch(e){return '';}}
+function pick(l,r,b,strip){
+  if(!l)return r;if(!r)return l;
+  var f=strip||function(x){return x;};
+  if(b&&sig(f(l))===sig(f(b)))return r;
+  return l;
+}
+function indexBy(arr,keyFn){var m={};(arr||[]).forEach(function(it){var k=keyFn(it);if(k!=null&&!(k in m))m[k]=it;});return m;}
+function idOf(it){return it&&it.id?it.id:null;}
+/* Merge two lists keyed by keyFn; unkeyed items are unioned by content. */
+function mergeList(local,remote,base,keyFn,combine){
+  var bi=indexBy(base,keyFn),li=indexBy(local,keyFn),ri=indexBy(remote,keyFn);
+  var order=[],seen={},flat={};
+  function add(it){
+    var k=keyFn(it);
+    if(k==null){var s='$'+sig(it);if(!flat[s]){flat[s]=it;order.push(s);}return;}
+    if(!seen[k]){seen[k]=1;order.push('#'+k);}
+  }
+  (remote||[]).forEach(add);(local||[]).forEach(add);
+  return order.map(function(t){
+    if(t.charAt(0)==='$')return flat[t];
+    var k=t.slice(1),l=li[k],r=ri[k],b=bi[k];
+    if(l&&r)return combine?combine(l,r,b):pick(l,r,b);
     return l||r;
   });
 }
-function mergeQuarterRocks(l,r){
-  var byId={},order=[],cats=['ideation','talent','build','ops','ceo'];
-  function take(wb,isLocal){cats.forEach(function(t){(wb[t+'Rocks']||[]).forEach(function(rk){if(!rk||!rk.id)return;if(!rk.cat)rk.cat=t;
-    if(byId[rk.id]){if(isLocal){var rem=byId[rk.id];var m=Object.assign({},rk);m.subrocks=mergeById(rk.subrocks||[],rem.subrocks||[]);m.comments=mergeFlat(rk.comments||[],rem.comments||[]);byId[rk.id]=m;}}
-    else{byId[rk.id]=rk;order.push(rk.id);}});});}
-  take(r,false);take(l,true);
+function mergeById(local,remote,base){return mergeList(local,remote,base,idOf);}
+function mergeFlat(local,remote,base){return mergeList(local,remote,base,idOf);}
+function mergeByKey(local,remote,key,base){return mergeList(local,remote,base,function(it){return it&&it[key]!=null?it[key]:null;});}
+function rockFields(r){var o=Object.assign({},r);delete o.subrocks;delete o.comments;return o;}
+function mergeRock(l,r,b){
+  var m=Object.assign({},pick(l,r,b,rockFields));
+  m.subrocks=mergeById(l.subrocks||[],r.subrocks||[],b&&b.subrocks);
+  m.comments=mergeFlat(l.comments||[],r.comments||[],b&&b.comments);
+  return m;
+}
+var ROCK_KEYS=['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'];
+function quarterRockList(q){var out=[];if(!q)return out;['ideation','talent','build','ops','ceo'].forEach(function(t){(q[t+'Rocks']||[]).forEach(function(rk){if(rk&&rk.id){if(!rk.cat)rk.cat=t;out.push(rk);}});});return out;}
+function mergeQuarterRocks(l,r,b){
+  /* rocks can move between categories; merge across all categories, then re-bucket by cat */
+  var merged=mergeList(quarterRockList(l),quarterRockList(r),quarterRockList(b),idOf,mergeRock);
   var out={ideationRocks:[],talentRocks:[],buildRocks:[],opsRocks:[],ceoRocks:[]};
-  order.forEach(function(id){var rk=byId[id];var c=(rk.cat&&cats.indexOf(rk.cat)>=0)?rk.cat:'build';out[c+'Rocks'].push(rk);});
+  var cats=['ideation','talent','build','ops','ceo'];
+  merged.forEach(function(rk){var c=(rk.cat&&cats.indexOf(rk.cat)>=0)?rk.cat:'build';out[c+'Rocks'].push(rk);});
   return out;
 }
-function mergeQuarter(l,r){
-  var o={quarter:l.quarter||r.quarter,qStart:l.qStart||r.qStart};
-  var mr=mergeQuarterRocks(l,r);['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'].forEach(function(k){o[k]=mr[k];});
-  ['better','blockers','support'].forEach(function(k){o[k]=mergeFlat(l[k]||[],r[k]||[]);});
-  o.ns=mergeByKey(l.ns||[],r.ns||[],'metric');
+function mergeQuarter(l,r,b){
+  b=b||{};
+  var o={};
+  ['quarter','qStart'].forEach(function(k){o[k]=(l[k]===b[k])?(r[k]!=null?r[k]:l[k]):(l[k]!=null&&l[k]!==''?l[k]:r[k]);});
+  var mr=mergeQuarterRocks(l,r,b);ROCK_KEYS.forEach(function(k){o[k]=mr[k];});
+  ['better','blockers','support'].forEach(function(k){o[k]=mergeFlat(l[k]||[],r[k]||[],b[k]);});
+  o.ns=mergeByKey(l.ns||[],r.ns||[],'metric',b.ns);
+  /* view state (expanded panels, filters) stays per-viewer */
   ['expanded','srTab','arCollapsed','indCollapsed','portcoCollapsed','activeFilter'].forEach(function(k){o[k]=l[k]||r[k]||{};});
   return ensureWB(o);
 }
-function mergeScorecard(l,r){
+function personFields(p){var o=Object.assign({},p);delete o.kpis;delete o.metrics;return o;}
+function mergeScorecard(l,r,b){
   if(!l)return r;if(!r)return l;
-  var map={},order=[];
-  (r.people||[]).forEach(function(p){var k=p.name;if(!(k in map))order.push(k);map[k]={r:p};});
-  (l.people||[]).forEach(function(p){var k=p.name;if(!(k in map)){order.push(k);map[k]={l:p};}else map[k].l=p;});
-  var people=order.map(function(k){var e=map[k];if(e.l&&e.r){var m=Object.assign({},e.l);m.kpis=mergeByKey(e.l.kpis||[],e.r.kpis||[],'name');m.metrics=mergeByKey(e.l.metrics||[],e.r.metrics||[],'name');return m;}return e.l||e.r;});
+  var people=mergeList(l.people,r.people,b&&b.people,function(p){return p&&p.name!=null?p.name:null;},function(lp,rp,bp){
+    var m=Object.assign({},pick(lp,rp,bp,personFields));
+    m.kpis=mergeByKey(lp.kpis||[],rp.kpis||[],'name',bp&&bp.kpis);
+    if(lp.metrics||rp.metrics)m.metrics=mergeByKey(lp.metrics||[],rp.metrics||[],'name',bp&&bp.metrics);
+    return m;
+  });
   return {people:people};
 }
 function tomb(id){if(!id)return;WB.deleted=WB.deleted||[];if(WB.deleted.indexOf(id)<0)WB.deleted.push(id);}
@@ -710,27 +778,51 @@ function pruneDeleted(wb){
   wb.todos=(wb.todos||[]).filter(function(t){return !del[t.id];});
   return wb;
 }
-function mergeWB(local,remote){
-  var out={activeQuarter:local.activeQuarter,_v:DATA_VERSION,scorecard:mergeScorecard(local.scorecard,remote.scorecard),todos:mergeFlat(local.todos||[],remote.todos||[]),deleted:mergeDeleted(local.deleted,remote.deleted),trash:mergeFlat(local.trash||[],remote.trash||[]).sort(function(a,b){return (b.at||0)-(a.at||0);}).slice(0,60),quarters:{}};
+function mergeWB(local,remote,base){
+  base=base||{};
+  var out={activeQuarter:local.activeQuarter,_v:DATA_VERSION,
+    scorecard:mergeScorecard(local.scorecard,remote.scorecard,base.scorecard),
+    todos:mergeFlat(local.todos||[],remote.todos||[],base.todos),
+    deleted:mergeDeleted(local.deleted,remote.deleted),
+    trash:mergeFlat(local.trash||[],remote.trash||[],base.trash).sort(function(a,b){return (b.at||0)-(a.at||0);}).slice(0,60),
+    quarters:{}};
+  var bq=base.quarters||{};
   var keys={};Object.keys(remote.quarters||{}).forEach(function(k){keys[k]=1;});Object.keys(local.quarters||{}).forEach(function(k){keys[k]=1;});
-  Object.keys(keys).forEach(function(q){var lq=(local.quarters||{})[q],rq=(remote.quarters||{})[q];out.quarters[q]=(!lq)?rq:(!rq)?lq:mergeQuarter(lq,rq);});
+  Object.keys(keys).forEach(function(q){var lq=(local.quarters||{})[q],rq=(remote.quarters||{})[q];out.quarters[q]=(!lq)?rq:(!rq)?lq:mergeQuarter(lq,rq,bq[q]);});
   if(!out.quarters[out.activeQuarter])out.activeQuarter=Object.keys(out.quarters)[0];
   return pruneDeleted(out);
 }
-function pushMergedSave(){
+/* Apply a server copy into WB via 3-way merge (keeps our unsynced edits). */
+function absorbRemote(res){
+  var remote=toWB(res.data);
+  if(!(remote&&remote.quarters&&Object.keys(remote.quarters).length))return false;
+  var aq=WB.activeQuarter;
+  WB=mergeWB(WB,remote,BASE?toWB(BASE):null);
+  setActiveQuarter(WB.quarters[aq]?aq:Object.keys(WB.quarters)[0]);
+  setBase(res.data,res.ts);
+  _lastRemoteSig=sig(res.data);
+  return true;
+}
+/* Read latest -> merge -> conditional write; retry on conflict. */
+function pushMergedSave(attempt){
   if(!SB_ENABLED)return;
+  if(_pushing){_pushAgain=true;return;}
+  _pushing=true;attempt=attempt||0;
   setSync('load');
   loadSupabase().then(function(res){
-    if(res.ok&&res.data){
-      var remote=toWB(res.data);
-      if(remote&&remote.quarters&&Object.keys(remote.quarters).length){
-        try{WB=mergeWB(WB,remote);setActiveQuarter(WB.quarters[WB.activeQuarter]?WB.activeQuarter:Object.keys(WB.quarters)[0]);}catch(e){}
-      }
-    }
+    if(!res.ok){return 'err';}
+    if(res.data){try{absorbRemote(res);}catch(e){console.error('[rocks] merge failed',e);return 'err';}}
+    else{_remoteTs=null;}
+    WB._v=DATA_VERSION;
     try{localStorage.setItem(STORE,JSON.stringify(WB));}catch(e){}
-    pushSupabase();
-    _lastRemoteSig=JSON.stringify(WB);
+    return pushSupabase();
+  }).then(function(result){
+    _pushing=false;
+    if(result==='conflict'&&attempt<4){pushMergedSave(attempt+1);return;}
+    if(result==='ok'){_lastErr=false;_lastRemoteSig=sig(BASE);if(!_pushAgain&&!_saveTimer)setPending(false);setSync('ok');}
+    else{_lastErr=true;setSync('err');}
     if(!isEditing()){renderQuarterSel();render(CUR);}
+    if(_pushAgain){_pushAgain=false;pushMergedSave();}
   });
 }
 
@@ -1915,15 +2007,17 @@ function boot(){
   window.addEventListener('pagehide',flushSave);
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushSave();});
   setInterval(function(){
-    if(!SB_ENABLED||_saveTimer||isEditing())return;
+    if(!SB_ENABLED||_saveTimer||_pushing||isEditing())return;
+    if(isPending()){pushMergedSave();return;}                       // unsynced edits (e.g. earlier failure) -> retry
     loadSupabase().then(function(res){
-      if(!res.ok||!res.data)return;
-      var sig=JSON.stringify(res.data);if(sig===_lastRemoteSig)return;_lastRemoteSig=sig;
-      var remote=toWB(res.data);
-      if(remote&&remote.quarters&&Object.keys(remote.quarters).length){
-        try{WB=mergeWB(WB,remote);setActiveQuarter(WB.quarters[WB.activeQuarter]?WB.activeQuarter:Object.keys(WB.quarters)[0]);}catch(e){return;}
-        if(!isEditing()){renderQuarterSel();render(CUR);setSync('ok');}
-      }
+      if(!res.ok){setSync('err','Offline — retrying');return;}
+      if(!res.data)return;
+      if(_lastErr){_lastErr=false;setSync('ok');}
+      if(sig(res.data)===_lastRemoteSig)return;
+      if(_saveTimer||_pushing||isEditing())return;                  // user started editing meanwhile; next tick
+      try{if(!absorbRemote(res))return;}catch(e){console.error('[rocks] merge failed',e);return;}
+      try{localStorage.setItem(STORE,JSON.stringify(WB));}catch(e){}
+      renderQuarterSel();render(CUR);setSync('ok');
     });
   },4000);
   document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');}});
@@ -1933,6 +2027,8 @@ function boot(){
   try{var raw=localStorage.getItem(STORE);if(raw)localWB=toWB(JSON.parse(raw));}catch(e){}
   if(localWB)setWB(localWB);
   var hadLocal=wbHasData(WB);
+  var hadPending=hadLocal&&isPending();
+  var storedBase=loadStoredBase();
   if(!D)seed();
   _booted=true;
   renderQuarterSel();
@@ -1942,15 +2038,21 @@ function boot(){
   setSync('load','Syncing…');
   loadSupabase().then(function(res){
     var rwb=res.ok?toWB(res.data):null;
-    if(res.ok&&rwb&&wbHasData(rwb)){setWB(rwb);setSync('ok');}      // remote has data -> canonical
-    else if(res.ok){ if(!hadLocal)seed(); setSync('ok'); }           // empty backend -> local/demo only
+    var needPush=false;
+    if(res.ok&&rwb&&wbHasData(rwb)){
+      if(hadPending){                                                // edits from last visit never reached the server -> merge them in
+        BASE=storedBase?clone(storedBase):null;
+        try{absorbRemote(res);needPush=true;}catch(e){console.error('[rocks] merge failed',e);setWB(rwb);setBase(res.data,res.ts);}
+      }else{ setWB(rwb);setBase(res.data,res.ts);_lastRemoteSig=sig(res.data); }
+      setSync('ok');
+    }
+    else if(res.ok){ if(!hadLocal)seed(); _remoteTs=null; setSync('ok'); }   // empty backend -> local/demo only
     else { setSync('err'); }                                         // network error -> keep what we have
-    if(res.ok&&res.data)_lastRemoteSig=JSON.stringify(res.data);     // baseline for live polling
     var scAdded=ensureScorecard();                                   // load team scorecard if backend has none yet
     var bAdded=importBuildRocksQ2();                                 // one-time append of Build Q2 rocks from ClickUp
     ensureTodos();var tAdded=importTodos();                          // one-time append of weekly to-dos
     renderQuarterSel();render(CUR);
-    if((scAdded||bAdded||tAdded)&&res.ok)save();                     // persist imported data once
+    if((scAdded||bAdded||tAdded||needPush)&&res.ok)save();           // persist imported / recovered data once
   });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
