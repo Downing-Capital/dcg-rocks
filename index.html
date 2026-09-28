@@ -187,6 +187,14 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 .rock.done .rock-bd{background:var(--surf)}
 .todo-tabs .cnt{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:10px;background:var(--amber-bg,#FAEEDA);color:var(--amber-tx,#633806);font-size:10px;font-weight:700}
 .todo-tabs{flex-wrap:wrap;gap:6px}
+.cylist{max-height:55vh;overflow:auto;border:1px solid var(--bdr);border-radius:var(--r)}
+.cygrp{padding:6px 0;border-bottom:1px solid var(--bdr)}.cygrp:last-child{border-bottom:0}
+.cyhd{font-size:11px;color:var(--tx2);padding:4px 12px;text-transform:uppercase;letter-spacing:.04em}
+.cyrow{display:flex !important;align-items:center;gap:10px;padding:6px 12px;margin:0 !important;font-size:13px !important;color:var(--tx) !important;cursor:pointer}
+.cyrow:hover{background:var(--surf2)}.cyrow input{width:auto !important;margin:0 !important}
+.cydesc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cyrec{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.pastdue{font-size:10px;font-family:var(--mono);color:var(--red);margin-top:3px;white-space:nowrap}
 .todotbl{table-layout:fixed}.todotbl td select{width:100%;max-width:100%;text-overflow:ellipsis}.todotbl .todoin{text-overflow:ellipsis}
 .draghandle{cursor:grab;white-space:nowrap;user-select:none;color:var(--tx3)}
 .draghandle .grip{opacity:.45;margin-right:5px;font-size:12px}
@@ -682,7 +690,7 @@ function loadSupabase(){
     return r.json().then(function(j){var row=j&&j[0];return {ok:true,data:(row&&row.data)?row.data:null,ts:(row&&row.updated_at)||null};});
   }).catch(function(){return {ok:false};});
 }
-function isEditing(){var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
+function isEditing(){if(typeof _subDrag!=='undefined'&&_subDrag!==null)return true;var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
 
 /* ---- 3-way merge helpers ----
    pick(l,r,b,strip): choose between local and remote copies of the same item.
@@ -1303,7 +1311,8 @@ function subrocksTab(type,rock){
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'portco\',this.value)">'+portcoOpts(s.portco)+'</select></td>';
     h+='<td><input type="date" value="'+esc(s.targetDate)+'" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'targetDate\',this.value)"></td>';
     h+='<td><input type="date" value="'+esc(s.doneDate)+'" onchange="subDone(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',this.value)"></td>';
-    h+='<td><select'+(isPastDue(s)&&subStatus(s)==='At Risk'?' title="Past due: shown as At Risk until it is Done or the target date moves"':'')+' onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(subStatus(s))+'</select></td>';
+    var stored=s.doneDate?'Done':(s.status||'Not Started');var pd=stored!=='At Risk'&&subStatus(s)==='At Risk';
+    h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(stored)+'</select>'+(pd?'<div class="pastdue" title="Past its target date and not Done, so it counts as At Risk in the rock roll-up and dashboards.">past due · counts as At Risk</div>':'')+'</td>';
     h+='<td><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
   });
   h+='</tbody></table></div>';
@@ -1524,12 +1533,15 @@ function findRockById(id){var f=allRocksAllQuarters().filter(function(x){return 
 function td2sub(s){return {'To Do':'Not Started','In Progress':'On Track','Done':'Done','Not Done':'At Risk','Cancelled':'Cancelled'}[s]||'Not Started';}
 function sub2td(s){return {'Not Started':'To Do','On Track':'In Progress','Done':'Done','At Risk':'Not Done','Cancelled':'Cancelled','Unplanned':'To Do'}[s]||'To Do';}
 /* A to-do linked to a sub-rock always shows the sub-rock's status (single source of truth). */
-function todoStatus(t){var s=todoSubOf(t);return s?sub2td(subStatus(s)):(t.status||'To Do');}
+/* A linked to-do shows the status the person chose (stored on the sub-rock). Being past due does NOT force it:
+   the sub-rock rolls up as At Risk in the Rocks views, and the to-do gets a "past due" tag instead. */
+function todoStatus(t){var s=todoSubOf(t);return s?sub2td(s.doneDate?'Done':(s.status||'Not Started')):(t.status||'To Do');}
+function todoPastDue(t){var s=todoSubOf(t);if(!s)return '';var st=subStatus(s);return (st==='At Risk'&&isPastDue(s)&&(s.status||'')!=='At Risk')?s.targetDate:'';}
 function todoSubOf(t){if(!t.subId||!t.rockId)return null;var r=findRockById(t.rockId);if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===t.subId;})||null;}
 /* Sync an edit on a linked to-do to its sub-rock. Only the edited field is copied (no field = full sync when first linking),
    so e.g. editing notes on a carried-forward to-do doesn't silently move the sub-rock's target date. */
 function pushTodoToSub(t,field){var s=todoSubOf(t);if(!s)return;var all=!field;
-  if(all||field==='desc')s.title=t.desc;if(all||field==='owner')s.owner=t.owner;if((all||field==='weekStart')&&t.weekStart)s.targetDate=t.weekStart;
+  if(all||field==='desc')s.title=t.desc;if(all||field==='owner')s.owner=t.owner;if((all||field==='weekStart')&&t.weekStart)s.targetDate=addDaysIso(t.weekStart,4);
   if(all||field==='status'){var st=td2sub(t.status);s.status=st;if(st==='Done'){if(!s.doneDate)s.doneDate=t.weekStart||currentWeekStart();}else{s.doneDate='';}}}
 function pushSubToTodo(s){if(!s.todoId)return;var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(!t)return;t.desc=s.title;t.owner=s.owner;if(s.targetDate)t.weekStart=isoDate(mondayOf(new Date(s.targetDate+'T00:00:00')));t.status=sub2td((s.doneDate?'Done':(s.status||'Not Started')));}
 function relinkTodo(t,newRockId){
@@ -1539,13 +1551,13 @@ function relinkTodo(t,newRockId){
   if(t.subId&&todoSubOf(t)){pushTodoToSub(t);return;}
   var r=findRockById(newRockId);if(!r)return;r.subrocks=r.subrocks||[];
   var st=td2sub(t.status);
-  var sub={id:uid(),title:t.desc,kr:'',owner:t.owner,dept:'',portco:'',score:'',targetDate:t.weekStart||'',doneDate:st==='Done'?(t.weekStart||currentWeekStart()):'',status:st,milestones:['','','','','','','','','','','',''],msNotes:['','','','','','','','','','','',''],todoId:t.id};
+  var sub={id:uid(),title:t.desc,kr:'',owner:t.owner,dept:'',portco:'',score:'',targetDate:t.weekStart?addDaysIso(t.weekStart,4):'',doneDate:st==='Done'?(t.weekStart||currentWeekStart()):'',status:st,milestones:['','','','','','','','','','','',''],msNotes:['','','','','','','','','','','',''],todoId:t.id};
   r.subrocks.push(sub);t.subId=sub.id;
 }
 function todoSet(id,field,val){var t=(WB.todos||[]).find(function(x){return x.id===id;});if(!t)return;val=(val&&val.trim)?val.trim():val;if(field==='rockId'){relinkTodo(t,val);}else{t[field]=val;if(t.subId)pushTodoToSub(t,field);}save();render(CUR);}
 function addTodo(owner,e){if(e)e.stopPropagation();WB.todos=WB.todos||[];WB.todos.push({id:uid(),owner:owner,weekStart:currentWeekStart(),desc:'',status:'To Do',time:'',notes:'',rockId:''});save();render(CUR);}
 function addTodoForRock(rid){WB.todos=WB.todos||[];var t={id:uid(),owner:'',weekStart:currentWeekStart(),desc:'New to-do',status:'To Do',time:'',notes:'',rockId:'',subId:''};WB.todos.push(t);relinkTodo(t,rid);save();rerenderCurrent();}
-function delTodo(id){var t=(WB.todos||[]).find(function(x){return x.id===id;});
+function delTodo(id){var t=(WB.todos||[]).find(function(x){return x.id===id;});if(t&&t.autoDue){t.subId='';}
   var prev=t&&t.carriedFrom?(WB.todos||[]).find(function(x){return x.id===t.carriedFrom;}):null;if(prev&&prev.carriedTo===t.id)prev.carriedTo='';
   if(t&&t.subId&&prev){var s0=todoSubOf(t);if(s0){prev.rockId=t.rockId;prev.subId=t.subId;s0.todoId=prev.id;}t.subId='';}
   if(t&&t.subId&&t.rockId){var r=findRockById(t.rockId);if(r)r.subrocks=(r.subrocks||[]).filter(function(s){return s.id!==t.subId;});tomb(t.subId);}if(t)trashPush('todo',t.desc,t,{});tomb(id);WB.todos=(WB.todos||[]).filter(function(x){return x.id!==id;});save();render(CUR);updateBadges();}
@@ -1600,26 +1612,74 @@ function setTodoAllWeek(w){_todoAllWeek=w;render(CUR);}
 function stepTodoAllWeek(dir){var ws=allWeeks().slice().reverse();var i=ws.indexOf(_todoAllWeek);if(i<0)i=ws.indexOf(currentWeekStart());i=Math.max(0,Math.min(ws.length-1,i+dir));_todoAllWeek=ws[i];render(CUR);}
 function addTodoWeek(owner,week,e){if(e)e.stopPropagation();WB.todos=WB.todos||[];WB.todos.push({id:uid(),owner:owner,weekStart:week,desc:'',status:'To Do',time:'',notes:'',rockId:''});
   if(_todoPerson==='__all')_todoWeekOpen['all|'+week+'|'+owner]=true;else _todoWeekOpen[owner+'|'+week]=true;save();render(CUR);}
-/* Carry forward: copy the previous week's unfinished items (To Do / In Progress / Not Done) into `week`.
-   Each source item is carried once (remembers carriedTo), so pressing it twice doesn't duplicate. */
+/* ---- Carry forward (pick which items) ----
+   Source = the person's most recent earlier week with to-dos. Unfinished items and recurring ones are pre-ticked;
+   Done items can be ticked too. Each source item is carried once (remembers carriedTo). */
+function isRecurring(t){return !!t.recurring||/recurr/i.test(t.notes||'');}
 function carryCandidates(owner,week){
-  var prev=personWeeks(owner).filter(function(w){return w<week;})[0];if(!prev)return {prev:null,items:[]};
-  var items=todosOf(owner,prev).filter(function(t){var st=todoStatus(t);return (st==='To Do'||st==='In Progress'||st==='Not Done')&&!t.carriedTo&&(t.desc||'').trim();});
-  return {prev:prev,items:items};}
-function carryForward(owner,week,e){if(e)e.stopPropagation();var c=carryCandidates(owner,week);if(!c.items.length)return;
-  c.items.forEach(function(t){var st=todoStatus(t);var sub=todoSubOf(t);
-    var n={id:uid(),owner:owner,weekStart:week,desc:t.desc,status:st==='In Progress'?'In Progress':'To Do',time:t.time||'',notes:t.notes||'',rockId:t.rockId||'',subId:'',carriedFrom:t.id};
-    if(sub){/* hand the sub-rock over: one sub-rock, followed week to week by its latest to-do */
-      t.status=st;t.subId='';n.subId=sub.id;sub.todoId=n.id;}
-    WB.todos.push(n);t.carriedTo=n.id;});
-  save();render(CUR);}
-function carryForwardAll(week){todoOwners().forEach(function(n){var c=carryCandidates(n,week);if(c.items.length)carryForward(n,week);});}
+  var prev=personWeeks(owner).filter(function(w){return w<week;})[0];if(!prev)return {prev:null,items:[],all:[]};
+  var all=todosOf(owner,prev).filter(function(t){return !t.carriedTo&&(t.desc||'').trim()&&todoStatus(t)!=='Cancelled';});
+  var items=all.filter(function(t){var st=todoStatus(t);return st==='To Do'||st==='In Progress'||st==='Not Done'||isRecurring(t);});
+  return {prev:prev,items:items,all:all};}
+function carryItemsTo(list,week){
+  list.forEach(function(t){if(t.carriedTo)return;var st=todoStatus(t);var sub=todoSubOf(t);var open=st!=='Done'&&st!=='Cancelled';
+    var n={id:uid(),owner:t.owner,weekStart:week,desc:t.desc,status:st==='In Progress'?'In Progress':'To Do',time:t.time||'',notes:t.notes||'',rockId:t.rockId||'',subId:'',carriedFrom:t.id};
+    if(isRecurring(t))n.recurring=true;
+    if(sub&&open){/* hand the sub-rock over: one sub-rock, followed week to week by its latest to-do */t.status=st;t.subId='';n.subId=sub.id;sub.todoId=n.id;}
+    WB.todos.push(n);t.carriedTo=n.id;});}
+/* non-interactive default (pre-ticked items) — used by tests and "carry all suggested" */
+function carryForward(owner,week,e){if(e)e.stopPropagation();var c=carryCandidates(owner,week);if(!c.items.length)return;carryItemsTo(c.items,week);save();render(CUR);}
+function carryForwardAll(week){openCarryPicker(null,week);}
+var _carry=null;
+function ensureCarryModal(){if($('#modal-carry'))return;var d=document.createElement('div');d.className='overlay';d.id='modal-carry';
+  d.innerHTML='<div class="modal" style="max-width:640px"><h3 id="cy-title">Carry forward</h3><p id="cy-sub"></p><div id="cy-list" class="cylist"></div>'+
+    '<div class="acts" style="margin-top:14px"><button class="btn sm" onclick="carryTick(true)">Select all</button><button class="btn sm" onclick="carryTick(false)">Select none</button><span style="flex:1"></span>'+
+    '<button class="btn" onclick="closeModal(\'modal-carry\')">Cancel</button><button class="btn pri" id="cy-ok" onclick="carryConfirm()">Carry</button></div></div>';
+  document.body.appendChild(d);d.addEventListener('click',function(e){if(e.target===d)closeModal('modal-carry');});}
+function openCarryPicker(owner,week,e){if(e)e.stopPropagation();ensureCarryModal();
+  var owners=owner?[owner]:todoOwners();var groups=[];
+  owners.forEach(function(n){var c=carryCandidates(n,week);if(c.all.length)groups.push({owner:n,prev:c.prev,all:c.all,pre:c.items.map(function(t){return t.id;})});});
+  _carry={week:week,groups:groups};
+  $('#cy-title').textContent='Carry forward to week of '+weekRangeLabel(week);
+  $('#cy-sub').textContent=groups.length?'Unfinished and recurring items are pre-selected. Tick Done items you want to repeat; tick "Recurring" to pre-select an item every week.':'Nothing left to carry — earlier items were already carried.';
+  var h='';groups.forEach(function(g){
+    h+='<div class="cygrp"><div class="cyhd">'+(owner?'':'<b>'+esc(g.owner)+'</b> · ')+'from week of '+esc(weekRangeLabel(g.prev))+'</div>';
+    g.all.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).forEach(function(t){var st=todoStatus(t);var on=g.pre.indexOf(t.id)>=0;
+      h+='<label class="cyrow"><input type="checkbox" class="cy-pick" data-id="'+t.id+'"'+(on?' checked':'')+' onchange="carryCount()"><span class="cydesc">'+esc(t.desc)+'</span>'+
+        '<span class="pill '+(TODO_PILL[st]||'p-ns')+'">'+esc(st)+'</span>'+
+        '<span class="cyrec" title="Pre-select this item every week"><input type="checkbox" class="cy-rec" data-id="'+t.id+'"'+(isRecurring(t)?' checked':'')+'> Recurring</span></label>';});
+    h+='</div>';});
+  $('#cy-list').innerHTML=h;carryCount();openModal('modal-carry');}
+function carryTick(on){document.querySelectorAll('#cy-list .cy-pick').forEach(function(x){x.checked=on;});carryCount();}
+function carryCount(){var n=document.querySelectorAll('#cy-list .cy-pick:checked').length;var b=$('#cy-ok');b.textContent=n?'Carry '+n+' item'+(n>1?'s':''):'Carry';b.disabled=!n;}
+function carryConfirm(){if(!_carry)return;var byId={};(WB.todos||[]).forEach(function(t){byId[t.id]=t;});
+  document.querySelectorAll('#cy-list .cy-rec').forEach(function(x){var t=byId[x.dataset.id];if(!t)return;var was=!!t.recurring;if(x.checked&&!isRecurring(t))t.recurring=true;else if(!x.checked&&was)t.recurring=false;});
+  var pick=[];document.querySelectorAll('#cy-list .cy-pick:checked').forEach(function(x){if(byId[x.dataset.id])pick.push(byId[x.dataset.id]);});
+  carryItemsTo(pick,_carry.week);closeModal('modal-carry');_carry=null;save();render(CUR);}
+
+/* ---- Sub-rocks due in a week become reminder to-dos for their owners ----
+   One per owner, linked to the sub-rock (status stays in sync). Deterministic ids, so two open tabs never duplicate;
+   deleting one removes only the reminder (tombstoned, so it isn't re-added) — never the sub-rock. */
+function splitOwners(s){return String(s||'').split(/\s*[,\/&]\s*/).map(function(x){return x.trim();}).filter(Boolean);}
+function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureTodos();
+  var end=addDaysIso(week,6),del={},have={},linked={};(WB.deleted||[]).forEach(function(x){del[x]=1;});
+  WB.todos.forEach(function(t){have[t.id]=1;if(t.subId&&t.weekStart===week)linked[t.subId+'|'+(t.owner||'')]=1;});
+  var added=0;
+  allRocksAllQuarters().forEach(function(x){(x.rock.subrocks||[]).forEach(function(s){
+    if(!s.targetDate||s.targetDate<week||s.targetDate>end)return;var st=s.doneDate?'Done':(s.status||'Not Started');if(st==='Done'||st==='Cancelled')return;
+    splitOwners(s.owner||x.rock.owner).forEach(function(o){var id='due_'+strHash(s.id+'|'+week+'|'+o);
+      if(have[id]||del[id]||linked[s.id+'|'+o])return;
+      WB.todos.push({id:id,owner:o,weekStart:week,desc:s.title||'(untitled sub-rock)',status:sub2td(st),time:'',notes:'',rockId:x.rock.id,subId:s.id,autoDue:true});
+      have[id]=1;added++;});
+  });});
+  return added;}
+function ensureDueTodosVisible(){var n=ensureDueTodos(currentWeekStart())+ensureDueTodos(addDaysIso(currentWeekStart(),7));if(n)save();return n;}
 function todoTimeInput(t){return '<input class="num" list="todo-time-opts" style="width:80px" value="'+esc(t.time==null?'':t.time)+'" onchange="todoSet(\''+t.id+'\',\'time\',this.value)">';}
 function todoTable(items,owner,week){
   var h='<table class="tbl todotbl"><thead><tr><th style="width:38%">To-Do</th><th style="width:17%">Rock</th><th style="width:150px">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
   items.forEach(function(t){
-    h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+'</td>'+
-      '<td>'+rockLinkSelect(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+'</td><td>'+todoTimeInput(t)+'</td>'+
+    h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
+      '<td>'+rockLinkSelect(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked sub-rock was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
       '<td><input class="todoin" value="'+esc(t.notes)+'" onchange="todoSet(\''+t.id+'\',\'notes\',this.value)"></td>'+
       '<td><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
   });
@@ -1631,14 +1691,14 @@ function todoWeekBlock(key,title,sub,items,owner,week,showCarry){
   var h='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="toggleTodoWeek(\''+esc(key).replace(/'/g,"\\'")+'\',\''+week+'\')"'+(cur?' style="border-color:var(--green)"':'')+'><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
   h+=title+'<span class="ct">'+st.n+' to-dos · '+st.done+' done · '+fmtHours(st.hrs)+' planned'+(sub?' · '+sub:'')+'</span><span class="spacer"></span>';
   var oq=esc(owner).replace(/'/g,"\\'");
-  if(cc.items.length)h+='<button class="btn sm" onclick="carryForward(\''+oq+'\',\''+week+'\',event)" title="Copy unfinished items from '+esc(weekRangeLabel(cc.prev))+'">Carry forward '+cc.items.length+'</button>';
+  if(cc.all&&cc.all.length)h+='<button class="btn sm" onclick="openCarryPicker(\''+oq+'\',\''+week+'\',event)" title="Choose items to copy from '+esc(weekRangeLabel(cc.prev))+'">Carry forward…</button>';
   h+='<button class="btn sm" onclick="addTodoWeek(\''+oq+'\',\''+week+'\',event)">'+ic2('plus')+'Add</button>';
   h+='<div style="width:90px;margin-left:8px"><div class="prog"><span style="width:'+(st.n?Math.round(st.done/st.n*100):0)+'%"></span></div></div></div>';
   h+='<div class="dgrp-bd"><div class="card tablecard" style="margin:0">';
-  h+=items.length?todoTable(todoSort(items),owner,week):'<div class="empty" style="padding:14px">Nothing planned yet — click Add'+(cc.items.length?' or Carry forward':'')+'.</div>';
+  h+=items.length?todoTable(todoSort(items),owner,week):'<div class="empty" style="padding:14px">Nothing planned yet — click Add'+(cc.all&&cc.all.length?' or Carry forward':'')+'.</div>';
   h+='</div></div></div>';return h;}
 function renderTodos(){
-  ensureTodos();var p=$('#panel-todos');var names=todoOwners();
+  ensureTodos();ensureDueTodosVisible();var p=$('#panel-todos');var names=todoOwners();
   if(_todoPerson===null)_todoPerson='__all';
   if(_todoPerson!=='__all'&&names.indexOf(_todoPerson)<0)_todoPerson='__all';
   var h='<datalist id="todo-time-opts">'+TODO_TIME_OPTS.map(function(o){return '<option value="'+o+'"></option>';}).join('')+'</datalist>';
@@ -1653,8 +1713,8 @@ function renderTodos(){
     h+='<div class="filt"><button class="btn sm" onclick="stepTodoAllWeek(-1)" title="Previous week">‹</button><select onchange="setTodoAllWeek(this.value)">'+
       ws.map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week of '+esc(weekRangeLabel(w))+(w===currentWeekStart()?' (this week)':'')+'</option>';}).join('')+
       '</select><button class="btn sm" onclick="stepTodoAllWeek(1)" title="Next week">›</button><span class="lbl" style="margin-left:10px">'+tot.n+' to-dos · '+tot.done+' done · '+fmtHours(tot.hrs)+' planned</span>';
-    var anyCarry=wk>=currentWeekStart()&&names.some(function(n){return carryCandidates(n,wk).items.length;});
-    if(anyCarry)h+='<span class="spacer" style="flex:1"></span><button class="btn sm" onclick="carryForwardAll(\''+wk+'\')">Carry forward for everyone</button>';
+    var anyCarry=wk>=currentWeekStart()&&names.some(function(n){return carryCandidates(n,wk).all.length;});
+    if(anyCarry)h+='<span class="spacer" style="flex:1"></span><button class="btn sm" onclick="carryForwardAll(\''+wk+'\')">Carry forward for everyone…</button>';
     h+='</div>';
     names.forEach(function(n){var items=todosOf(n,wk);var key='all|'+wk+'|'+n;
       if(!(key in _todoWeekOpen))_todoWeekOpen[key]=items.length>0;
@@ -2262,7 +2322,7 @@ function boot(){
     else { setSync('err'); }                                         // network error -> keep what we have
     var scAdded=ensureScorecard();                                   // load team scorecard if backend has none yet
     var bAdded=importBuildRocksQ2();                                 // one-time append of Build Q2 rocks from ClickUp
-    ensureTodos();var tAdded=importTodos();                          // one-time append of weekly to-dos
+    ensureTodos();var tAdded=importTodos();if(res.ok&&ensureDueTodos(currentWeekStart())+ensureDueTodos(addDaysIso(currentWeekStart(),7)))tAdded=true;                          // one-time append of weekly to-dos
     renderQuarterSel();render(CUR);
     if((scAdded||bAdded||tAdded||needPush)&&res.ok)save();           // persist imported / recovered data once
   });
