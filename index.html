@@ -659,7 +659,7 @@ function loadSupabase(){
   /* returns {ok:true,data:obj|null,ts:string|null} on success, {ok:false} on error */
   if(!SB_ENABLED)return Promise.resolve({ok:true,data:null,ts:null});
   function get(sel){
-    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?id=eq.'+encodeURIComponent(SB_ID)+'&select='+sel+'&_='+Date.now(),{headers:sbHeaders(),cache:'no-store'});
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?id=eq.'+encodeURIComponent(SB_ID)+'&select='+sel,{headers:sbHeaders(),cache:'no-store'});
   }
   return get(_tsSupported?'data,updated_at':'data').then(function(r){
     if(!r.ok&&_tsSupported){_tsSupported=false;return get('data');}
