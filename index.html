@@ -59,7 +59,8 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 /* ===== Layout ===== */
 .app{display:flex;min-height:100vh}
 .sidebar{width:var(--sb-w);flex:0 0 var(--sb-w);background:var(--sb);border-right:1px solid rgba(255,255,255,.06);
-  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:margin .2s}
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden;transition:margin .2s}
+.sidebar>*{min-width:0}
 .brand{padding:20px 18px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .brand .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#1E253E;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:0 0 auto}
 .brand-logo{height:26px;width:auto;max-width:180px;display:block}
@@ -85,11 +86,15 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 .nav a .badge{margin-left:auto;font-size:10px;font-family:var(--mono);background:rgba(255,255,255,.12);color:var(--sb-tx);
   padding:1px 6px;border-radius:20px;min-width:18px;text-align:center}
 .nav a.on .badge{background:var(--accent);color:#1E253E}
-.sb-foot{padding:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:6px}
+.sb-foot{padding:10px;border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sb-foot button{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--sb-tx);border-radius:var(--r);
   padding:7px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:500}
 .sb-foot button:hover{background:rgba(255,255,255,.14);color:#fff}
-.sb-foot button svg{width:15px;height:15px}
+.sb-foot button svg{width:15px;height:15px;flex:0 0 auto}
+.colrz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2}
+.colrz:hover,.col-resizing .colrz{background:linear-gradient(90deg,transparent 3px,var(--blue,#3b82f6) 3px,var(--blue,#3b82f6) 5px,transparent 5px)}
+.col-resizing{cursor:col-resize !important;user-select:none}
+.sb-foot button{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 82%,transparent);
@@ -195,12 +200,13 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 .cyrow:hover{background:var(--surf2)}.cyrow input{width:auto !important;margin:0 !important}
 .cydesc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cyrec{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:4px;white-space:nowrap}
-.pastdue{font-size:10px;font-family:var(--mono);color:var(--red);margin-top:3px;white-space:nowrap}
+.pastdue{font-size:10px;font-family:var(--mono);color:var(--red);margin-top:3px;white-space:normal;line-height:1.25}
 .todotbl{table-layout:fixed}.todotbl td select{width:100%;max-width:100%;text-overflow:ellipsis}.todotbl .todoin{text-overflow:ellipsis}
 .draghandle{cursor:grab;white-space:nowrap;user-select:none;color:var(--tx3)}
 .draghandle .grip{opacity:.45;margin-right:5px;font-size:12px}
 .draghandle:hover .grip{opacity:1}
-tr.subrow.dragging{opacity:.4}
+tr.subrow.dragging,tr.todorow.dragging{opacity:.4}
+tr.todorow.dropto td{border-top:2px solid var(--green)}
 tr.subrow.dropto td{border-top:2px solid var(--green)}
 .rock.unp{background:linear-gradient(0deg,var(--red-bg),var(--red-bg)),var(--surf);background-blend-mode:multiply}
 .rock-hd{display:flex;align-items:center;gap:13px;padding:14px 16px;cursor:pointer}
@@ -691,7 +697,7 @@ function loadSupabase(){
     return r.json().then(function(j){var row=j&&j[0];return {ok:true,data:(row&&row.data)?row.data:null,ts:(row&&row.updated_at)||null};});
   }).catch(function(){return {ok:false};});
 }
-function isEditing(){if(typeof _subDrag!=='undefined'&&(_subDrag!==null||_subArm))return true;var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
+function isEditing(){if(typeof _subDrag!=='undefined'&&(_subDrag!==null||_subArm))return true;if(typeof _todoDrag!=='undefined'&&_todoDrag)return true;var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
 
 /* ---- 3-way merge helpers ----
    pick(l,r,b,strip): choose between local and remote copies of the same item.
@@ -977,6 +983,24 @@ function ic2(k){var p={plus:'<path d="M12 5v14M5 12h14"/>'}[k]||'';return '<svg 
 /* ============================================================
    Router to render functions
    ============================================================ */
+/* ---- Resizable table columns ----
+   Drag the right edge of any column header. Widths are remembered per table in this browser
+   (localStorage), so each viewer can size columns their own way. Double-click an edge to reset. */
+var _colW=(function(){try{return JSON.parse(localStorage.getItem('dc_colw')||'{}')||{};}catch(e){return {};}})();
+function saveColW(){try{localStorage.setItem('dc_colw',JSON.stringify(_colW));}catch(e){}}
+/* same kind of table (same headers) shares one width setting, e.g. every week's To-Do table */
+function tblKey(t){return [...t.querySelectorAll('thead th')].map(function(th){return th.textContent.trim();}).join('|');}
+function applyColWidths(root){(root||document).querySelectorAll('table.tbl').forEach(function(t){var ths=t.querySelectorAll('thead th');if(!ths.length)return;var k=tblKey(t);var w=_colW[k];
+  if(w){t.style.tableLayout='fixed';t.style.width=w.total?w.total+'px':'';ths.forEach(function(th,i){if(w.cols&&w.cols[i])th.style.width=w.cols[i]+'px';});}
+  ths.forEach(function(th,i){if(i===ths.length-1||th.querySelector('.colrz'))return;th.style.position=th.style.position||'relative';var g=document.createElement('span');g.className='colrz';g.title='Drag to resize · double-click to reset';
+    g.addEventListener('mousedown',function(e){startColResize(e,t,i);});g.addEventListener('dblclick',function(e){e.stopPropagation();delete _colW[tblKey(t)];saveColW();render(CUR);});
+    g.addEventListener('click',function(e){e.stopPropagation();});th.appendChild(g);});});}
+var _rz=null;
+function startColResize(e,t,i){e.preventDefault();e.stopPropagation();var ths=[...t.querySelectorAll('thead th')];var widths=ths.map(function(th){return th.getBoundingClientRect().width;});
+  t.style.tableLayout='fixed';t.style.width=t.getBoundingClientRect().width+'px';ths.forEach(function(th,j){th.style.width=widths[j]+'px';});
+  _rz={t:t,i:i,x:e.clientX,w:widths[i],tw:t.getBoundingClientRect().width,ths:ths};_subArm=true;document.body.classList.add('col-resizing');}
+document.addEventListener('mousemove',function(e){if(!_rz)return;var d=e.clientX-_rz.x;var nw=Math.max(40,_rz.w+d);_rz.ths[_rz.i].style.width=nw+'px';_rz.t.style.width=(_rz.tw+(nw-_rz.w))+'px';});
+document.addEventListener('mouseup',function(){if(!_rz)return;var k=tblKey(_rz.t);_colW[k]={cols:_rz.ths.map(function(th){return Math.round(th.getBoundingClientRect().width);}),total:Math.round(_rz.t.getBoundingClientRect().width)};saveColW();_rz=null;_subArm=false;document.body.classList.remove('col-resizing');});
 function render(id){
   if(id==='overview')renderOverview();
   else if(id==='northstar')renderNorthStar();
@@ -994,6 +1018,7 @@ function render(id){
   else if(id==='trash')renderTrash();
   renderOwnerOptions();
   updateBadges();
+  try{applyColWidths(document.getElementById('panel-'+id));}catch(e){}
 }
 function rerenderCurrent(){
   var oc=document.querySelector('.rock.open');
@@ -1677,6 +1702,9 @@ function carryConfirm(){if(!_carry)return;var byId={};(WB.todos||[]).forEach(fun
    deleting one removes only the reminder (tombstoned, so it isn't re-added) — never the sub-rock. */
 function splitOwners(s){return String(s||'').split(/\s*[,\/&]\s*/).map(function(x){return x.trim();}).filter(Boolean);}
 function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureTodos();
+  /* clean-up: a reminder is redundant when the same person already has a real to-do linked to that sub-rock this week */
+  var redundant=WB.todos.filter(function(t){return t.autoDue&&t.weekStart===week&&t.subId&&WB.todos.some(function(u){return u!==t&&!u.autoDue&&u.weekStart===week&&u.subId===t.subId&&todoHasOwner(u,t.owner);});});
+  redundant.forEach(function(t){tomb(t.id);});if(redundant.length){var rid={};redundant.forEach(function(t){rid[t.id]=1;});WB.todos=WB.todos.filter(function(t){return !rid[t.id];});}
   var end=addDaysIso(week,6),del={},have={},linked={};(WB.deleted||[]).forEach(function(x){del[x]=1;});
   WB.todos.forEach(function(t){have[t.id]=1;if(t.subId&&t.weekStart===week)todoOwnerList(t).forEach(function(o){linked[t.subId+'|'+o.toLowerCase()]=1;});});
   var added=0;
@@ -1687,19 +1715,34 @@ function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureT
       WB.todos.push({id:id,owner:o,weekStart:week,desc:s.title||'(untitled sub-rock)',status:sub2td(st),time:'',notes:'',rockId:x.rock.id,subId:s.id,autoDue:true});
       have[id]=1;added++;});
   });});
-  return added;}
+  return added+redundant.length;}
 function ensureDueTodosVisible(){var n=ensureDueTodos(currentWeekStart())+ensureDueTodos(addDaysIso(currentWeekStart(),7));if(n)save();return n;}
 function todoTimeInput(t){return '<input class="num" list="todo-time-opts" style="width:80px" value="'+esc(t.time==null?'':t.time)+'" onchange="todoSet(\''+t.id+'\',\'time\',this.value)">';}
 function todoTable(items,owner,week){
-  var h='<table class="tbl todotbl"><thead><tr><th style="width:38%">To-Do</th><th style="width:17%">Rock</th><th style="width:150px">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
-  items.forEach(function(t){
-    h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
+  var oq=esc(owner).replace(/'/g,"\\'");
+  var h='<table class="tbl todotbl"><thead><tr><th style="width:28px"></th><th style="width:38%">To-Do</th><th style="width:17%">Rock</th><th style="width:150px">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
+  items.forEach(function(t,ti){
+    h+='<tr class="todorow" ondragstart="todoDragStart(event,\''+oq+'\',\''+week+'\','+ti+')" ondragover="todoDragOver(event,\''+oq+'\',\''+week+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="todoDrop(event,\''+oq+'\',\''+week+'\','+ti+')" ondragend="todoDragEnd()">'+
+      '<td class="draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span></td>'+
+      '<td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
       '<td>'+rockLinkSelect(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked sub-rock was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
       '<td><input class="todoin" value="'+esc(t.notes)+'" onchange="todoSet(\''+t.id+'\',\'notes\',this.value)"></td>'+
       '<td><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
   });
   h+='</tbody></table>';return h;}
-function todoSort(items){return items.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));});}
+/* Order within a week: by status until someone drags a row; after that the block keeps its manual order
+   (t.ord). Items added later without an order go to the bottom. */
+function todoSort(items){var manual=items.some(function(t){return typeof t.ord==='number';});
+  return items.slice().sort(function(a,b){
+    if(manual){var oa=typeof a.ord==='number'?a.ord:1e9,ob=typeof b.ord==='number'?b.ord:1e9;if(oa!==ob)return oa-ob;}
+    return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));});}
+var _todoDrag=null;
+function todoDragStart(e,owner,week,i){_todoDrag={owner:owner,week:week,i:i};try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));}catch(x){}e.currentTarget.classList.add('dragging');}
+function todoDragOver(e,owner,week){if(!_todoDrag||_todoDrag.owner!==owner||_todoDrag.week!==week)return;e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(x){}e.currentTarget.classList.add('dropto');}
+function todoDragEnd(){_todoDrag=null;_subArm=false;document.querySelectorAll('tr.todorow').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
+function todoDrop(e,owner,week,to){e.preventDefault();var d=_todoDrag;todoDragEnd();if(!d||d.owner!==owner||d.week!==week||d.i===to)return;
+  var list=todoSort(todosOf(owner,week));var it=list.splice(d.i,1)[0];list.splice(to,0,it);
+  list.forEach(function(t,k){t.ord=k;});save();render(CUR);}
 function todoWeekBlock(key,title,sub,items,owner,week,showCarry){
   var open=isWeekOpen(key,week);var st=weekStats(items);var cur=week===currentWeekStart();
   var cc=(showCarry&&week>=currentWeekStart())?carryCandidates(owner,week):{items:[]};
@@ -2318,7 +2361,7 @@ function boot(){
   $('#cf-ok').onclick=function(){if(_cfCb)_cfCb();_cfCb=null;closeModal('modal-confirm');};
   var st;$('#search').oninput=function(){clearTimeout(st);var v=this.value;st=setTimeout(function(){doSearch(v);},180);};
   window.addEventListener('pagehide',flushSave);
-  document.addEventListener('mouseup',function(){if(_subDrag===null)_subArm=false;});
+  document.addEventListener('mouseup',function(){if(_subDrag===null&&!_todoDrag)_subArm=false;});
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushSave();});
   setInterval(function(){
     if(!SB_ENABLED||_saveTimer||_pushing||isEditing())return;
