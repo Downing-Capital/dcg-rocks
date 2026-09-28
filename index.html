@@ -187,6 +187,7 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 .rock.done .rock-bd{background:var(--surf)}
 .todo-tabs .cnt{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:10px;background:var(--amber-bg,#FAEEDA);color:var(--amber-tx,#633806);font-size:10px;font-weight:700}
 .todo-tabs{flex-wrap:wrap;gap:6px}
+.kauto{font-size:11px;font-weight:600;border:1px dashed var(--bdr2);border-radius:20px;padding:2px 8px;white-space:nowrap}
 .cylist{max-height:55vh;overflow:auto;border:1px solid var(--bdr);border-radius:var(--r)}
 .cygrp{padding:6px 0;border-bottom:1px solid var(--bdr)}.cygrp:last-child{border-bottom:0}
 .cyhd{font-size:11px;color:var(--tx2);padding:4px 12px;text-transform:uppercase;letter-spacing:.04em}
@@ -524,7 +525,7 @@ function toWB(raw){
   if(!raw||typeof raw!=='object')return null;
   if(raw.quarters&&typeof raw.quarters==='object'&&Object.keys(raw.quarters).length){
     var aq=raw.activeQuarter&&raw.quarters[raw.activeQuarter]?raw.activeQuarter:Object.keys(raw.quarters)[0];
-    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash};
+    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash,todoPeople:raw.todoPeople};
   }
   if(raw.ns||raw.ideationRocks||raw.buildRocks||raw.talentRocks||raw.opsRocks||raw.ceoRocks){
     var q=raw.quarter||'Q2 2026';var bw=blankWorkbook(q,raw.qStart||'2026-04-03');
@@ -533,7 +534,7 @@ function toWB(raw){
   }
   return null;
 }
-function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[]};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
+function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[],todoPeople:wb.todoPeople||{}};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
 
 /* ---- Helpers ---- */
 function uid(){return '_'+Math.random().toString(36).substr(2,9);}
@@ -690,7 +691,7 @@ function loadSupabase(){
     return r.json().then(function(j){var row=j&&j[0];return {ok:true,data:(row&&row.data)?row.data:null,ts:(row&&row.updated_at)||null};});
   }).catch(function(){return {ok:false};});
 }
-function isEditing(){if(typeof _subDrag!=='undefined'&&_subDrag!==null)return true;var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
+function isEditing(){if(typeof _subDrag!=='undefined'&&(_subDrag!==null||_subArm))return true;var a=document&&document.activeElement;if(!a||a.id==='search')return false;return !!(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);}
 
 /* ---- 3-way merge helpers ----
    pick(l,r,b,strip): choose between local and remote copies of the same item.
@@ -815,12 +816,16 @@ function pruneDeleted(wb){
   wb.todos=(wb.todos||[]).filter(function(t){return !del[t.id];});
   return wb;
 }
+/* 3-way merge of a small keyed object (e.g. {Molly:{removedFrom:'2026-09-28'}}): per key, ours if we changed it, else theirs. */
+function mergeObj(l,r,b){l=l||{};r=r||{};b=b||{};var o={},keys={};Object.keys(l).concat(Object.keys(r)).forEach(function(k){keys[k]=1;});
+  Object.keys(keys).forEach(function(k){var v=(k in l)&&(k in r)?pick(l[k],r[k],b[k]):((k in l)?l[k]:r[k]);if(v!==undefined)o[k]=v;});return o;}
 function mergeWB(local,remote,base){
   base=base||{};
   var out={activeQuarter:local.activeQuarter,_v:DATA_VERSION,
     scorecard:mergeScorecard(local.scorecard,remote.scorecard,base.scorecard),
     todos:mergeFlat(local.todos||[],remote.todos||[],base.todos),
     deleted:mergeDeleted(local.deleted,remote.deleted),
+    todoPeople:mergeObj(local.todoPeople,remote.todoPeople,base.todoPeople),
     trash:mergeFlat(local.trash||[],remote.trash||[],base.trash).sort(function(a,b){return (b.at||0)-(a.at||0);}).slice(0,60),
     quarters:{}};
   var bq=base.quarters||{};
@@ -1305,7 +1310,7 @@ function subrocksTab(type,rock){
   var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Sub-Rock</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th></th></tr></thead><tbody>';
   subs.forEach(function(s,si){
     var noTgt=!s.targetDate;
-    h+='<tr class="subrow"'+(noTgt?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="this.parentNode.draggable=true" onmouseup="this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
+    h+='<tr class="subrow"'+(noTgt?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
     h+='<td><span class="ce" contenteditable onblur="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'title\',this.textContent)">'+esc(s.title)+'</span></td>';
     h+='<td><input class="ownin" list="owner-options" value="'+esc(s.owner)+'" placeholder="Owner(s)" title="Separate multiple owners with commas" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'owner\',this.value)"></td>';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'portco\',this.value)">'+portcoOpts(s.portco)+'</select></td>';
@@ -1328,10 +1333,10 @@ function addSub(type,rid){
   save();rerenderCurrent();
 }
 function findSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===sid;});}
-var _subDrag=null;
+var _subDrag=null,_subArm=false;
 function subDragStart(e,i){_subDrag=i;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));}catch(x){}e.currentTarget.classList.add('dragging');}
 function subDragOver(e){if(_subDrag===null)return;e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(x){}e.currentTarget.classList.add('dropto');}
-function subDragEnd(){_subDrag=null;document.querySelectorAll('tr.subrow').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
+function subDragEnd(){_subDrag=null;_subArm=false;document.querySelectorAll('tr.subrow').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
 function subDrop(e,type,rid,to){e.preventDefault();var from=_subDrag;subDragEnd();if(from===null||from===to)return;
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r||!r.subrocks)return;
   var it=r.subrocks.splice(from,1)[0];r.subrocks.splice(to,0,it);save();rerenderCurrent();}
@@ -1592,16 +1597,26 @@ function parseHours(v){if(v==null)return 0;var s=String(v).trim().toLowerCase();
   var m=/^(\d+(?:[.,]\d+)?)\s*(h|hr|hrs|hour|hours)?\s*(\d{1,2})?\s*(m|min|mins)?/.exec(s);if(!m)return 0;
   var n=parseFloat(m[1].replace(',','.'));if(m[4]&&!m[2]&&!m[3])return n/60;if(m[2]&&m[3])return n+(+m[3])/60;return n;}
 function fmtHours(h){if(!h)return '0h';var r=Math.round(h*2)/2;return (r%1?r.toFixed(1):r)+'h';}
-function todoOwners(){var s={};TODO_ROSTER.forEach(function(n){s[n]=1;});(WB.todos||[]).forEach(function(t){s[t.owner||'Unassigned']=1;});
-  var names=TODO_ROSTER.slice();Object.keys(s).forEach(function(n){if(names.indexOf(n)<0)names.push(n);});return names;}
-function todosOf(owner,week){return (WB.todos||[]).filter(function(t){return (t.owner||'Unassigned')===owner&&(!week||t.weekStart===week);});}
+/* A to-do owned by "Renata, Ygor" shows under Renata AND under Ygor (one shared item), never as a combined tab. */
+function todoOwnerList(t){var o=splitOwners(t.owner);return o.length?o:['Unassigned'];}
+function sameName(a,b){return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase();}
+function todoHasOwner(t,n){return todoOwnerList(t).some(function(o){return sameName(o,n);});}
+/* Removing someone from To-Dos: hidden from the chosen week onward (earlier weeks keep their history). Synced via WB.todoPeople. */
+function todoRemovedFrom(n){var m=WB.todoPeople||{};var k=Object.keys(m).find(function(x){return sameName(x,n);});return k&&m[k]&&m[k].removedFrom||'';}
+function todoActiveIn(n,week){var r=todoRemovedFrom(n);return !r||week<r;}
+function todoAllOwners(){var names=TODO_ROSTER.slice();(WB.todos||[]).forEach(function(t){todoOwnerList(t).forEach(function(o){if(!names.some(function(n){return sameName(n,o);}))names.push(o);});});return names;}
+function todoOwners(week){var w=week||currentWeekStart();return todoAllOwners().filter(function(n){return todoActiveIn(n,w);});}
+function removeTodoPerson(n,week){confirmDelete('Remove '+n+' from To-Dos?','Hide '+n+' from the week of '+weekRangeLabel(week)+' onward. Earlier weeks keep their to-dos, and no new reminders are created for them. You can restore them from the To-Dos page.',function(){
+  WB.todoPeople=WB.todoPeople||{};WB.todoPeople[n]={removedFrom:week};if(_todoPerson===n)_todoPerson='__all';save();render(CUR);});$('#cf-ok').textContent='Remove';}
+function restoreTodoPerson(n){WB.todoPeople=WB.todoPeople||{};Object.keys(WB.todoPeople).forEach(function(k){if(sameName(k,n))WB.todoPeople[k]={removedFrom:''};});save();render(CUR);}
+function todosOf(owner,week){return (WB.todos||[]).filter(function(t){return todoHasOwner(t,owner)&&(!week||t.weekStart===week);});}
 function weekStats(items){var done=items.filter(function(t){return todoStatus(t)==='Done';}).length;
   var hrs=items.reduce(function(a,t){return a+parseHours(t.time);},0);return {n:items.length,done:done,hrs:hrs};}
 function weekOpenDefault(ws){var cur=currentWeekStart();return ws===cur||ws===addDaysIso(cur,-7);}
 function isWeekOpen(key,ws){return key in _todoWeekOpen?_todoWeekOpen[key]:weekOpenDefault(ws);}
 function toggleTodoWeek(key,ws){_todoWeekOpen[key]=!isWeekOpen(key,ws);render(CUR);}
 function setTodoWeeksAll(open){
-  if(_todoPerson==='__all'){todoOwners().forEach(function(n){_todoWeekOpen['all|'+_todoAllWeek+'|'+n]=open;});}
+  if(_todoPerson==='__all'){todoOwners(_todoAllWeek).forEach(function(n){_todoWeekOpen['all|'+_todoAllWeek+'|'+n]=open;});}
   else{personWeeks(_todoPerson).forEach(function(ws){_todoWeekOpen[_todoPerson+'|'+ws]=open;});}
   render(CUR);}
 function personWeeks(owner){var s={};s[currentWeekStart()]=1;todosOf(owner).forEach(function(t){if(t.weekStart)s[t.weekStart]=1;});
@@ -1637,7 +1652,7 @@ function ensureCarryModal(){if($('#modal-carry'))return;var d=document.createEle
     '<button class="btn" onclick="closeModal(\'modal-carry\')">Cancel</button><button class="btn pri" id="cy-ok" onclick="carryConfirm()">Carry</button></div></div>';
   document.body.appendChild(d);d.addEventListener('click',function(e){if(e.target===d)closeModal('modal-carry');});}
 function openCarryPicker(owner,week,e){if(e)e.stopPropagation();ensureCarryModal();
-  var owners=owner?[owner]:todoOwners();var groups=[];
+  var owners=owner?[owner]:todoOwners(week);var groups=[];
   owners.forEach(function(n){var c=carryCandidates(n,week);if(c.all.length)groups.push({owner:n,prev:c.prev,all:c.all,pre:c.items.map(function(t){return t.id;})});});
   _carry={week:week,groups:groups};
   $('#cy-title').textContent='Carry forward to week of '+weekRangeLabel(week);
@@ -1663,12 +1678,12 @@ function carryConfirm(){if(!_carry)return;var byId={};(WB.todos||[]).forEach(fun
 function splitOwners(s){return String(s||'').split(/\s*[,\/&]\s*/).map(function(x){return x.trim();}).filter(Boolean);}
 function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureTodos();
   var end=addDaysIso(week,6),del={},have={},linked={};(WB.deleted||[]).forEach(function(x){del[x]=1;});
-  WB.todos.forEach(function(t){have[t.id]=1;if(t.subId&&t.weekStart===week)linked[t.subId+'|'+(t.owner||'')]=1;});
+  WB.todos.forEach(function(t){have[t.id]=1;if(t.subId&&t.weekStart===week)todoOwnerList(t).forEach(function(o){linked[t.subId+'|'+o.toLowerCase()]=1;});});
   var added=0;
   allRocksAllQuarters().forEach(function(x){(x.rock.subrocks||[]).forEach(function(s){
     if(!s.targetDate||s.targetDate<week||s.targetDate>end)return;var st=s.doneDate?'Done':(s.status||'Not Started');if(st==='Done'||st==='Cancelled')return;
     splitOwners(s.owner||x.rock.owner).forEach(function(o){var id='due_'+strHash(s.id+'|'+week+'|'+o);
-      if(have[id]||del[id]||linked[s.id+'|'+o])return;
+      if(have[id]||del[id]||linked[s.id+'|'+o.toLowerCase()]||!todoActiveIn(o,week))return;
       WB.todos.push({id:id,owner:o,weekStart:week,desc:s.title||'(untitled sub-rock)',status:sub2td(st),time:'',notes:'',rockId:x.rock.id,subId:s.id,autoDue:true});
       have[id]=1;added++;});
   });});
@@ -1678,7 +1693,7 @@ function todoTimeInput(t){return '<input class="num" list="todo-time-opts" style
 function todoTable(items,owner,week){
   var h='<table class="tbl todotbl"><thead><tr><th style="width:38%">To-Do</th><th style="width:17%">Rock</th><th style="width:150px">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
   items.forEach(function(t){
-    h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
+    h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
       '<td>'+rockLinkSelect(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked sub-rock was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
       '<td><input class="todoin" value="'+esc(t.notes)+'" onchange="todoSet(\''+t.id+'\',\'notes\',this.value)"></td>'+
       '<td><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
@@ -1698,25 +1713,28 @@ function todoWeekBlock(key,title,sub,items,owner,week,showCarry){
   h+=items.length?todoTable(todoSort(items),owner,week):'<div class="empty" style="padding:14px">Nothing planned yet — click Add'+(cc.all&&cc.all.length?' or Carry forward':'')+'.</div>';
   h+='</div></div></div>';return h;}
 function renderTodos(){
-  ensureTodos();ensureDueTodosVisible();var p=$('#panel-todos');var names=todoOwners();
+  ensureTodos();ensureDueTodosVisible();var p=$('#panel-todos');var names=todoOwners(currentWeekStart());
   if(_todoPerson===null)_todoPerson='__all';
-  if(_todoPerson!=='__all'&&names.indexOf(_todoPerson)<0)_todoPerson='__all';
+  if(_todoPerson!=='__all'&&!names.some(function(n){return sameName(n,_todoPerson);}))_todoPerson='__all';
   var h='<datalist id="todo-time-opts">'+TODO_TIME_OPTS.map(function(o){return '<option value="'+o+'"></option>';}).join('')+'</datalist>';
   h+='<div class="filt todo-tabs"><button class="btn sm'+(_todoPerson==='__all'?' pri':'')+'" onclick="setTodoPerson(\'__all\')">Everyone</button>'+
     names.map(function(n){var nq=esc(n).replace(/'/g,"\\'");var open=todosOf(n,currentWeekStart()).filter(function(t){return todoStatus(t)!=='Done'&&todoStatus(t)!=='Cancelled';}).length;
       return '<button class="btn sm'+(_todoPerson===n?' pri':'')+'" onclick="setTodoPerson(\''+nq+'\')">'+esc(n)+(open?' <span class="cnt">'+open+'</span>':'')+'</button>';}).join('')+
     '<span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setTodoWeeksAll(true)">Expand all</button><button class="btn sm" onclick="setTodoWeeksAll(false)">Collapse all</button>'+
+    (_todoPerson!=='__all'?'<button class="btn sm" onclick="removeTodoPerson(\''+esc(_todoPerson).replace(/'/g,"\\'")+'\',currentWeekStart())" title="Hide this person from To-Dos from this week onward">Remove '+esc(_todoPerson)+'</button>':'')+
     '<button class="btn sm" onclick="$(\'#todo-xlsx\').click()" title="Add to-dos from the Weekly To-Do Tracker spreadsheet">Import Excel</button><input type="file" id="todo-xlsx" accept=".xlsx,.xls" style="display:none" onchange="if(this.files[0])importTrackerFile(this.files[0]);this.value=\'\'"></div>';
+  var gone=todoAllOwners().filter(function(n){return !todoActiveIn(n,currentWeekStart());});
+  if(gone.length)h+='<div class="hint">Removed from To-Dos: '+gone.map(function(n){return esc(n)+' <span class="lbl">(from '+esc(weekRangeLabel(todoRemovedFrom(n)))+')</span> <button class="btn sm" onclick="restoreTodoPerson(\''+esc(n).replace(/'/g,"\\'")+'\')">Restore</button>';}).join(' &nbsp; ')+'</div>';
   if(_todoPerson==='__all'){
     var ws=allWeeks();if(!_todoAllWeek||ws.indexOf(_todoAllWeek)<0)_todoAllWeek=currentWeekStart();var wk=_todoAllWeek;
     var tot=weekStats((WB.todos||[]).filter(function(t){return t.weekStart===wk;}));
     h+='<div class="filt"><button class="btn sm" onclick="stepTodoAllWeek(-1)" title="Previous week">‹</button><select onchange="setTodoAllWeek(this.value)">'+
       ws.map(function(w){return '<option value="'+w+'"'+(w===wk?' selected':'')+'>Week of '+esc(weekRangeLabel(w))+(w===currentWeekStart()?' (this week)':'')+'</option>';}).join('')+
       '</select><button class="btn sm" onclick="stepTodoAllWeek(1)" title="Next week">›</button><span class="lbl" style="margin-left:10px">'+tot.n+' to-dos · '+tot.done+' done · '+fmtHours(tot.hrs)+' planned</span>';
-    var anyCarry=wk>=currentWeekStart()&&names.some(function(n){return carryCandidates(n,wk).all.length;});
+    var wkNames=todoOwners(wk);var anyCarry=wk>=currentWeekStart()&&wkNames.some(function(n){return carryCandidates(n,wk).all.length;});
     if(anyCarry)h+='<span class="spacer" style="flex:1"></span><button class="btn sm" onclick="carryForwardAll(\''+wk+'\')">Carry forward for everyone…</button>';
     h+='</div>';
-    names.forEach(function(n){var items=todosOf(n,wk);var key='all|'+wk+'|'+n;
+    wkNames.forEach(function(n){var items=todosOf(n,wk);var key='all|'+wk+'|'+n;
       if(!(key in _todoWeekOpen))_todoWeekOpen[key]=items.length>0;
       h+=todoWeekBlock(key,'<span class="avatar">'+esc(initials(n))+'</span><span class="nm">'+esc(n)+'</span>','',items,n,wk,true);});
   }else{
@@ -1823,8 +1841,35 @@ function qMonthIdx(qn){qn=parseInt(qn,10)||2;var s=(qn-1)*3;return [s,s+1,s+2];}
 function aggregate(vals,method){var nums=vals.filter(function(v){return typeof v==='number';});if(!nums.length)return '';if(method==='Sum')return Math.round(nums.reduce(function(a,b){return a+b;},0)*1000)/1000;if(method==='Latest'){var last='';vals.forEach(function(v){if(typeof v==='number')last=v;});return last;}return Math.round(nums.reduce(function(a,b){return a+b;},0)/nums.length*1000)/1000;}
 function defaultAgg(k){var u=(k.unit||'').toLowerCase();if(u==='#')return 'Sum';return 'Average';}
 function kpiAgg(k){return k.agg||defaultAgg(k);}
-function qHasMonths(k,qn){var idx=qMonthIdx(qn);return idx.some(function(i){return typeof (k.monthly&&k.monthly[i])==='number';});}
-function qActualVal(k,qn){var idx=qMonthIdx(qn);var vals=idx.map(function(i){return k.monthly?k.monthly[i]:'';});if(vals.some(function(v){return typeof v==='number';}))return aggregate(vals,kpiAgg(k));var q=k.q&&k.q[qn];return q?q.actual:'';}
+/* ---- Automatic "Rocks Completion" KPI ----
+   Value = share of the person's sub-rocks (in that quarter, not Cancelled) that are Done.
+   Monthly value = done by the end of that month (months not started yet stay blank).
+   Status = actual vs target pro-rated to how far through the quarter we are:
+   On Track if at or above that pace, Behind if within 80% of it, Off Track below. Only the target (Plan) is editable. */
+function isAutoRocksKpi(k){return !!k&&/^\s*rocks?\s*complet/i.test(k.name||'');}
+var _NAME_ALIAS={leo:'leonardo',leonardo:'leo'};
+function ownerMatches(owner,name){var a=String(owner||'').trim().split(/\s+/)[0].toLowerCase(),b=String(name||'').trim().split(/\s+/)[0].toLowerCase();return !!a&&(a===b||_NAME_ALIAS[a]===b);}
+function kpiPerson(k){var pp=null;((WB.scorecard&&WB.scorecard.people)||[]).some(function(p){if((p.kpis||[]).indexOf(k)>=0){pp=p;return true;}return false;});return pp;}
+function quarterYear(){var m=/(\d{4})/.exec(WB.activeQuarter||'');return m?+m[1]:new Date().getFullYear();}
+function quarterLabelFor(qn,year){var want=qOrd('Q'+qn+' '+year);var hit=null;Object.keys(WB.quarters||{}).forEach(function(k){if(qOrd(k)===want)hit=k;});return hit;}
+function personSubsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
+  quarterRockList(q).forEach(function(r){(r.subrocks||[]).forEach(function(s){if((s.status||'')==='Cancelled')return;if(splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);}))out.push(s);});});return out;}
+function doneBy(s,iso){if(s.doneDate)return s.doneDate<=iso;return (s.status||'')==='Done'&&iso>=isoDate(new Date());}
+function autoRocks(k){if(!isAutoRocksKpi(k))return null;var pp=kpiPerson(k);if(!pp)return null;
+  var year=quarterYear(),today=isoDate(new Date()),monthly=[];
+  for(var mi=0;mi<12;mi++){var qn=Math.floor(mi/3)+1,ql=quarterLabelFor(qn,year);var first=isoDate(new Date(year,mi,1)),last=isoDate(new Date(year,mi+1,0));
+    if(!ql||first>today){monthly.push('');continue;}var subs=personSubsIn(ql,pp.name);if(!subs.length){monthly.push('');continue;}
+    var cut=last<today?last:today;monthly.push(Math.round(subs.filter(function(s){return doneBy(s,cut);}).length/subs.length*1000)/1000);}
+  var qn0=parseInt(activeQNum(),10),ql0=quarterLabelFor(qn0,year),subs0=ql0?personSubsIn(ql0,pp.name):[];
+  var done0=subs0.filter(function(s){return doneBy(s,today);}).length;var actual=subs0.length?Math.round(done0/subs0.length*1000)/1000:'';
+  var plan=k.q&&k.q[qn0]?k.q[qn0].plan:'';var status='';
+  if(typeof plan==='number'&&typeof actual==='number'){var qs=new Date(year,(qn0-1)*3,1),qe=new Date(year,qn0*3,1),now=new Date();
+    var frac=Math.max(0,Math.min(1,(now-qs)/(qe-qs)));var exp=plan*frac;status=actual>=exp-1e-9?'On Track':actual>=exp*0.8?'Behind':'Off Track';}
+  return {monthly:monthly,actual:actual,status:status,done:done0,total:subs0.length};}
+function kpiStatus(k,qn){var a=autoRocks(k);if(a)return a.status;return (k.q&&k.q[qn]&&k.q[qn].status)||'';}
+function kpiMonth(k,i){var a=autoRocks(k);if(a)return a.monthly[i];return k.monthly?k.monthly[i]:'';}
+function qHasMonths(k,qn){if(autoRocks(k))return true;var idx=qMonthIdx(qn);return idx.some(function(i){return typeof (k.monthly&&k.monthly[i])==='number';});}
+function qActualVal(k,qn){var au=autoRocks(k);if(au)return au.actual;var idx=qMonthIdx(qn);var vals=idx.map(function(i){return k.monthly?k.monthly[i]:'';});if(vals.some(function(v){return typeof v==='number';}))return aggregate(vals,kpiAgg(k));var q=k.q&&k.q[qn];return q?q.actual:'';}
 var _scOpen={},_scMonthly={};
 function scToggle(pi){var key='sc-'+pi;_scOpen[key]=!_scOpen[key];render(CUR);}
 function scToggleMonthly(pi){_scMonthly[pi]=!_scMonthly[pi];render(CUR);}
@@ -1847,8 +1892,8 @@ function scSetPrimary(pi,ki){WB.scorecard.people[pi].primary=WB.scorecard.people
 function kpiCard(pi,ki,qn,showPerson){
   var pp=WB.scorecard.people[pi];var k=pp.kpis[ki];
   var q=(k.q&&k.q[qn])||{plan:'',actual:'',status:''};
-  var hasMon=qHasMonths(k,qn);var actual=qActualVal(k,qn);var plan=q.plan;
-  var st=scStatusNorm(q.status);
+  var hasMon=qHasMonths(k,qn);var actual=qActualVal(k,qn);var plan=q.plan;var au=autoRocks(k);
+  var st=scStatusNorm(kpiStatus(k,qn));
   var sc=st==='On Track'?'ot':st==='Behind'?'ar':st==='Off Track'?'off':'na';
   var stcol=st==='On Track'?'var(--green-tx)':st==='Behind'?'var(--amber-tx)':st==='Off Track'?'var(--red)':'var(--tx3)';
   var att='';if(typeof plan==='number'&&plan!==0&&typeof actual==='number')att=Math.max(0,Math.min(100,Math.abs(actual/plan)*100));
@@ -1860,17 +1905,18 @@ function kpiCard(pi,ki,qn,showPerson){
   if(showPerson)h+='<span class="kperson">'+esc(pp.name)+(pp.area?' · '+esc(pp.area):'')+'</span>';
   h+='<span class="spacer"></span>';
   h+='<button class="kc-btn kc-star'+(isPrim?' on':'')+'" onclick="scSetPrimary('+pi+','+ki+')" title="'+(isPrim?'Shown in Overview dashboard':'Show this KPI in the Overview')+'">'+(isPrim?'★':'☆')+'</button>';
-  h+='<select class="kstatus" style="color:'+stcol+'" onchange="scQ('+pi+','+ki+',\'status\',this.value)"><option value="">— status —</option>'+['On Track','Behind','Off Track'].map(function(s){return '<option'+(st===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
+  if(au)h+='<span class="kstatus kauto" style="color:'+stcol+'" title="Automatic: actual vs target pro-rated to today ('+au.done+' of '+au.total+' sub-rocks done)">'+(st||'—')+' · auto</span>';
+  else h+='<select class="kstatus" style="color:'+stcol+'" onchange="scQ('+pi+','+ki+',\'status\',this.value)"><option value="">— status —</option>'+['On Track','Behind','Off Track'].map(function(s){return '<option'+(st===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
   if(k.proof)h+='<a class="kc-btn" href="'+esc(k.proof)+'" target="_blank" rel="noopener" title="Open proof">🔗</a>';
-  h+='<button class="kc-btn kc-chev'+(dopen?' open':'')+'" onclick="scKpiDetail('+pi+','+ki+')" title="Enter monthly actuals, aggregation & proof"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>';
+  if(!au)h+='<button class="kc-btn kc-chev'+(dopen?' open':'')+'" onclick="scKpiDetail('+pi+','+ki+')" title="Enter monthly actuals, aggregation & proof"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>';
   h+='<button class="kc-btn" onclick="delScKpi('+pi+','+ki+')" title="Delete KPI">✕</button></div>';
   h+='<div class="kc-meta">';
   h+='<span class="kpv">Plan <input value="'+esc(plan)+'" onchange="scQ('+pi+','+ki+',\'plan\',this.value)"></span><span class="arrow">→</span>';
-  h+='<span class="kpv">Actual '+(hasMon?'<b class="autoval" onclick="scKpiDetail('+pi+','+ki+')" title="Auto: '+kpiAgg(k)+' of months. Click to edit months.">'+fmtKPI(actual,k.unit)+'</b>':'<input value="'+esc(q.actual)+'" placeholder="enter…" onchange="scQ('+pi+','+ki+',\'actual\',this.value)">')+'</span>';
+  h+='<span class="kpv">Actual '+(au?'<b class="autoval" style="cursor:default" title="Automatic from the Rocks: '+au.done+' of '+au.total+' of '+esc(pp.name)+'\'s sub-rocks done this quarter">'+fmtKPI(actual,k.unit)+'</b>':hasMon?'<b class="autoval" onclick="scKpiDetail('+pi+','+ki+')" title="Auto: '+kpiAgg(k)+' of months. Click to edit months.">'+fmtKPI(actual,k.unit)+'</b>':'<input value="'+esc(q.actual)+'" placeholder="enter…" onchange="scQ('+pi+','+ki+',\'actual\',this.value)">')+'</span>';
   h+='<div class="kbar"><span class="f-'+sc+'" style="width:'+(att===''?0:att)+'%"></span></div><span class="kvar">'+varv+'</span>';
-  var mini=qi.map(function(i){var v=(k.monthly&&k.monthly[i]!=null&&k.monthly[i]!=='')?fmtKPI(k.monthly[i],k.unit):'·';return MONTHS_ABBR[i].charAt(0)+' '+v;}).join('  ');
+  var mini=qi.map(function(i){var mv=kpiMonth(k,i);var v=(mv!=null&&mv!=='')?fmtKPI(mv,k.unit):'·';return MONTHS_ABBR[i].charAt(0)+' '+v;}).join('  ');
   h+='<span class="kmini">'+esc(mini)+'</span></div>';
-  if(dopen){
+  if(dopen&&!au){
     h+='<div class="kc-edit">';
     qi.forEach(function(i){h+='<div class="fld mon"><label>'+MONTHS_ABBR[i]+'</label><input value="'+esc(k.monthly&&k.monthly[i]!=null?k.monthly[i]:'')+'" onchange="scMQ('+pi+','+ki+','+i+',this.value)"></div>';});
     h+='<div class="fld"><label>Aggregation</label><select onchange="scK('+pi+','+ki+',\'agg\',this.value)">'+['Average','Sum','Latest'].map(function(a){return '<option'+(kpiAgg(k)===a?' selected':'')+'>'+a+'</option>';}).join('')+'</select></div>';
@@ -1900,7 +1946,8 @@ function scMonthlyTable(pp,pi,kind,label){
   var h='<div class="card tablecard" style="margin:0 0 8px"><div class="mtitle">'+label+' — monthly actuals</div><table class="tbl"><thead><tr><th style="min-width:150px">'+label+'</th><th>Unit</th>'+MON.map(function(m){return '<th class="num">'+m+'</th>';}).join('')+'</tr></thead><tbody>';
   arr.forEach(function(k,ki){
     h+='<tr><td title="'+esc(k.desc||'')+'">'+esc(k.name)+'</td><td>'+esc(k.unit||'')+'</td>';
-    for(var mi=0;mi<12;mi++){h+='<td><input class="num" style="width:46px" value="'+esc(k.monthly[mi]==null?'':k.monthly[mi])+'" onchange="scM('+pi+',\''+kind+'\','+ki+','+mi+',this.value)"></td>';}
+    var au2=kind==='kpi'?autoRocks(k):null;
+    for(var mi=0;mi<12;mi++){if(au2){h+='<td class="num" title="Automatic from the Rocks">'+fmtKPI(au2.monthly[mi],k.unit)+'</td>';continue;}h+='<td><input class="num" style="width:46px" value="'+esc(k.monthly[mi]==null?'':k.monthly[mi])+'" onchange="scM('+pi+',\''+kind+'\','+ki+','+mi+',this.value)"></td>';}
     h+='</tr>';
   });
   h+='</tbody></table></div>';return h;
@@ -1917,8 +1964,8 @@ function renderScorecard(){
   people.forEach(function(pp,pi){
     if(scRemoved(pp))return;
     if(sel&&sel!==pp.name)return;
-    var trackable=pp.kpis.filter(function(k){return k.q&&k.q[qn]&&scStatusNorm(k.q[qn].status);});
-    var onCount=trackable.filter(function(k){return scStatusNorm(k.q[qn].status)==='On Track';}).length;
+    var trackable=pp.kpis.filter(function(k){return scStatusNorm(kpiStatus(k,qn));});
+    var onCount=trackable.filter(function(k){return scStatusNorm(kpiStatus(k,qn))==='On Track';}).length;
     var key='sc-'+pi;var open=!!_scOpen[key];
     h+='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="scToggle('+pi+')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
     h+='<span class="avatar">'+esc(initials(pp.name))+'</span><span class="ce nm" contenteditable onclick="event.stopPropagation()" onblur="scP('+pi+',\'name\',this.textContent)">'+esc(pp.name)+'</span>';
@@ -1950,7 +1997,7 @@ function renderAllKpis(){
   var people=WB.scorecard.people||[];
   var all=[];people.forEach(function(pp,pi){if(scRemoved(pp))return;pp.kpis.forEach(function(k,ki){all.push({pi:pi,ki:ki,pp:pp,k:k});});});
   var c={'On Track':0,'Behind':0,'Off Track':0,'No status':0};
-  all.forEach(function(x){var st=scStatusNorm((x.k.q&&x.k.q[qn]&&x.k.q[qn].status)||'');c[st||'No status']++;});
+  all.forEach(function(x){var st=scStatusNorm(kpiStatus(x.k,qn));c[st||'No status']++;});
   var flt=_kpiFilter;
   var defs=[['On Track','--green'],['Behind','--amber'],['Off Track','--red'],['No status','--bdr2']];
   var h='<div class="filt"><span class="lbl">Showing quarter:</span><span class="tag">Q'+qn+'</span><span class="lbl">— set in the sidebar</span></div>';
@@ -1958,7 +2005,7 @@ function renderAllKpis(){
   if(!all.length){h+=emptyState('gauge','No KPIs yet','Add people and KPIs in the By Person view.');p.innerHTML=h;return;}
   var areas={};all.forEach(function(x){var a=x.pp.area||'Other';(areas[a]=areas[a]||[]).push(x);});
   Object.keys(areas).sort().forEach(function(a){
-    var items=areas[a].filter(function(x){if(!flt)return true;var st=scStatusNorm((x.k.q&&x.k.q[qn]&&x.k.q[qn].status)||'')||'No status';return st===flt;});
+    var items=areas[a].filter(function(x){if(!flt)return true;var st=scStatusNorm(kpiStatus(x.k,qn))||'No status';return st===flt;});
     if(!items.length)return;
     h+='<div class="sec-head"><h2>'+esc(a)+'</h2><span class="sub">'+items.length+'</span></div><div class="kpicards">';
     items.forEach(function(x){h+=kpiCard(x.pi,x.ki,qn,true);});
@@ -1970,7 +2017,7 @@ function ovKpiSection(){
   ensureScorecard();var qn=activeQNum();var people=(WB.scorecard.people||[]).filter(function(pp){return !scRemoved(pp);});
   if(!people.length)return '';
   var on=0,beh=0,off=0;
-  people.forEach(function(pp){pp.kpis.forEach(function(k){if(k.q&&k.q[qn]){var n=scStatusNorm(k.q[qn].status);if(n==='On Track')on++;else if(n==='Behind')beh++;else if(n==='Off Track')off++;}});});
+  people.forEach(function(pp){pp.kpis.forEach(function(k){if((k.q&&k.q[qn])||autoRocks(k)){var n=scStatusNorm(kpiStatus(k,qn));if(n==='On Track')on++;else if(n==='Behind')beh++;else if(n==='Off Track')off++;}});});
   var h='<div class="sec-head"><h2>Team KPIs — Q'+qn+'</h2><span class="sub">plan vs actual</span><span class="spacer"></span><button class="btn sm" onclick="switchTab(\'scorecard\')">Open scorecard</button></div>';
   h+='<div class="stats" style="margin-bottom:14px"><div class="stat"><div class="n" style="color:var(--green)">'+on+'</div><div class="l"><span class="sw" style="background:var(--green)"></span>On Track</div></div><div class="stat"><div class="n" style="color:var(--amber)">'+beh+'</div><div class="l"><span class="sw" style="background:var(--amber)"></span>Behind</div></div><div class="stat"><div class="n" style="color:var(--red)">'+off+'</div><div class="l"><span class="sw" style="background:var(--red)"></span>Off Track</div></div></div>';
   h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>Person</th><th>Area</th><th>Primary KPI</th><th class="num">Plan</th><th class="num">Actual</th><th>Status</th></tr></thead><tbody>';
@@ -1979,7 +2026,7 @@ function ovKpiSection(){
     var k=pp.kpis.filter(function(x){return x.name===pn;})[0]||pp.kpis[0];
     var q=(k&&k.q)?k.q[qn]:null;
     var av=k?qActualVal(k,qn):'';
-    h+='<tr><td>'+esc(pp.name)+'</td><td><span class="tag">'+esc(pp.area)+'</span></td><td>'+(k?esc(k.name):'—')+'</td><td class="num">'+(q?fmtKPI(q.plan,k.unit):'')+'</td><td class="num">'+(k?fmtKPI(av,k.unit):'')+'</td><td>'+(q?scPill(q.status):'<span class="pill p-ns">—</span>')+'</td></tr>';
+    h+='<tr><td>'+esc(pp.name)+'</td><td><span class="tag">'+esc(pp.area)+'</span></td><td>'+(k?esc(k.name):'—')+'</td><td class="num">'+(q?fmtKPI(q.plan,k.unit):'')+'</td><td class="num">'+(k?fmtKPI(av,k.unit):'')+'</td><td>'+(k&&(q||autoRocks(k))?scPill(kpiStatus(k,qn)):'<span class="pill p-ns">—</span>')+'</td></tr>';
   });
   h+='</tbody></table></div>';return h;
 }
@@ -2271,6 +2318,7 @@ function boot(){
   $('#cf-ok').onclick=function(){if(_cfCb)_cfCb();_cfCb=null;closeModal('modal-confirm');};
   var st;$('#search').oninput=function(){clearTimeout(st);var v=this.value;st=setTimeout(function(){doSearch(v);},180);};
   window.addEventListener('pagehide',flushSave);
+  document.addEventListener('mouseup',function(){if(_subDrag===null)_subArm=false;});
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushSave();});
   setInterval(function(){
     if(!SB_ENABLED||_saveTimer||_pushing||isEditing())return;
