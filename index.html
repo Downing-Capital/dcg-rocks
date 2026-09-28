@@ -192,6 +192,9 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 .rock.done .rock-bd{background:var(--surf)}
 .todo-tabs .cnt{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:10px;background:var(--amber-bg,#FAEEDA);color:var(--amber-tx,#633806);font-size:10px;font-weight:700}
 .todo-tabs{flex-wrap:wrap;gap:6px}
+.btn.linkish{background:transparent;border-color:transparent;color:var(--tx3);box-shadow:none}.btn.linkish:hover{color:var(--tx);border-color:var(--bdr)}
+.removedlist{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 12px;margin:0 0 12px;border:1px dashed var(--bdr2);border-radius:var(--r);font-size:12px}
+.rmitem{display:inline-flex;align-items:center;gap:6px}
 .kauto{font-size:11px;font-weight:600;border:1px dashed var(--bdr2);border-radius:20px;padding:2px 8px;white-space:nowrap}
 .cylist{max-height:55vh;overflow:auto;border:1px solid var(--bdr);border-radius:var(--r)}
 .cygrp{padding:6px 0;border-bottom:1px solid var(--bdr)}.cygrp:last-child{border-bottom:0}
@@ -1614,7 +1617,7 @@ function todoStatusSel(id,cur){return '<select class="ministatus '+(TODO_PILL[cu
    TO-DOS — per person, grouped by week (mirrors the Weekly To-Do Tracker)
    ============================================================ */
 var TODO_TIME_OPTS=['30 min','1h','1h30','2h','3h','4h','4h+'];
-var _todoPerson=null,_todoWeekOpen={},_todoAllWeek=null;
+var _todoPerson=null,_todoWeekOpen={},_todoAllWeek=null,_showRemovedTodo=false,_showRemovedSc=false;
 function addDaysIso(iso,n){var d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return isoDate(d);}
 function weekRangeLabel(ws){var a=new Date(ws+'T00:00:00'),b=new Date(a);b.setDate(a.getDate()+4);
   return MONTHS_ABBR[a.getMonth()]+' '+a.getDate()+' – '+(b.getMonth()!==a.getMonth()?MONTHS_ABBR[b.getMonth()]+' ':'')+b.getDate();}
@@ -1765,9 +1768,10 @@ function renderTodos(){
       return '<button class="btn sm'+(_todoPerson===n?' pri':'')+'" onclick="setTodoPerson(\''+nq+'\')">'+esc(n)+(open?' <span class="cnt">'+open+'</span>':'')+'</button>';}).join('')+
     '<span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setTodoWeeksAll(true)">Expand all</button><button class="btn sm" onclick="setTodoWeeksAll(false)">Collapse all</button>'+
     (_todoPerson!=='__all'?'<button class="btn sm" onclick="removeTodoPerson(\''+esc(_todoPerson).replace(/'/g,"\\'")+'\',currentWeekStart())" title="Hide this person from To-Dos from this week onward">Remove '+esc(_todoPerson)+'</button>':'')+
+    (function(){var g=todoAllOwners().filter(function(n){return !todoActiveIn(n,currentWeekStart());});return g.length?'<button class="btn sm linkish" onclick="_showRemovedTodo=!_showRemovedTodo;render(CUR)" title="People removed from To-Dos">Removed ('+g.length+')</button>':'';})()+
     '<button class="btn sm" onclick="$(\'#todo-xlsx\').click()" title="Add to-dos from the Weekly To-Do Tracker spreadsheet">Import Excel</button><input type="file" id="todo-xlsx" accept=".xlsx,.xls" style="display:none" onchange="if(this.files[0])importTrackerFile(this.files[0]);this.value=\'\'"></div>';
   var gone=todoAllOwners().filter(function(n){return !todoActiveIn(n,currentWeekStart());});
-  if(gone.length)h+='<div class="hint">Removed from To-Dos: '+gone.map(function(n){return esc(n)+' <span class="lbl">(from '+esc(weekRangeLabel(todoRemovedFrom(n)))+')</span> <button class="btn sm" onclick="restoreTodoPerson(\''+esc(n).replace(/'/g,"\\'")+'\')">Restore</button>';}).join(' &nbsp; ')+'</div>';
+  if(gone.length&&_showRemovedTodo)h+='<div class="removedlist"><span class="lbl">Removed people</span>'+gone.map(function(n){return '<span class="rmitem">'+esc(n)+' <span class="lbl">since '+esc(weekRangeLabel(todoRemovedFrom(n)))+'</span> <button class="btn sm" onclick="restoreTodoPerson(\''+esc(n).replace(/'/g,"\\'")+'\')">Restore</button></span>';}).join('')+'<button class="btn sm" onclick="_showRemovedTodo=false;render(CUR)">Close</button></div>';
   if(_todoPerson==='__all'){
     var ws=allWeeks();if(!_todoAllWeek||ws.indexOf(_todoAllWeek)<0)_todoAllWeek=currentWeekStart();var wk=_todoAllWeek;
     var tot=weekStats((WB.todos||[]).filter(function(t){return t.weekStart===wk;}));
@@ -2003,7 +2007,8 @@ function renderScorecard(){
   h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Plan vs Actual follows the quarter chosen in the sidebar (currently Q'+qn+'). Switch quarters there to set/see other targets.</div>';
   if(!people.length){h+=emptyState('gauge','No scorecard yet','Add a person to start tracking KPIs.');p.innerHTML=h;return;}
   var removed=[];people.forEach(function(pp,pi){if(scRemoved(pp))removed.push({pp:pp,pi:pi});});
-  if(removed.length)h+='<div class="hint">Removed from '+esc(WB.activeQuarter)+': '+removed.map(function(x){return esc(x.pp.name)+' <button class="btn sm" style="margin-left:2px" onclick="restoreScPerson('+x.pi+')">Restore</button>';}).join(' &nbsp; ')+'</div>';
+  if(removed.length)h+='<div style="display:flex;justify-content:flex-end;margin:-4px 0 8px"><button class="btn sm linkish" onclick="_showRemovedSc=!_showRemovedSc;render(CUR)" title="People removed from the scorecard">Removed ('+removed.length+')</button></div>';
+  if(removed.length&&_showRemovedSc)h+='<div class="removedlist"><span class="lbl">Removed people</span>'+removed.map(function(x){return '<span class="rmitem">'+esc(x.pp.name)+' <span class="lbl">since '+esc(x.pp.removedFrom||'')+'</span> <button class="btn sm" onclick="restoreScPerson('+x.pi+')">Restore</button></span>';}).join('')+'<button class="btn sm" onclick="_showRemovedSc=false;render(CUR)">Close</button></div>';
   people.forEach(function(pp,pi){
     if(scRemoved(pp))return;
     if(sel&&sel!==pp.name)return;
