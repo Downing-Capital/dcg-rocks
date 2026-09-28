@@ -440,7 +440,7 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 <div class="overlay" id="modal-newq">
   <div class="modal">
     <h3>New quarter</h3>
-    <p>Starts with no rocks. Your North Star metrics carry over (weekly values reset to blank).</p>
+    <p>Starts with no rocks.</p>
     <label>Quarter name</label>
     <input id="nq-name" placeholder="e.g. Q3 2026">
     <label>Quarter start date (week 1)</label>
@@ -875,9 +875,9 @@ var ICONS={
 };
 function ic(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[k]||'')+'</svg>';}
 
+var NS_ENABLED=false; /* North Star section retired (data kept, just hidden) */
 var NAV=[
   {grp:'',items:[{id:'overview',label:'Overview',icon:'overview'}]},
-  {grp:'Metrics',items:[{id:'northstar',label:'North Star',icon:'northstar'}]},
   {grp:'Rocks',items:[
     {id:'allrocks',label:'All Rocks',icon:'layers'},
     {id:'ideation',label:'Ideation',icon:'rocks'},
@@ -1084,7 +1084,7 @@ function renderOverview(){
   html+=ovKpiSection();
 
   // North star snapshot
-  if(D.ns.length){
+  if(NS_ENABLED&&D.ns.length){
     html+='<div class="sec-head"><h2>North Star</h2><span class="sub">cumulative vs target</span></div>';
     html+='<div class="card chartbox"><div class="cv" style="height:240px"><canvas id="ov-ns"></canvas></div></div>';
   }
@@ -1126,7 +1126,7 @@ function drawOverviewCharts(){
   var c=statusCounts(allRocks().map(function(x){return x.rock;}));
   makeChart('ov-status',{type:'doughnut',data:{labels:['On Track','At Risk','Not Started','Done','Unplanned'],datasets:[{data:[c['On Track'],c['At Risk'],c['Not Started'],c.Done,c.Unplanned],backgroundColor:[col.green,col.amber,col.grey,col.blue,col.red],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:col.tx,boxWidth:10,font:{size:11}}}}}});
 
-  if(D.ns.length){
+  if(NS_ENABLED&&D.ns.length){
     var wk=weekDates().map(fmtWeek);
     var ds=D.ns.slice(0,5).map(function(m,i){
       var pal=[col.blue,col.green,col.purple,col.teal,col.amber];var cum=0;
@@ -1550,6 +1550,11 @@ function delTodo(id){var t=(WB.todos||[]).find(function(x){return x.id===id;});
   if(t&&t.subId&&prev){var s0=todoSubOf(t);if(s0){prev.rockId=t.rockId;prev.subId=t.subId;s0.todoId=prev.id;}t.subId='';}
   if(t&&t.subId&&t.rockId){var r=findRockById(t.rockId);if(r)r.subrocks=(r.subrocks||[]).filter(function(s){return s.id!==t.subId;});tomb(t.subId);}if(t)trashPush('todo',t.desc,t,{});tomb(id);WB.todos=(WB.todos||[]).filter(function(x){return x.id!==id;});save();render(CUR);updateBadges();}
 function scToggle2(key){_scOpen[key]=_scOpen[key]===false?true:false;render(CUR);}
+/* A rock's PortCo: its own PortCo field, else "PortCo: X" in the description, else the most common PortCo among its sub-rocks. */
+function rockPortco(r){if(!r)return '';var pc=(r.portco||'').trim();if(pc)return pc;
+  var m=/PortCo:\s*([^\n,;|]+)/i.exec(r.desc||'');if(m)return m[1].trim();
+  var c={},best='',bn=0;(r.subrocks||[]).forEach(function(s){var p=(s.portco||'').trim();if(p){c[p]=(c[p]||0)+1;if(c[p]>bn){bn=c[p];best=p;}}});return best;}
+function rockOptLabel(r){var pc=rockPortco(r);var t=(r.title||'untitled');return (pc?'['+pc+'] ':'')+(t.length>60?t.slice(0,58)+'…':t);}
 function rockLinkSelect(t){
   var q=WB.quarters[WB.activeQuarter]||{};var rocks=[];
   ['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'].forEach(function(k){(q[k]||[]).forEach(function(r){rocks.push(r);});});
@@ -1560,7 +1565,7 @@ function rockLinkSelect(t){
     return (r.subrocks||[]).some(function(s){return ownersOf(s).indexOf(owner)>=0;});
   });
   if(t.rockId&&!assoc.some(function(r){return r.id===t.rockId;})){var cur=allRocksAllQuarters().filter(function(x){return x.rock.id===t.rockId;})[0];if(cur)assoc=[cur.rock].concat(assoc);}
-  return '<select onchange="todoSet(\''+t.id+'\',\'rockId\',this.value)"><option value="">— no rock —</option>'+assoc.map(function(r){return '<option value="'+r.id+'"'+(t.rockId===r.id?' selected':'')+'>'+esc((r.title||'untitled').slice(0,44))+'</option>';}).join('')+'</select>';
+  return '<select onchange="todoSet(\''+t.id+'\',\'rockId\',this.value)"><option value="">— no rock —</option>'+assoc.slice().sort(function(a,b){var pa=rockPortco(a)||'~',pb=rockPortco(b)||'~';return pa===pb?(a.title||'').localeCompare(b.title||''):pa.localeCompare(pb);}).map(function(r){return '<option value="'+r.id+'"'+(t.rockId===r.id?' selected':'')+' title="'+esc(r.title||'')+'">'+esc(rockOptLabel(r))+'</option>';}).join('')+'</select>';
 }
 function todoStatusSel(id,cur){return '<select class="ministatus '+(TODO_PILL[cur]||'p-ns')+'" onclick="event.stopPropagation()" onchange="todoSet(\''+id+'\',\'status\',this.value)">'+TODO_STATUS.map(function(s){return '<option'+(cur===s?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select>';}
 /* ============================================================
@@ -2115,7 +2120,7 @@ function createQuarter(){
   if(!WB.quarters[name]){
     var wb=blankWorkbook(name,start||'');
     // carry North Star metrics forward, reset weekly values
-    wb.ns=(D&&D.ns?D.ns:[]).map(function(m){return {type:m.type,metric:m.metric,owner:m.owner,target:m.target,weeks:['','','','','','','','','','','',''],status:'On Track'};});
+    wb.ns=!NS_ENABLED?[]:(D&&D.ns?D.ns:[]).map(function(m){return {type:m.type,metric:m.metric,owner:m.owner,target:m.target,weeks:['','','','','','','','','','','',''],status:'On Track'};});
     WB.quarters[name]=wb;
   }
   setActiveQuarter(name);save();renderQuarterSel();closeModal('modal-newq');switchTab('overview');
