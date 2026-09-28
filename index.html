@@ -183,6 +183,13 @@ input,select,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
 /* rock cards */
 .rocklist{display:flex;flex-direction:column;gap:9px}
 .rock{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rlg);box-shadow:var(--shadow);overflow:hidden}
+.rock.done{background:var(--green-bg);border-color:var(--green)}
+.rock.done .rock-bd{background:var(--surf)}
+.draghandle{cursor:grab;white-space:nowrap;user-select:none;color:var(--tx3)}
+.draghandle .grip{opacity:.45;margin-right:5px;font-size:12px}
+.draghandle:hover .grip{opacity:1}
+tr.subrow.dragging{opacity:.4}
+tr.subrow.dropto td{border-top:2px solid var(--green)}
 .rock.unp{background:linear-gradient(0deg,var(--red-bg),var(--red-bg)),var(--surf);background-blend-mode:multiply}
 .rock-hd{display:flex;align-items:center;gap:13px;padding:14px 16px;cursor:pointer}
 .rock-hd .chev{width:16px;height:16px;color:var(--tx3);transition:transform .15s;flex:0 0 auto}
@@ -544,7 +551,7 @@ function daysUntil(s){if(!s)return null;var d=new Date(s+'T00:00:00');if(isNaN(d
 function rockStatus(rock){
   var subs=rock.subrocks||[];
   if(!subs.length)return rock.status||'Unplanned';
-  var st=subs.map(function(s){return s.doneDate?'Done':(s.status||'Not Started');}).filter(function(s){return s!=='Cancelled';});
+  var st=subs.map(function(s){return subStatus(s);}).filter(function(s){return s!=='Cancelled';});
   if(!st.length)return 'Cancelled';
   if(st.every(function(s){return s==='Done';}))return 'Done';
   if(st.some(function(s){return s==='At Risk';}))return 'At Risk';
@@ -572,7 +579,10 @@ function ownerList(){
   return Object.keys(s).sort();
 }
 function renderOwnerOptions(){var dl=$('#owner-options');if(!dl)return;dl.innerHTML=ownerList().map(function(o){return '<option value="'+esc(o)+'"></option>';}).join('');}
-function subStatus(s){return s.doneDate?'Done':(s.status||'Not Started');}
+/* Past its target date and not Done/Cancelled -> shown as At Risk automatically.
+   Derived at display time (nothing is written), so moving the date or finishing it clears it. */
+function isPastDue(s){if(!s||!s.targetDate)return false;var d=daysUntil(s.targetDate);return d!==null&&d<0;}
+function subStatus(s){if(s.doneDate)return 'Done';var st=s.status||'Not Started';if(st!=='Done'&&st!=='Cancelled'&&isPastDue(s))return 'At Risk';return st;}
 
 /* ============================================================
    Persistence — localStorage immediate + Supabase debounced
@@ -695,6 +705,21 @@ function mergeList(local,remote,base,keyFn,combine){
     if(!seen[k]){seen[k]=1;order.push('#'+k);}
   }
   (remote||[]).forEach(add);(local||[]).forEach(add);
+  /* If we reordered items (relative order of shared items differs from base) and the
+     remote didn't, keep our order; remote-only additions go at the end. */
+  if(base&&base.length){
+    var lk=(local||[]).map(keyFn).filter(function(k){return k!=null;});
+    var rk=(remote||[]).map(keyFn).filter(function(k){return k!=null;});
+    var bk=(base||[]).map(keyFn).filter(function(k){return k!=null;});
+    function common(a,x,y){return a.filter(function(k){return (k in x)&&(k in y);});}
+    var lMoved=sig(common(lk,bi,ri))!==sig(common(bk,li,ri));
+    var rMoved=sig(common(rk,bi,li))!==sig(common(bk,li,ri));
+    if(lMoved&&!rMoved){
+      var ord=[],seen2={};lk.forEach(function(k){if(!seen2[k]&&(k in li)){seen2[k]=1;ord.push('#'+k);}});
+      order.forEach(function(t){if(t.charAt(0)==='$'||!seen2[t.slice(1)])ord.push(t);});
+      order=ord;
+    }
+  }
   return order.map(function(t){
     if(t.charAt(0)==='$')return flat[t];
     var k=t.slice(1),l=li[k],r=ri[k],b=bi[k];
@@ -1198,7 +1223,7 @@ function rockCard(type,rock,idx,readonly){
   var st=rockStatus(rock);var pct=rockPct(rock);var key=type+'-'+rock.id;
   var open=!readonly&&D.expanded[key];
   var unp=st==='Unplanned';
-  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+'" data-key="'+key+'">';
+  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+'" data-key="'+key+'">';
   h+='<div class="rock-hd" onclick="toggleRock(\''+key+'\',event)">';
   if(!readonly)h+='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
   h+=avatarStack(ownersOf(rock));
@@ -1269,13 +1294,13 @@ function subrocksTab(type,rock){
   var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Sub-Rock</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th></th></tr></thead><tbody>';
   subs.forEach(function(s,si){
     var noTgt=!s.targetDate;
-    h+='<tr'+(noTgt?' style="background:var(--red-bg)"':'')+'><td class="num" style="color:var(--tx3)">'+(si+1)+'</td>';
+    h+='<tr class="subrow"'+(noTgt?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="this.parentNode.draggable=true" onmouseup="this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
     h+='<td><span class="ce" contenteditable onblur="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'title\',this.textContent)">'+esc(s.title)+'</span></td>';
     h+='<td><input class="ownin" list="owner-options" value="'+esc(s.owner)+'" placeholder="Owner(s)" title="Separate multiple owners with commas" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'owner\',this.value)"></td>';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'portco\',this.value)">'+portcoOpts(s.portco)+'</select></td>';
     h+='<td><input type="date" value="'+esc(s.targetDate)+'" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'targetDate\',this.value)"></td>';
     h+='<td><input type="date" value="'+esc(s.doneDate)+'" onchange="subDone(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',this.value)"></td>';
-    h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(subStatus(s))+'</select></td>';
+    h+='<td><select'+(isPastDue(s)&&subStatus(s)==='At Risk'?' title="Past due: shown as At Risk until it is Done or the target date moves"':'')+' onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(subStatus(s))+'</select></td>';
     h+='<td><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
   });
   h+='</tbody></table></div>';
@@ -1291,6 +1316,13 @@ function addSub(type,rid){
   save();rerenderCurrent();
 }
 function findSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===sid;});}
+var _subDrag=null;
+function subDragStart(e,i){_subDrag=i;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));}catch(x){}e.currentTarget.classList.add('dragging');}
+function subDragOver(e){if(_subDrag===null)return;e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(x){}e.currentTarget.classList.add('dropto');}
+function subDragEnd(){_subDrag=null;document.querySelectorAll('tr.subrow').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
+function subDrop(e,type,rid,to){e.preventDefault();var from=_subDrag;subDragEnd();if(from===null||from===to)return;
+  var r=getRocks(type).find(function(x){return x.id===rid;});if(!r||!r.subrocks)return;
+  var it=r.subrocks.splice(from,1)[0];r.subrocks.splice(to,0,it);save();rerenderCurrent();}
 function subSet(type,rid,sid,k,v){var s=findSub(type,rid,sid);if(!s)return;s[k]=v.trim?v.trim():v;if(k==='status'){if(s.status==='Done'&&!s.doneDate){var t=new Date();s.doneDate=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);}else if(s.status!=='Done'){s.doneDate='';}}if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function subDone(type,rid,sid,v){var s=findSub(type,rid,sid);if(!s)return;s.doneDate=v;if(v)s.status='Done';else if(s.status==='Done')s.status='On Track';if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function delSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});var s=(r.subrocks||[]).find(function(x){return x.id===sid;});if(s&&s.todoId){var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(t){t.subId='';t.rockId='';}}if(s)trashPush('sub',s.title,s,{quarter:WB.activeQuarter,rockId:rid});tomb(sid);r.subrocks=r.subrocks.filter(function(x){return x.id!==sid;});save();rerenderCurrent();}
@@ -1382,10 +1414,11 @@ function renderDashInd(){
   allSubs().forEach(function(x){var ows=ownersOf(x.sub);if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(sby[o]=sby[o]||[]).push(x);});});
   var nm={};Object.keys(rby).forEach(function(n){nm[n]=1;});Object.keys(sby).forEach(function(n){nm[n]=1;});
   var names=Object.keys(nm).sort(function(a,b){return ((rby[b]||[]).length+(sby[b]||[]).length)-((rby[a]||[]).length+(sby[a]||[]).length);});
+  _indLast=names.slice();
   var sel=getDashFilter('ind');
   var h='<div class="filt"><span class="lbl">Filter:</span><select id="filt-ind" onchange="setDashFilter(\'ind\',this.value)"><option value="">All individuals</option>'+
     names.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select>'+
-    '<span class="lbl" style="margin-left:12px">Sort:</span><button class="btn sm'+(_indSort!=='due'?' pri':'')+'" onclick="setIndSort(\'\')">Status</button><button class="btn sm'+(_indSort==='due'?' pri':'')+'" onclick="setIndSort(\'due\')">Due date</button></div>';
+    '<span class="lbl" style="margin-left:12px">Sort:</span><button class="btn sm'+(_indSort!=='due'?' pri':'')+'" onclick="setIndSort(\'\')">Status</button><button class="btn sm'+(_indSort==='due'?' pri':'')+'" onclick="setIndSort(\'due\')">Due date</button><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'ind\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'ind\',false)">Collapse all</button></div>';
   if(!names.length){h+=emptyState('user','No owners yet','Assign owners to rocks or sub-rocks to see workload here.');p.innerHTML=h;return;}
   names.filter(function(n){return !sel||sel===n;}).forEach(function(n){
     var rk=rby[n]||[],sb=sby[n]||[];
@@ -1424,7 +1457,8 @@ function renderDashPortco(){
   Object.keys(groups).forEach(function(g){if(order.indexOf(g)<0)order.push(g);});
   var sel=getDashFilter('portco');
   var h='<div class="filt"><span class="lbl">Filter:</span><select id="filt-portco" onchange="setDashFilter(\'portco\',this.value)"><option value="">All PortCos</option>'+
-    order.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></div>';
+    order.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'portco\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'portco\',\'rocks\')">Rocks only</button><button class="btn sm" onclick="setAllGrp(\'portco\',false)">Collapse all</button></div>';
+  _pcLast=order.map(function(pc){var ids={};groups[pc].forEach(function(x){ids[x.rock.id]=1;});return {pc:pc,ids:Object.keys(ids)};});
   if(!order.length){h+=emptyState('grid','No PortCo sub-rocks yet','Assign a PortCo to sub-rocks to see them grouped here.');p.innerHTML=h;return;}
   order.filter(function(n){return !sel||sel===n;}).forEach(function(pc){
     var items=groups[pc];var done=items.filter(function(x){return subStatus(x.sub)==='Done';}).length;
@@ -1446,7 +1480,14 @@ function renderDashPortco(){
   });
   p.innerHTML=h;
 }
-var _dashFilter={};var _pcCollapse={};
+var _dashFilter={};var _pcCollapse={};var _indLast=[],_pcLast=[];
+/* Expand/collapse every group on a dashboard. mode: true=all open, false=all closed,
+   'rocks' (PortCo only) = PortCo groups open, rocks inside collapsed to titles. */
+function setAllGrp(kind,mode){
+  if(kind==='ind'){_indLast.forEach(function(n){D.indCollapsed['ind-'+n]=(mode===false);});}
+  else{_pcLast.forEach(function(g){D.portcoCollapsed['portco-'+g.pc]=(mode===false);g.ids.forEach(function(id){_pcCollapse[g.pc+'|'+id]=(mode!==true);});});}
+  save();render(CUR);
+}
 function pcToggle(pc,id){var k=pc+'|'+id;_pcCollapse[k]=!_pcCollapse[k];render(CUR);}
 function getDashFilter(k){return _dashFilter[k]||'';}
 function setDashFilter(k,v){_dashFilter[k]=v;render(CUR);}
@@ -1479,9 +1520,11 @@ function allRocksAllQuarters(){var a=[];Object.keys(WB.quarters||{}).forEach(fun
 function findRockById(id){var f=allRocksAllQuarters().filter(function(x){return x.rock.id===id;})[0];return f?f.rock:null;}
 function td2sub(s){return {'To Do':'Not Started','In Progress':'On Track','Done':'Done','Not Done':'At Risk','Cancelled':'Cancelled'}[s]||'Not Started';}
 function sub2td(s){return {'Not Started':'To Do','On Track':'In Progress','Done':'Done','At Risk':'Not Done','Cancelled':'Cancelled','Unplanned':'To Do'}[s]||'To Do';}
+/* A to-do linked to a sub-rock always shows the sub-rock's status (single source of truth). */
+function todoStatus(t){var s=todoSubOf(t);return s?sub2td(subStatus(s)):(t.status||'To Do');}
 function todoSubOf(t){if(!t.subId||!t.rockId)return null;var r=findRockById(t.rockId);if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===t.subId;})||null;}
 function pushTodoToSub(t){var s=todoSubOf(t);if(!s)return;s.title=t.desc;s.owner=t.owner;if(t.weekStart)s.targetDate=t.weekStart;var st=td2sub(t.status);s.status=st;if(st==='Done'){if(!s.doneDate)s.doneDate=t.weekStart||currentWeekStart();}else{s.doneDate='';}}
-function pushSubToTodo(s){if(!s.todoId)return;var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(!t)return;t.desc=s.title;t.owner=s.owner;if(s.targetDate)t.weekStart=isoDate(mondayOf(new Date(s.targetDate+'T00:00:00')));t.status=sub2td(subStatus(s));}
+function pushSubToTodo(s){if(!s.todoId)return;var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(!t)return;t.desc=s.title;t.owner=s.owner;if(s.targetDate)t.weekStart=isoDate(mondayOf(new Date(s.targetDate+'T00:00:00')));t.status=sub2td((s.doneDate?'Done':(s.status||'Not Started')));}
 function relinkTodo(t,newRockId){
   if(t.subId&&t.rockId&&t.rockId!==newRockId){var or=findRockById(t.rockId);if(or)or.subrocks=(or.subrocks||[]).filter(function(s){return s.id!==t.subId;});t.subId='';}
   t.rockId=newRockId;
@@ -1519,7 +1562,7 @@ function renderTodos(){
   var h='<div class="filt"><span class="lbl">Person:</span><select id="filt-todo" onchange="setDashFilter(\'todo\',this.value)"><option value="">All individuals</option>'+names.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></div>';
   names.filter(function(n){return !sel||sel===n;}).forEach(function(n){
     var items=(by[n]||[]).slice().sort(function(a,b){return (a.weekStart||'').localeCompare(b.weekStart||'');});
-    var openCnt=items.filter(function(t){return t.status!=='Done';}).length;
+    var openCnt=items.filter(function(t){return todoStatus(t)!=='Done';}).length;
     var key='todo-'+n;var open=_scOpen[key]!==false;
     h+='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="scToggle2(\''+key+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><span class="avatar">'+esc(initials(n))+'</span><span class="nm">'+esc(n)+'</span><span class="ct">'+items.length+' to-dos · '+openCnt+' open</span><span class="spacer"></span><button class="btn sm" onclick="addTodo(\''+esc(n).replace(/\x27/g,"")+'\',event)">'+ic2('plus')+'Add</button></div>';
     h+='<div class="dgrp-bd"><div class="card tablecard" style="margin:0">';
@@ -1529,7 +1572,7 @@ function renderTodos(){
       items.forEach(function(t){
         h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)"></td>'+
           '<td>'+rockLinkSelect(t)+'</td>'+
-          '<td>'+todoStatusSel(t.id,t.status)+'</td>'+
+          '<td>'+todoStatusSel(t.id,todoStatus(t))+'</td>'+
           '<td><input class="num" style="width:46px" value="'+esc(t.time)+'" onchange="todoSet(\''+t.id+'\',\'time\',this.value)"></td>'+
           '<td><input type="date" value="'+esc(t.weekStart)+'" onchange="todoSet(\''+t.id+'\',\'weekStart\',this.value)"></td>'+
           '<td><input class="todoin" value="'+esc(t.notes)+'" onchange="todoSet(\''+t.id+'\',\'notes\',this.value)"></td>'+
@@ -1552,8 +1595,8 @@ function renderThisWeek(){
   if(!people.length&&!dueSubs.length){h+=emptyState('spark','Nothing scheduled this week','Add to-dos in the To-Dos tab, or set sub-rock due dates.');p.innerHTML=h;return;}
   people.forEach(function(n){
     h+='<div class="sec-head"><h2>'+esc(n)+'</h2><span class="sub">'+by[n].length+' to-dos</span></div><div class="card" style="padding:4px 0">';
-    by[n].slice().sort(function(a,b){return TODO_STATUS.indexOf(a.status)-TODO_STATUS.indexOf(b.status);}).forEach(function(t){
-      h+='<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(t.notes?'<div class="rname">'+esc(t.notes)+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,t.status)+'</div>';
+    by[n].slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).forEach(function(t){
+      h+='<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(t.notes?'<div class="rname">'+esc(t.notes)+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';
     });
     h+='</div>';
   });
@@ -1569,7 +1612,7 @@ function todosTab(type,rock){
   var h='<div style="margin-bottom:8px"><button class="btn sm" onclick="addTodoForRock(\''+rock.id+'\')">'+ic2('plus')+'Add to-do for this rock</button></div>';
   if(!items.length)return h+'<div class="empty" style="padding:18px">No to-dos linked to this rock yet.</div>';
   h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>To-Do</th><th>Owner</th><th>Status</th><th>Week of</th><th></th></tr></thead><tbody>';
-  items.forEach(function(t){h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)"></td><td><input class="ownin" list="owner-options" value="'+esc(t.owner)+'" onchange="todoSet(\''+t.id+'\',\'owner\',this.value)"></td><td>'+todoStatusSel(t.id,t.status)+'</td><td><input type="date" value="'+esc(t.weekStart)+'" onchange="todoSet(\''+t.id+'\',\'weekStart\',this.value)"></td><td><button class="btn-del" onclick="delTodo(\''+t.id+'\')">✕</button></td></tr>';});
+  items.forEach(function(t){h+='<tr><td><input class="todoin" value="'+esc(t.desc)+'" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)"></td><td><input class="ownin" list="owner-options" value="'+esc(t.owner)+'" onchange="todoSet(\''+t.id+'\',\'owner\',this.value)"></td><td>'+todoStatusSel(t.id,todoStatus(t))+'</td><td><input type="date" value="'+esc(t.weekStart)+'" onchange="todoSet(\''+t.id+'\',\'weekStart\',this.value)"></td><td><button class="btn-del" onclick="delTodo(\''+t.id+'\')">✕</button></td></tr>';});
   h+='</tbody></table></div>';return h;
 }
 function importBuildRocksQ2(){
@@ -1660,7 +1703,16 @@ function kpiCard(pi,ki,qn,showPerson){
 }
 function scP(pi,field,val){WB.scorecard.people[pi][field]=(val&&val.trim)?val.trim():val;save();}
 function addScPerson(){WB.scorecard.people.push({name:'New person',area:'',kpis:[],metrics:[]});save();render(CUR);}
-function delScPerson(pi,e){if(e)e.stopPropagation();var pp=WB.scorecard.people[pi];confirmDelete('Remove person?','Remove “'+(pp?pp.name:'')+'” and all their KPIs from the scorecard?',function(){WB.scorecard.people.splice(pi,1);save();render(CUR);});}
+/* Removing a person is per quarter: hidden from the removal quarter onward, kept in earlier ones.
+   Stored as a field (removedFrom) so it syncs to teammates like any other edit. */
+function qOrd(label){var m=/Q([1-4])\s*'?(\d{2,4})/i.exec(label||'');if(!m)return null;var y=+m[2];if(y<100)y+=2000;return y*4+(+m[1]-1);}
+function scRemoved(pp){if(!pp||!pp.removedFrom)return false;var a=qOrd(WB.activeQuarter),b=qOrd(pp.removedFrom);if(a===null||b===null)return WB.activeQuarter===pp.removedFrom;return a>=b;}
+function delScPerson(pi,e){if(e)e.stopPropagation();var pp=WB.scorecard.people[pi];if(!pp)return;var q=WB.activeQuarter;
+  confirmDelete('Remove person?','Remove “'+pp.name+'” from '+q+' onward? They and their KPIs stay in earlier quarters. You can restore them from this page.',function(){
+    var cur=qOrd(pp.removedFrom),nw=qOrd(q);if(!pp.removedFrom||(cur!==null&&nw!==null&&nw<cur))pp.removedFrom=q;save();render(CUR);});}
+function restoreScPerson(pi){var pp=WB.scorecard.people[pi];if(!pp)return;
+  /* clears the removal entirely, so they show again in every quarter */
+  delete pp.removedFrom;save();render(CUR);}
 function addScKpi(pi){WB.scorecard.people[pi].kpis.push({name:'New KPI',desc:'',unit:'',monthly:['','','','','','','','','','','',''],q:{},proof:''});save();render(CUR);}
 function delScKpi(pi,ki){WB.scorecard.people[pi].kpis.splice(ki,1);save();render(CUR);}
 function scMonthlyTable(pp,pi,kind,label){
@@ -1678,10 +1730,13 @@ function renderScorecard(){
   ensureScorecard();
   var p=$('#panel-scorecard');var qn=activeQNum();
   var people=WB.scorecard.people||[];var sel=getDashFilter('sc');
-  var h='<div class="filt"><span class="lbl">Showing quarter:</span><span class="tag">Q'+qn+'</span><span class="lbl" style="margin-left:12px">Person:</span><select id="filt-sc" onchange="setDashFilter(\'sc\',this.value)"><option value="">All individuals</option>'+people.map(function(pp){return '<option'+(sel===pp.name?' selected':'')+'>'+esc(pp.name)+'</option>';}).join('')+'</select><span class="spacer"></span><button class="btn sm" onclick="addScPerson()">'+ic2('plus')+'Add person</button></div>';
+  var h='<div class="filt"><span class="lbl">Showing quarter:</span><span class="tag">Q'+qn+'</span><span class="lbl" style="margin-left:12px">Person:</span><select id="filt-sc" onchange="setDashFilter(\'sc\',this.value)"><option value="">All individuals</option>'+people.filter(function(pp){return !scRemoved(pp);}).map(function(pp){return '<option'+(sel===pp.name?' selected':'')+'>'+esc(pp.name)+'</option>';}).join('')+'</select><span class="spacer"></span><button class="btn sm" onclick="addScPerson()">'+ic2('plus')+'Add person</button></div>';
   h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Plan vs Actual follows the quarter chosen in the sidebar (currently Q'+qn+'). Switch quarters there to set/see other targets.</div>';
   if(!people.length){h+=emptyState('gauge','No scorecard yet','Add a person to start tracking KPIs.');p.innerHTML=h;return;}
+  var removed=[];people.forEach(function(pp,pi){if(scRemoved(pp))removed.push({pp:pp,pi:pi});});
+  if(removed.length)h+='<div class="hint">Removed from '+esc(WB.activeQuarter)+': '+removed.map(function(x){return esc(x.pp.name)+' <button class="btn sm" style="margin-left:2px" onclick="restoreScPerson('+x.pi+')">Restore</button>';}).join(' &nbsp; ')+'</div>';
   people.forEach(function(pp,pi){
+    if(scRemoved(pp))return;
     if(sel&&sel!==pp.name)return;
     var trackable=pp.kpis.filter(function(k){return k.q&&k.q[qn]&&scStatusNorm(k.q[qn].status);});
     var onCount=trackable.filter(function(k){return scStatusNorm(k.q[qn].status)==='On Track';}).length;
@@ -1714,7 +1769,7 @@ function kpiFilter(s){_kpiFilter=_kpiFilter===s?null:s;render(CUR);}
 function renderAllKpis(){
   ensureScorecard();var p=$('#panel-allkpis');var qn=activeQNum();
   var people=WB.scorecard.people||[];
-  var all=[];people.forEach(function(pp,pi){pp.kpis.forEach(function(k,ki){all.push({pi:pi,ki:ki,pp:pp,k:k});});});
+  var all=[];people.forEach(function(pp,pi){if(scRemoved(pp))return;pp.kpis.forEach(function(k,ki){all.push({pi:pi,ki:ki,pp:pp,k:k});});});
   var c={'On Track':0,'Behind':0,'Off Track':0,'No status':0};
   all.forEach(function(x){var st=scStatusNorm((x.k.q&&x.k.q[qn]&&x.k.q[qn].status)||'');c[st||'No status']++;});
   var flt=_kpiFilter;
@@ -1733,7 +1788,7 @@ function renderAllKpis(){
   p.innerHTML=h;
 }
 function ovKpiSection(){
-  ensureScorecard();var qn=activeQNum();var people=WB.scorecard.people||[];
+  ensureScorecard();var qn=activeQNum();var people=(WB.scorecard.people||[]).filter(function(pp){return !scRemoved(pp);});
   if(!people.length)return '';
   var on=0,beh=0,off=0;
   people.forEach(function(pp){pp.kpis.forEach(function(k){if(k.q&&k.q[qn]){var n=scStatusNorm(k.q[qn].status);if(n==='On Track')on++;else if(n==='Behind')beh++;else if(n==='Off Track')off++;}});});
