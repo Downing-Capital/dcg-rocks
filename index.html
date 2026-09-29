@@ -396,6 +396,71 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .cdate{font-size:11px;color:var(--tx3);font-family:var(--mono)}
 .chead .btn-del{margin-left:auto}
 .ctext{font-size:13px;color:var(--tx);white-space:pre-wrap}
+.wholist{display:flex;flex-wrap:wrap;gap:6px}
+.wholist .btn.guess{border-color:var(--blue);background:var(--blue-bg)}
+.acctbl{width:100%;font-size:12.5px;border-collapse:collapse;margin-bottom:16px}
+.acctbl td{padding:5px 4px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.acctbl td:first-child{color:var(--tx2);word-break:break-all}
+.acctbl select{width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:4px 6px;font-size:12.5px}
+.mehead{display:flex;align-items:center;gap:12px;padding:16px 18px;margin-bottom:16px}
+.mehead .avatar{width:38px;height:38px;font-size:14px}
+.mehead h2{font-family:var(--serif);font-size:20px;font-weight:600}
+.mehead .em{font-size:12px;color:var(--tx3)}
+/* rock type */
+.rock.hard{border-left:4px solid var(--purple)}
+.rock.proj{border-left:4px dashed var(--bdr2)}
+.kchip{font-size:10.5px;font-family:var(--mono);padding:1px 7px;border-radius:5px;white-space:nowrap;font-weight:600}
+.khard{background:var(--purple-bg);color:var(--purple-tx)}
+.kproj{background:var(--surf2);color:var(--tx2);border:1px dashed var(--bdr2)}
+.arkind{display:flex;gap:10px;margin:2px 0 12px;flex-wrap:wrap}
+.addform label.arkopt{flex:1 1 240px;display:flex;gap:9px;align-items:flex-start;border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px;cursor:pointer;background:var(--surf);margin:0;font-size:13px;color:var(--tx)}
+.addform label.arkopt input{width:auto;margin-top:3px}
+.arkopt small{display:block;color:var(--tx2);font-size:11.5px;margin-top:2px;font-weight:400}
+.arkopt:has(input:checked){border-color:var(--purple);background:var(--purple-bg)}
+/* sub-rock comments */
+.subcmt{font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer;border-radius:6px;padding:3px 6px;border:1px solid transparent}
+.subcmt:hover{border-color:var(--bdr);background:var(--surf)}
+.subcmt.empty{color:var(--tx3)}
+#tx-val{width:100%;min-height:240px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px;font-size:13.5px;line-height:1.5;resize:vertical;margin-bottom:14px}
+#tx-val:focus{outline:none;border-color:var(--blue)}
+/* links */
+.lnkform{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.lnkform input{flex:1 1 170px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:7px 10px;font-size:13px}
+.lnkform input:focus{outline:none;border-color:var(--blue)}
+.lnk{color:var(--blue-tx);text-decoration:none;font-weight:500}.lnk:hover{text-decoration:underline}
+/* PortCo dashboard */
+.pctabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--bdr);padding-bottom:8px}
+.pctabs button{background:none;border:1px solid transparent;border-radius:6px;padding:6px 12px;font-size:12.5px;color:var(--tx2);font-weight:500}
+.pctabs button:hover{background:var(--surf2)}
+.pctabs button.on{background:var(--teal-bg);color:var(--teal-tx);border-color:var(--teal)}
+.pchead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 18px;margin-bottom:16px}
+.pchead h2{font-family:var(--serif);font-size:20px;font-weight:600}
+.pchead .upd{font-size:11.5px;color:var(--tx3)}
+.pcsum{padding:16px}
+.pcsum h3{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;gap:8px;align-items:center}
+.pcnums{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.pcnums b{display:block;font-size:20px;font-family:var(--serif);font-weight:600}
+.pcnums span{font-size:11px;color:var(--tx3)}
+.pcnums .warn b{color:var(--amber)}.pcnums .bad b{color:var(--red)}
+.pcown{margin-top:12px;font-size:12px;color:var(--tx2)}
+.pcbox{padding:16px}
+.pcbox h3{font-size:13px;font-weight:600;margin-bottom:10px}
+.pcbox label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);font-weight:600;display:block;margin:10px 0 5px}
+.pcbox textarea,.pcbox select,.pcbox input{width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:7px 9px;font-size:13px;resize:vertical}
+.pcbox textarea:focus,.pcbox input:focus{outline:none;border-color:var(--blue);background:var(--surf)}
+.pcbox .lnkform input{flex:1 1 120px}
+.pcst-ok{background:var(--green-bg)!important;color:var(--green-tx)!important}.pcst-watch{background:var(--amber-bg)!important;color:var(--amber-tx)!important}.pcst-bad{background:var(--red-bg)!important;color:var(--red)!important}
+/* Welcome */
+.whero{padding:22px 24px;margin-bottom:16px}
+.whero h2{font-family:var(--serif);font-size:22px;font-weight:600;margin-bottom:6px}
+.whero p{font-size:13.5px;color:var(--tx2);line-height:1.55;max-width:820px}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.wcard{padding:16px 18px;display:flex;flex-direction:column}
+.wcard h3{font-family:var(--serif);font-size:15.5px;font-weight:600;margin-bottom:6px}
+.wcard p,.wcard li{font-size:13px;color:var(--tx2);line-height:1.5}
+.wcard ul{padding-left:18px;margin:6px 0 10px}
+.wcard li b{color:var(--tx);font-weight:600}
+.wcard .wgo{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;padding-top:8px}
 
 @media(max-width:820px){
   .sidebar{position:fixed;z-index:60;margin-left:calc(-1 * var(--sb-w));box-shadow:var(--shadow-lg)}
@@ -457,6 +522,7 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
     <input id="set-q" placeholder="e.g. Q2 2026">
     <label>Quarter start date (week 1)</label>
     <input id="set-start" type="date">
+    <div id="set-accounts"></div>
     <div class="acts">
       <button class="btn" onclick="closeModal('modal-settings')">Cancel</button>
       <button class="btn pri" onclick="saveSettings()">Save</button>
@@ -475,6 +541,31 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
     <div class="acts">
       <button class="btn" onclick="closeModal('modal-newq')">Cancel</button>
       <button class="btn pri" onclick="createQuarter()">Create quarter</button>
+    </div>
+  </div>
+</div>
+<!-- Who are you modal -->
+<div class="overlay" id="modal-who">
+  <div class="modal" style="max-width:520px">
+    <h3>Who are you?</h3>
+    <p id="who-sub" style="font-size:13px;color:var(--tx2);margin-bottom:14px"></p>
+    <div id="who-list" class="wholist"></div>
+    <label style="margin-top:14px">Not on the list? Type your name</label>
+    <input id="who-other" placeholder="First name, as used on the rocks" onkeydown="if(event.key==='Enter')pickWhoOther()">
+    <div class="acts">
+      <button class="btn" onclick="skipWho()">Skip for now</button>
+      <button class="btn pri" onclick="pickWhoOther()">Save</button>
+    </div>
+  </div>
+</div>
+<!-- Long text modal -->
+<div class="overlay" id="modal-text">
+  <div class="modal" style="max-width:680px">
+    <h3 id="tx-title">Comments</h3>
+    <textarea id="tx-val" placeholder="Write as much as you need…"></textarea>
+    <div class="acts">
+      <button class="btn" onclick="_txtCb=null;closeModal('modal-text')">Cancel</button>
+      <button class="btn pri" onclick="saveText()">Save</button>
     </div>
   </div>
 </div>
@@ -543,7 +634,7 @@ function toWB(raw){
   if(!raw||typeof raw!=='object')return null;
   if(raw.quarters&&typeof raw.quarters==='object'&&Object.keys(raw.quarters).length){
     var aq=raw.activeQuarter&&raw.quarters[raw.activeQuarter]?raw.activeQuarter:Object.keys(raw.quarters)[0];
-    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash,todoPeople:raw.todoPeople};
+    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash,todoPeople:raw.todoPeople,portcos:raw.portcos,accounts:raw.accounts};
   }
   if(raw.ns||raw.ideationRocks||raw.buildRocks||raw.talentRocks||raw.opsRocks||raw.ceoRocks){
     var q=raw.quarter||'Q2 2026';var bw=blankWorkbook(q,raw.qStart||'2026-04-03');
@@ -552,7 +643,7 @@ function toWB(raw){
   }
   return null;
 }
-function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[],todoPeople:wb.todoPeople||{}};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
+function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[],todoPeople:wb.todoPeople||{},portcos:wb.portcos||{},accounts:wb.accounts||{}};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
 
 /* ---- Helpers ---- */
 function uid(){return '_'+Math.random().toString(36).substr(2,9);}
@@ -596,7 +687,7 @@ function rockPct(rock){
 }
 function rockWeight(r){var w=parseFloat(r.weight);return (isNaN(w)||w<=0)?1:w;}
 function weightedPct(rocks){var tw=0,acc=0;rocks.forEach(function(r){var w=rockWeight(r);tw+=w;acc+=w*rockPct(r);});return tw?Math.round(acc/tw):0;}
-function completionBar(rocks){var rs=rocks.filter(function(r){return rockStatus(r)!=='Cancelled';});var p=weightedPct(rs);return '<div class="compbar"><span class="comppct">'+p+'%</span><div class="prog"><span style="width:'+p+'%"></span></div><span class="compsub">weighted completion · '+rs.length+' rocks</span></div>';}
+function completionBar(rocks){var np=rocks.filter(isProject).length;var rs=hardRocks(rocks).filter(function(r){return rockStatus(r)!=='Cancelled';});var p=weightedPct(rs);return '<div class="compbar"><span class="comppct">'+p+'%</span><div class="prog"><span style="width:'+p+'%"></span></div><span class="compsub">weighted completion · '+rs.length+' hard rocks'+(np?' · '+np+' project'+(np>1?'s':'')+' not counted':'')+'</span></div>';}
 /* Owner suggestions: collected from every owner ever typed, across all quarters */
 function ownerList(){
   var s={};
@@ -747,7 +838,7 @@ function consumeAuthHash(){var hsh=location.hash||'';if(hsh.indexOf('access_toke
 var _afterSignIn=null;
 function afterSignIn(){renderAuthBadge();if(_afterSignIn){var f=_afterSignIn;_afterSignIn=null;f();}}
 function renderAuthBadge(){var f=document.querySelector('.sb-foot');if(!f)return;var b=$('#sb-user');if(!b){b=document.createElement('div');b.id='sb-user';b.className='sb-user';f.parentNode.insertBefore(b,f.nextSibling);}
-  b.innerHTML=_auth?'<span title="'+esc(authEmail())+'">'+esc(authEmail().split('@')[0])+'</span><a href="#" onclick="signOut();return false">Sign out</a>':'';}
+  b.innerHTML=_auth?'<span title="'+esc(authEmail())+'">'+esc((typeof myName==='function'&&myName())||authEmail().split('@')[0])+'</span><a href="#" onclick="signOut();return false">Sign out</a>':'';}
 
 /* Write WB to the server. Resolves 'ok' | 'conflict' | 'err'.
    With a known server timestamp we PATCH only if the row is unchanged
@@ -853,11 +944,12 @@ function mergeList(local,remote,base,keyFn,combine){
 function mergeById(local,remote,base){return mergeList(local,remote,base,idOf);}
 function mergeFlat(local,remote,base){return mergeList(local,remote,base,idOf);}
 function mergeByKey(local,remote,key,base){return mergeList(local,remote,base,function(it){return it&&it[key]!=null?it[key]:null;});}
-function rockFields(r){var o=Object.assign({},r);delete o.subrocks;delete o.comments;return o;}
+function rockFields(r){var o=Object.assign({},r);delete o.subrocks;delete o.comments;delete o.links;return o;}
 function mergeRock(l,r,b){
   var m=Object.assign({},pick(l,r,b,rockFields));
   m.subrocks=mergeById(l.subrocks||[],r.subrocks||[],b&&b.subrocks);
   m.comments=mergeFlat(l.comments||[],r.comments||[],b&&b.comments);
+  if(l.links||r.links)m.links=mergeFlat(l.links||[],r.links||[],b&&b.links);
   return m;
 }
 var ROCK_KEYS=['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'];
@@ -930,6 +1022,12 @@ function pruneDeleted(wb){
 /* 3-way merge of a small keyed object (e.g. {Molly:{removedFrom:'2026-09-28'}}): per key, ours if we changed it, else theirs. */
 function mergeObj(l,r,b){l=l||{};r=r||{};b=b||{};var o={},keys={};Object.keys(l).concat(Object.keys(r)).forEach(function(k){keys[k]=1;});
   Object.keys(keys).forEach(function(k){var v=(k in l)&&(k in r)?pick(l[k],r[k],b[k]):((k in l)?l[k]:r[k]);if(v!==undefined)o[k]=v;});return o;}
+/* PortCo dashboard info: per PortCo, per field; links/contacts merged item by item. */
+function pcFields(p){var o=Object.assign({},p);delete o.links;delete o.contacts;return o;}
+function mergePortcos(l,r,b){l=l||{};r=r||{};b=b||{};var o={},keys={};Object.keys(l).concat(Object.keys(r)).forEach(function(k){keys[k]=1;});
+  Object.keys(keys).forEach(function(k){var lp=l[k],rp=r[k],bp=b[k];if(!lp||!rp){o[k]=lp||rp;return;}
+    var m=Object.assign({},mergeObj(pcFields(lp),pcFields(rp),bp?pcFields(bp):{}));
+    m.links=mergeFlat(lp.links||[],rp.links||[],bp&&bp.links);m.contacts=mergeFlat(lp.contacts||[],rp.contacts||[],bp&&bp.contacts);o[k]=m;});return o;}
 function mergeWB(local,remote,base){
   base=base||{};
   var out={activeQuarter:local.activeQuarter,_v:DATA_VERSION,
@@ -937,6 +1035,8 @@ function mergeWB(local,remote,base){
     todos:mergeFlat(local.todos||[],remote.todos||[],base.todos),
     deleted:mergeDeleted(local.deleted,remote.deleted),
     todoPeople:mergeObj(local.todoPeople,remote.todoPeople,base.todoPeople),
+    portcos:mergePortcos(local.portcos,remote.portcos,base.portcos),
+    accounts:mergeObj(local.accounts,remote.accounts,base.accounts),
     trash:mergeFlat(local.trash||[],remote.trash||[],base.trash).sort(function(a,b){return (b.at||0)-(a.at||0);}).slice(0,60),
     quarters:{}};
   var bq=base.quarters||{};
@@ -983,6 +1083,7 @@ function pushMergedSave(attempt){
    Navigation + page shells
    ============================================================ */
 var ICONS={
+  home:'<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
   overview:'<path d="M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 14h7v7H3z"/>',
   northstar:'<path d="M12 2l2.4 6.9H22l-6 4.5 2.3 7L12 16l-6.3 4.4L8 13.4 2 8.9h7.6z"/>',
   rocks:'<path d="M2 22 13 3l4 7 5 12z"/><path d="M9.5 13 6 22"/>',
@@ -1001,7 +1102,7 @@ function ic(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 
 var NS_ENABLED=false; /* North Star section retired (data kept, just hidden) */
 var NAV=[
-  {grp:'',items:[{id:'overview',label:'Overview',icon:'overview'}]},
+  {grp:'',items:[{id:'welcome',label:'Welcome',icon:'home'},{id:'overview',label:'Overview',icon:'overview'},{id:'mine',label:'My Items',icon:'user'}]},
   {grp:'Rocks',items:[
     {id:'allrocks',label:'All Rocks',icon:'layers'},
     {id:'ideation',label:'Ideation',icon:'rocks'},
@@ -1030,7 +1131,9 @@ var NAV=[
   ]}
 ];
 var PAGE_META={
+  welcome:['Welcome','Where everything lives in DCG Rocks'],
   overview:['Overview','Quarter at a glance'],
+  mine:['My Items','Your rocks, sub-rocks, to-dos and KPIs in one place'],
   northstar:['North Star Metrics','Leading & lagging indicators — tracked weekly'],
   allrocks:['All Rocks','Every Rock across the studio, ranked by score'],
   ideation:['Ideation Rocks','Discovering the next opportunities'],
@@ -1039,7 +1142,7 @@ var PAGE_META={
   ops:['Operations Rocks','Running the studio efficiently'],
   ceo:['Office CEO Rocks','Leadership priorities'],
   'dash-ind':['By Individual','Workload and completion by owner'],
-  'dash-portco':['By PortCo','Sub-Rocks grouped by portfolio company'],
+  'dash-portco':['By PortCo','One dashboard per portfolio company'],
   allkpis:['All KPIs','Every KPI across the team, grouped by area'],
   scorecard:['KPIs by Person','Quarterly Plan vs Actual, per person'],
   thisweek:['This Week','To-dos and sub-rocks due this week'],
@@ -1065,7 +1168,7 @@ function buildNav(){
 }
 function buildPanels(){
   var c=$('#content');
-  var ids=['overview','northstar','allrocks','ideation','talent','build','ops','ceo','dash-ind','dash-portco','allkpis','scorecard','thisweek','todos','better','blockers','support','trash'];
+  var ids=['welcome','overview','mine','northstar','allrocks','ideation','talent','build','ops','ceo','dash-ind','dash-portco','allkpis','scorecard','thisweek','todos','better','blockers','support','trash'];
   c.innerHTML=ids.map(function(id){return '<section class="panel" id="panel-'+id+'"></section>';}).join('');
 }
 var CUR='overview';
@@ -1107,7 +1210,9 @@ function startColResize(e,t,i){e.preventDefault();e.stopPropagation();var ths=[.
 document.addEventListener('mousemove',function(e){if(!_rz)return;var d=e.clientX-_rz.x;var nw=Math.max(40,_rz.w+d);_rz.ths[_rz.i].style.width=nw+'px';_rz.t.style.width=(_rz.tw+(nw-_rz.w))+'px';});
 document.addEventListener('mouseup',function(){if(!_rz)return;var k=tblKey(_rz.t);_colW[k]={cols:_rz.ths.map(function(th){return Math.round(th.getBoundingClientRect().width);}),total:Math.round(_rz.t.getBoundingClientRect().width)};saveColW();_rz=null;_subArm=false;document.body.classList.remove('col-resizing');});
 function render(id){
-  if(id==='overview')renderOverview();
+  if(id==='welcome')renderWelcome();
+  else if(id==='overview')renderOverview();
+  else if(id==='mine')renderMine();
   else if(id==='northstar')renderNorthStar();
   else if(id==='allrocks')renderAllRocks();
   else if(ROCK_PANELS[id])renderRockPanel(id);
@@ -1123,6 +1228,7 @@ function render(id){
   else if(id==='trash')renderTrash();
   renderOwnerOptions();
   updateBadges();
+  try{renderAuthBadge();}catch(e){}
   try{applyColWidths(document.getElementById('panel-'+id));}catch(e){}
 }
 function rerenderCurrent(){
@@ -1148,6 +1254,15 @@ function updateBadges(){
 /* ============================================================
    Aggregation helpers
    ============================================================ */
+/* Rock type: 'hard' = committed quarterly goal (default, incl. every existing rock); 'project' = assignment that came up during the quarter.
+   Projects behave like rocks everywhere (sub-rocks, reminders, to-dos) but are left out of KPIs and completion stats. */
+function isProject(r){return !!r&&r.kind==='project';}
+function hardRocks(rocks){return rocks.filter(function(r){return !isProject(r);});}
+var _kind=(function(){try{return localStorage.getItem('dc_kind')||'';}catch(e){return '';}})();
+function setKind(v){_kind=v;try{localStorage.setItem('dc_kind',v);}catch(e){}render(CUR);}
+function kindOk(r){return !_kind||(_kind==='project'?isProject(r):!isProject(r));}
+function kindFilterBar(){return '<span class="lbl">Type:</span><button class="btn sm'+(!_kind?' pri':'')+'" onclick="setKind(\'\')">All</button><button class="btn sm'+(_kind==='hard'?' pri':'')+'" onclick="setKind(\'hard\')">Hard rocks</button><button class="btn sm'+(_kind==='project'?' pri':'')+'" onclick="setKind(\'project\')">Projects</button>';}
+function kindChip(r){return isProject(r)?'<span class="kchip kproj" title="Project assignment: not counted in KPIs or completion stats">Project</span>':'<span class="kchip khard" title="Hard rock: committed quarterly goal">Hard rock</span>';}
 function allRocks(){var a=[];ROCK_TYPES.forEach(function(t){getRocks(t).forEach(function(r){a.push({rock:r,type:t});});});return a;}
 function allSubs(){var a=[];ROCK_TYPES.forEach(function(t){getRocks(t).forEach(function(r){(r.subrocks||[]).forEach(function(s){a.push({sub:s,rock:r,type:t});});});});return a;}
 function statusCounts(rocks){
@@ -1171,12 +1286,87 @@ function makeChart(id,cfg){
 }
 
 /* ============================================================
+   WHO IS SIGNED IN — each login linked to a stakeholder name (WB.accounts, shared)
+   Used to open views on your own items and fill in your name. Not a permission system.
+   ============================================================ */
+var ADMINS=['ryamao@downingcap.com'];
+function isAdmin(){return ADMINS.indexOf((authEmail()||'').toLowerCase())>=0;}
+function acctOf(email){return (WB.accounts||{})[(email||'').toLowerCase()]||null;}
+function myName(){var a=acctOf(authEmail());return a&&a.name||'';}
+function isMe(n){var m=myName();return !!m&&!!n&&ownerMatches(n,m);}
+function stakeholderNames(){var out=[];function add(n){n=String(n||'').trim();if(n&&!out.some(function(x){return ownerMatches(x,n);}))out.push(n);}
+  try{todoOwners().forEach(add);}catch(e){}((WB.scorecard&&WB.scorecard.people)||[]).forEach(function(p){if(!scRemoved(p))add(p.name);});return out.sort(function(a,b){return a.localeCompare(b);});}
+function setAccount(email,name){email=(email||'').toLowerCase();if(!email)return;WB.accounts=WB.accounts||{};
+  if(!name){WB.accounts[email]={name:'',at:new Date().toISOString(),by:authEmail()};}else WB.accounts[email]={name:String(name).trim(),at:new Date().toISOString(),by:authEmail()};
+  _todoPerson=null;delete _dashFilter.ind;_twMine=null;save();render(CUR);}
+var _whoEmail='',_whoNames=[];
+function openWho(email){_whoEmail=(email||authEmail()||'').toLowerCase();_whoNames=stakeholderNames();var local=_whoEmail.split('@')[0].replace(/[^a-z]/g,'');var cur=(acctOf(_whoEmail)||{}).name||'';
+  $('#who-sub').textContent=(_whoEmail===(authEmail()||'').toLowerCase()?'Link your login ':'Link ')+'('+_whoEmail+') to a name, so the platform opens on those to-dos, rocks and KPIs and fills in the name on comments and notes.';
+  $('#who-list').innerHTML=_whoNames.map(function(n,i){var g=cur?sameName(n,cur):(n.length>2&&local.indexOf(n.toLowerCase())>=0);return '<button class="btn sm'+(g?' guess':'')+'" onclick="pickWho('+i+')">'+esc(n)+'</button>';}).join('');
+  $('#who-other').value='';openModal('modal-who');}
+function pickWho(i){var n=_whoNames[i];if(!n)return;closeModal('modal-who');setAccount(_whoEmail,n);if(!$('#modal-settings').classList.contains('on'))return;renderAccounts();}
+function pickWhoOther(){var v=$('#who-other').value.trim();if(!v){$('#who-other').focus();return;}closeModal('modal-who');setAccount(_whoEmail,v);if($('#modal-settings').classList.contains('on'))renderAccounts();}
+function skipWho(){closeModal('modal-who');try{sessionStorage.setItem('dc_who_skip','1');}catch(e){}}
+function maybeAskWho(){if(!_auth||myName())return;var sk=null;try{sk=sessionStorage.getItem('dc_who_skip')||localStorage.getItem('dc_who_skip');}catch(e){}if(sk)return;openWho(authEmail());}
+function renderAccounts(){var box=$('#set-accounts');if(!box)return;var me=(authEmail()||'').toLowerCase();var acc=WB.accounts||{};var names=stakeholderNames();
+  var emails=Object.keys(acc).filter(function(e){return isAdmin()||e===me;});if(emails.indexOf(me)<0&&me)emails.unshift(me);emails.sort(function(a,b){return a===me?-1:b===me?1:a.localeCompare(b);});
+  var h='<label>'+(isAdmin()?'Logins &amp; stakeholders':'Your login')+'</label><table class="acctbl">'+emails.map(function(e){var cur=(acc[e]||{}).name||'';var opts=names.slice();if(cur&&!opts.some(function(n){return sameName(n,cur);}))opts.unshift(cur);
+    return '<tr><td>'+esc(e)+'</td><td style="width:48%"><select onchange="setAccount(\''+esc(e)+'\',this.value);renderAccounts()"><option value="">— not linked —</option>'+opts.map(function(n){return '<option'+(sameName(n,cur)?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></td></tr>';}).join('')+'</table>';
+  box.innerHTML=h;}
+function renderMine(){
+  var p=$('#panel-mine');var me=myName();
+  if(!me){p.innerHTML=emptyState('user','Your login isn’t linked to a name yet','Link it once and this page shows your rocks, sub-rocks, to-dos and KPIs.')+'<div style="text-align:center;margin-top:-10px"><button class="btn pri" onclick="openWho()">Link my login</button></div>';return;}
+  var ws=currentWeekStart();
+  var rk=allRocks().filter(function(x){return ownersOf(x.rock).some(isMe);});
+  var sb=allSubs().filter(function(x){return splitOwners(x.sub.owner||x.rock.owner).some(isMe)&&subStatus(x.sub)!=='Cancelled';});
+  var sbH=sb.filter(function(x){return !isProject(x.rock);});var dn=sbH.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pct=sbH.length?Math.round(dn/sbH.length*100):0;
+  var risk=sb.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
+  var dl=[];sb.forEach(function(x){if(subStatus(x.sub)==='Done')return;var d=daysUntil(x.sub.targetDate);if(d!==null&&d<=14)dl.push({x:x,d:d});});dl.sort(function(a,b){return a.d-b.d;});
+  var over=dl.filter(function(o){return o.d<0;}).length;
+  var td=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&todoOwnerList(t).some(isMe);});var tdOpen=td.filter(function(t){var s=todoStatus(t);return s!=='Done'&&s!=='Cancelled';}).length;
+  var h='<div class="card mehead"><span class="avatar">'+esc(initials(me))+'</span><div><h2>'+esc(me)+'</h2><div class="em">'+esc(authEmail())+' · '+esc(WB.activeQuarter||'')+'</div></div><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="openWho()">Not you? Change</button></div>';
+  h+='<div class="kpis">'+kpi('My completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done · hard rocks','prog'+pct)+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('At risk',risk,'sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'sub-rocks past their target',null,over?'amber':'')+'</div>';
+  h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">'+td.length+'</span><span class="spacer"></span><button class="btn sm" onclick="goMyTodos()">Open To-Dos</button></div>'+
+    (td.length?td.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).map(function(t){var others=todoOwnerList(t).filter(function(o){return !isMe(o);});return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(others.length?'<div class="rname">shared with '+esc(others.join(', '))+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos this week.</div>')+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,12).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(o.x.rock.title||'')+(o.x.sub.portco?' · '+esc(o.x.sub.portco):'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div></div>';
+  h+='<div class="sec-head"><h2>My rocks</h2><span class="sub">'+rk.length+'</span></div><div class="card" style="padding:4px 0">'+(rk.length?rk.sort(function(a,b){return SORTORD[rockStatus(a.rock)]-SORTORD[rockStatus(b.rock)];}).map(indRockRow).join(''):'<div class="empty" style="padding:14px">No rocks owned this quarter.</div>')+'</div>';
+  h+='<div class="sec-head"><h2>My sub-rocks</h2><span class="sub">'+sb.length+'</span></div><div class="card" style="padding:4px 0">'+(sb.length?sb.sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).map(indSubRow).join(''):'<div class="empty" style="padding:14px">No sub-rocks this quarter.</div>')+'</div>';
+  ensureScorecard();var qn=activeQNum();var pi=-1;(WB.scorecard.people||[]).some(function(pp,i){if(!scRemoved(pp)&&ownerMatches(pp.name,me)){pi=i;return true;}return false;});
+  h+='<div class="sec-head"><h2>My KPIs</h2><span class="sub">Q'+qn+'</span></div>';
+  if(pi<0)h+='<div class="card"><div class="empty" style="padding:18px">No KPIs set up for '+esc(me)+' on the scorecard.</div></div>';
+  else{var pp=WB.scorecard.people[pi];h+=pp.kpis.length?'<div class="kpicards">'+pp.kpis.map(function(k,ki){return kpiCard(pi,ki,qn,false);}).join('')+'</div>':'<div class="card"><div class="empty" style="padding:18px">No KPIs yet.</div></div>';}
+  p.innerHTML=h;
+}
+function goMyTodos(){var me=myName();var hit=todoOwners(currentWeekStart()).find(function(n){return ownerMatches(n,me);});_todoPerson=hit||'__all';switchTab('todos');}
+
+/* ============================================================
+   WELCOME
+   ============================================================ */
+function wGo(id,label){return '<button class="btn sm" onclick="switchTab(\''+id+'\')">'+label+' →</button>';}
+function renderWelcome(){
+  var h='<div class="card whero"><h2>Welcome to DCG Rocks</h2><p>This is where the studio plans and tracks each quarter: the rocks we commit to, the projects that come up along the way, who owns what, and what is due this week. Everything saves automatically and syncs to the whole team within a few seconds. The indicator in the top right shows <b>Saved</b> when you are up to date. Use the quarter picker at the top of the sidebar to switch quarters.</p></div>';
+  h+='<div class="wgrid">';
+  h+='<div class="card wcard"><h3>Overview</h3><p>The quarter at a glance: % of rocks and sub-rocks completed, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs.</p><p>Completion numbers count <b>hard rocks only</b>.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
+  h+='<div class="card wcard"><h3>Rocks</h3><p>Each rock lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you add a rock, choose its type:</p><ul><li><b>Hard rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Filter any rock page with <b>Type: All · Hard rocks · Projects</b>.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
+  h+='<div class="card wcard"><h3>Inside a rock</h3><p>Click a rock to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the steps, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Week-by-Week</b>: the plan on a 12-week grid.</li><li><b>To-Dos</b>: weekly to-dos linked to this rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
+  h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: each person’s rocks and sub-rocks, with completion and what is at risk.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (hard rocks and projects shown separately), deadlines, this week’s to-dos, status and notes, and links &amp; contacts.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
+  h+='<div class="card wcard"><h3>KPIs</h3><p><b>All KPIs</b> lists every KPI by area. <b>By Person</b> shows each person’s quarterly plan vs actual. The <b>Rocks Completion</b> KPI fills in by itself from the share of that person’s hard-rock sub-rocks that are done; only its target is edited by hand.</p><div class="wgo">'+wGo('allkpis','All KPIs')+wGo('scorecard','By Person')+'</div></div>';
+  h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: everyone’s to-dos for the current week and the sub-rocks due this week. Shared items show under each person.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, reorder them, or import the Excel tracker. A reminder to-do is created automatically when one of your sub-rocks is due this week or next.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('todos','To-Dos')+'</div></div>';
+  h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>1% Better</b>: small improvements.</li><li><b>Blockers</b>: anything stopping a rock.</li><li><b>Support</b>: what the team needs from leadership.</li><li><b>Trash</b>: restore anything deleted recently.</li></ul><div class="wgo">'+wGo('blockers','Blockers')+wGo('trash','Trash')+'</div></div>';
+  h+='<div class="card wcard"><h3>Account &amp; data</h3><p>Sign in with your @downingcap.com email. The first time, you pick your name so your login is linked to you: <b>My Items</b>, To-Dos, This Week and By Individual then open on your own work, and your name fills in on comments. Change the link any time in <b>Settings</b>. Your name and a <b>Sign out</b> link are at the bottom of the sidebar. <b>Export</b> downloads a full backup and <b>Import</b> restores one. <b>Theme</b> switches light and dark mode.</p></div>';
+  h+='</div>';
+  $('#panel-welcome').innerHTML=h;
+}
+
+/* ============================================================
    OVERVIEW
    ============================================================ */
 function renderOverview(){
   var p=$('#panel-overview');
-  var rocks=allRocks().map(function(x){return x.rock;}).filter(function(r){return rockStatus(r)!=='Cancelled';});
-  var subs=allSubs().filter(function(x){return subStatus(x.sub)!=='Cancelled';});
+  var rocks=allRocks().map(function(x){return x.rock;}).filter(function(r){return rockStatus(r)!=='Cancelled'&&!isProject(r);});
+  var allSubsQ=allSubs().filter(function(x){return subStatus(x.sub)!=='Cancelled';});
+  var subs=allSubsQ.filter(function(x){return !isProject(x.rock);});
+  var nProj=allRocks().filter(function(x){return isProject(x.rock);}).length;
   var total=rocks.length;
   var c=statusCounts(rocks);
   var doneRocks=c.Done;
@@ -1189,7 +1379,7 @@ function renderOverview(){
 
   // due-date alerts
   var over=[],soon=[];
-  subs.forEach(function(x){
+  allSubsQ.forEach(function(x){
     if(subStatus(x.sub)==='Done')return;
     var d=daysUntil(x.sub.targetDate);if(d===null)return;
     if(d<0)over.push({x:x,d:d});else if(d<=14)soon.push({x:x,d:d});
@@ -1201,15 +1391,15 @@ function renderOverview(){
 
   var html='';
   html+='<div class="kpis">';
-  html+=kpi('Rocks completed',pctRocks+'%',total+' rocks · '+doneRocks+' completed · '+atRisk+' at risk','prog'+pctRocks);
+  html+=kpi('Rocks completed',pctRocks+'%',total+' hard rocks · '+doneRocks+' completed · '+atRisk+' at risk'+(nProj?' · '+nProj+' projects not counted':''),'prog'+pctRocks);
   html+=kpi('Sub-rock completion',wPct+'%',subDone+' of '+subs.length+' sub-rocks · weighted','prog'+wPct);
   html+=kpi('Needs attention',(atRisk+unplanned),atRisk+' at risk · '+unplanned+' unplanned',null,(atRisk+unplanned)>0?'amber':'');
   html+=kpi('Open requests',(openBlockers+openSupport),openBlockers+' blockers · '+openSupport+' support',null,(openBlockers+openSupport)>0?'amber':'');
   html+='</div>';
 
   html+='<div class="grid3">';
-  html+='<div class="card chartbox"><h3>Sub-Rock progress by category</h3><div class="cv"><canvas id="ov-cat"></canvas></div></div>';
-  html+='<div class="card chartbox"><h3>Overall status</h3><div class="cv"><canvas id="ov-status"></canvas></div></div>';
+  html+='<div class="card chartbox"><h3>Sub-Rock progress by category <span class="kmini">hard rocks</span></h3><div class="cv"><canvas id="ov-cat"></canvas></div></div>';
+  html+='<div class="card chartbox"><h3>Overall status <span class="kmini">hard rocks</span></h3><div class="cv"><canvas id="ov-status"></canvas></div></div>';
   html+='</div>';
 
   // alerts
@@ -1255,7 +1445,7 @@ function drawOverviewCharts(){
   var labels=ROCK_TYPES.map(function(t){return ROCK_LABELS[t].replace(' Rocks','');});
   var done=[],prog=[],rest=[];
   ROCK_TYPES.forEach(function(t){
-    var s=allSubs().filter(function(x){return x.type===t;});
+    var s=allSubs().filter(function(x){return x.type===t&&!isProject(x.rock);});
     done.push(s.filter(function(x){return subStatus(x.sub)==='Done';}).length);
     prog.push(s.filter(function(x){return subStatus(x.sub)==='On Track'||subStatus(x.sub)==='At Risk';}).length);
     rest.push(s.filter(function(x){return subStatus(x.sub)==='Not Started';}).length);
@@ -1266,7 +1456,7 @@ function drawOverviewCharts(){
     {label:'Not started',data:rest,backgroundColor:col.grey,borderRadius:4}
   ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:col.tx}},y:{stacked:true,grid:{color:col.grid},ticks:{color:col.tx,precision:0}}},plugins:{legend:{position:'bottom',labels:{color:col.tx,boxWidth:10,font:{size:11}}}}}});
 
-  var c=statusCounts(allRocks().map(function(x){return x.rock;}));
+  var c=statusCounts(hardRocks(allRocks().map(function(x){return x.rock;})));
   makeChart('ov-status',{type:'doughnut',data:{labels:['On Track','At Risk','Not Started','Done','Unplanned'],datasets:[{data:[c['On Track'],c['At Risk'],c['Not Started'],c.Done,c.Unplanned],backgroundColor:[col.green,col.amber,col.grey,col.blue,col.red],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:col.tx,boxWidth:10,font:{size:11}}}}}});
 
   if(NS_ENABLED&&D.ns.length){
@@ -1327,55 +1517,57 @@ function toggleFilter(tabKey,status){D.activeFilter[tabKey]=D.activeFilter[tabKe
 var _grpBy={};
 function setGrpBy(t,v){_grpBy[t]=v;render(CUR);}
 function renderRockPanel(type){
-  var p=$('#panel-'+type);var rocks=getRocks(type);
+  var p=$('#panel-'+type);var rocksAll=getRocks(type);var rocks=rocksAll.filter(kindOk);
   var counts=statusCounts(rocks);
   var h=statRow(counts,type);
   if(rocks.length)h+=completionBar(rocks);
   var gb=_grpBy[type]||'';
-  if(rocks.length)h+='<div class="filt"><span class="lbl">Group:</span><button class="btn sm'+(!gb?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'\')">None</button><button class="btn sm'+(gb==='portco'?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'portco\')">By PortCo</button></div>';
+  if(rocksAll.length)h+='<div class="filt">'+kindFilterBar()+'<span class="lbl" style="margin-left:12px">Group:</span><button class="btn sm'+(!gb?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'\')">None</button><button class="btn sm'+(gb==='portco'?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'portco\')">By PortCo</button></div>';
   h+='<div class="addform" id="addform-'+type+'"></div>';
   var flt=D.activeFilter[type];
-  var shown=rocks.map(function(r,i){return {r:r,i:i};});
+  var shown=rocksAll.map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r);});
   if(flt)shown=shown.filter(function(o){return rockStatus(o.r)===flt;});
   shown.sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));});
-  if(!rocks.length)h+=emptyState('rocks','No rocks yet','Click “Add Rock” to create your first one for this quarter.');
+  if(!rocksAll.length)h+=emptyState('rocks','No rocks yet','Click “Add Rock” to create your first one for this quarter.');
   else if(!shown.length)h+='<div class="empty">No rocks match this filter.</div>';
   else if(gb==='portco'){
     var groups={};shown.forEach(function(o){var pc=(o.r.portco||'').trim()||'— No PortCo';(groups[pc]=groups[pc]||[]).push(o);});
     var order=PORTCOS.filter(function(pc){return groups[pc];});Object.keys(groups).forEach(function(g){if(order.indexOf(g)<0)order.push(g);});
-    order.forEach(function(pc){h+='<div class="sec-head"><h2>'+esc(pc)+'</h2><span class="sub">'+groups[pc].length+' · '+weightedPct(groups[pc].map(function(o){return o.r;}))+'%</span></div><div class="rocklist">'+groups[pc].map(function(o){return rockCard(type,o.r,o.i);}).join('')+'</div>';});
+    order.forEach(function(pc){h+='<div class="sec-head"><h2>'+esc(pc)+'</h2><span class="sub">'+groups[pc].length+' · '+weightedPct(hardRocks(groups[pc].map(function(o){return o.r;})))+'%</span></div><div class="rocklist">'+groups[pc].map(function(o){return rockCard(type,o.r,o.i);}).join('')+'</div>';});
   }
   else h+='<div class="rocklist">'+shown.map(function(o){return rockCard(type,o.r,o.i);}).join('')+'</div>';
   p.innerHTML=h;
 }
 function renderAllRocks(){
   var p=$('#panel-allrocks');
-  var rocks=allRocks();var counts=statusCounts(rocks.map(function(x){return x.rock;}));
+  var rocksAll0=allRocks();var rocks=rocksAll0.filter(function(x){return kindOk(x.rock);});var counts=statusCounts(rocks.map(function(x){return x.rock;}));
   var h=statRow(counts,'allrocks');
+  if(rocksAll0.length)h+='<div class="filt">'+kindFilterBar()+'</div>';
   if(rocks.length)h+=completionBar(rocks.map(function(x){return x.rock;}));
   var flt=D.activeFilter.allrocks;
   ROCK_TYPES.forEach(function(t){
-    var rs=getRocks(t).map(function(r,i){return {r:r,i:i};});
+    var rs=getRocks(t).map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r);});
     if(flt)rs=rs.filter(function(o){return rockStatus(o.r)===flt;});
     if(!rs.length)return;
     rs.sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));});
     h+='<div class="sec-head"><h2>'+ROCK_LABELS[t]+'</h2><span class="sub">'+rs.length+'</span></div>';
     h+='<div class="rocklist">'+rs.map(function(o){return rockCard(t,o.r,o.i,true);}).join('')+'</div>';
   });
-  if(!rocks.length)h+=emptyState('rocks','No rocks yet','Add rocks under each category to see them here.');
+  if(!rocksAll0.length)h+=emptyState('rocks','No rocks yet','Add rocks under each category to see them here.');else if(!rocks.length)h+='<div class="empty">No rocks match this filter.</div>';
   p.innerHTML=h;
 }
 function rockCard(type,rock,idx,readonly){
   var st=rockStatus(rock);var pct=rockPct(rock);var key=type+'-'+rock.id;
   var open=!readonly&&D.expanded[key];
   var unp=st==='Unplanned';
-  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+'" data-key="'+key+'">';
+  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+(isProject(rock)?' proj':' hard')+'" data-key="'+key+'">';
   h+='<div class="rock-hd" onclick="toggleRock(\''+key+'\',event)">';
   if(!readonly)h+='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
   h+=avatarStack(ownersOf(rock));
   h+='<span class="ttl" '+(readonly?'':'contenteditable onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'title\',this.textContent)"')+' onclick="event.stopPropagation()">'+esc(rock.title||'Untitled rock')+'</span>';
   if(readonly)h+='<span class="owner">'+(rock.owner?esc(rock.owner):'<span style="color:var(--tx3)">unassigned</span>')+'</span>';
   else h+='<input class="ownin ownin-hd" list="owner-options" value="'+esc(rock.owner||'')+'" placeholder="owners (comma-separated)" title="Separate multiple owners with commas" onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'owner\',this.value);rerenderCurrent()">';
+  h+=kindChip(rock);
   if(rock.portco)h+='<span class="tag pctag">'+esc(rock.portco)+'</span>';
   h+='<span class="spacer"></span>';
   h+=(!readonly&&!(rock.subrocks&&rock.subrocks.length))?statusSelectMini('setRockStatus(\''+type+'\',\''+rock.id+'\',this.value)',st,true):chip(st);
@@ -1387,12 +1579,13 @@ function rockCard(type,rock,idx,readonly){
   if(!readonly){
     h+='<div class="rock-bd">';
     h+=rockMeta(type,rock);
-    var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
-    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Sub-Rocks</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Week-by-Week</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button></div>';
+    var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nL=(rock.links||[]).length;var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
+    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Sub-Rocks</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Week-by-Week</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
     h+='<div class="subpane'+(tab==='subs'?' on':'')+'">'+subrocksTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='ms'?' on':'')+'">'+milestonesTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='todos'?' on':'')+'">'+todosTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='comments'?' on':'')+'">'+commentsTab(type,rock)+'</div>';
+    h+='<div class="subpane'+(tab==='links'?' on':'')+'">'+linksTab(type,rock)+'</div>';
     h+='</div>';
   }
   h+='</div>';
@@ -1409,13 +1602,14 @@ function rockMeta(type,rock){
   return '<div class="rmeta">'+
     '<div class="rmeta-w"><label>Weight</label><input type="number" min="0" step="1" value="'+esc(rock.weight||'')+'" placeholder="1" title="How much this rock counts toward overall completion" onchange="rockSetWeight(\''+type+'\',\''+rock.id+'\',this.value)" onclick="event.stopPropagation()"></div>'+
     '<div class="rmeta-w" style="flex:0 0 132px"><label>PortCo</label><select onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'portco\',this.value);rerenderCurrent()">'+portcoOptsRock(rock.portco)+'</select></div>'+
+    '<div class="rmeta-w" style="flex:0 0 132px"><label>Type</label><select onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'kind\',this.value);rerenderCurrent()"><option value="hard"'+(isProject(rock)?'':' selected')+'>Hard rock</option><option value="project"'+(isProject(rock)?' selected':'')+'>Project</option></select></div>'+
     '<div class="rmeta-w" style="flex:0 0 140px"><label>Category</label><select onclick="event.stopPropagation()" onchange="moveRock(\''+type+'\',\''+rock.id+'\',this.value)">'+catOpts(type)+'</select></div>'+
     '<div class="rmeta-d"><label>Description</label><textarea rows="2" placeholder="What is this rock and why does it matter this quarter?" onclick="event.stopPropagation()" onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'desc\',this.value)">'+esc(rock.desc||'')+'</textarea></div>'+
     '</div>';
 }
 function commentsTab(type,rock){
   var cs=(rock.comments||[]).slice().reverse();
-  var h='<div class="cbox"><input id="cmt-who-'+rock.id+'" class="cwho" placeholder="Your name (optional)"><textarea id="cmt-txt-'+rock.id+'" rows="2" placeholder="Add a weekly update or comment…"></textarea><div style="text-align:right;margin-top:8px"><button class="btn sm pri" onclick="addComment(\''+type+'\',\''+rock.id+'\')">Post comment</button></div></div>';
+  var h='<div class="cbox"><input id="cmt-who-'+rock.id+'" class="cwho" placeholder="Your name (optional)" value="'+esc(myName())+'"><textarea id="cmt-txt-'+rock.id+'" rows="2" placeholder="Add a weekly update or comment…"></textarea><div style="text-align:right;margin-top:8px"><button class="btn sm pri" onclick="addComment(\''+type+'\',\''+rock.id+'\')">Post comment</button></div></div>';
   if(!cs.length)h+='<div class="empty" style="padding:22px">No comments yet — log your first weekly update.</div>';
   else h+='<div class="clist">'+cs.map(function(c){
     return '<div class="citem"><div class="chead"><span class="cauthor">'+esc(c.who||'Anonymous')+'</span><span class="cdate">'+esc(c.ts)+'</span><button class="btn-del" onclick="delComment(\''+type+'\',\''+rock.id+'\',\''+c.id+'\')" title="Delete comment">✕</button></div><div class="ctext">'+esc(c.text)+'</div></div>';
@@ -1427,17 +1621,34 @@ function addComment(type,rid){
   var txt=t?t.value.trim():'';if(!txt)return;
   var r=getRocks(type).find(function(x){return x.id===rid;});
   r.comments=r.comments||[];
-  r.comments.push({id:uid(),who:w?w.value.trim():'',text:txt,ts:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})});
+  r.comments.push({id:uid(),who:(w&&w.value.trim())||myName(),text:txt,ts:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})});
   save();rerenderCurrent();
 }
 function delComment(type,rid,cid){var r=getRocks(type).find(function(x){return x.id===rid;});if(r){var c=(r.comments||[]).find(function(x){return x.id===cid;});if(c)trashPush('comment',(c.text||'').slice(0,60),c,{quarter:WB.activeQuarter,rockId:rid});tomb(cid);r.comments=(r.comments||[]).filter(function(c){return c.id!==cid;});save();rerenderCurrent();}}
+
+/* ---- Links tab ---- */
+function normUrl(u){u=String(u||'').trim();if(!u)return '';if(!/^[a-z][a-z0-9+.-]*:/i.test(u))u='https://'+u;return /^(https?:|mailto:)/i.test(u)?u:'';}
+function linkList(links,delFn){if(!links.length)return '<div class="empty" style="padding:18px">No links yet.</div>';
+  return '<div class="card" style="padding:4px 0">'+links.map(function(l){var u=normUrl(l.url);return '<div class="drow"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto;color:var(--tx3)"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><div class="grow"><div>'+(u?'<a class="lnk" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(l.label||u)+'</a>':esc(l.label||l.url))+'</div><div class="rname">'+esc(l.url||'')+'</div></div><button class="btn-del" onclick="'+delFn(l.id)+'" title="Remove link">✕</button></div>';}).join('')+'</div>';}
+function linksTab(type,rock){var ls=rock.links||[];
+  var h='<div class="lnkform"><input id="lnk-l-'+rock.id+'" placeholder="Label, e.g. Board deck"><input id="lnk-u-'+rock.id+'" placeholder="https://…" onkeydown="if(event.key===\'Enter\')addLink(\''+type+'\',\''+rock.id+'\')"><button class="btn sm pri" onclick="addLink(\''+type+'\',\''+rock.id+'\')">Add link</button></div>';
+  return h+linkList(ls,function(id){return 'delLink(\''+type+'\',\''+rock.id+'\',\''+id+'\')';});}
+function addLink(type,rid){var l=$('#lnk-l-'+rid),u=$('#lnk-u-'+rid);var url=u?u.value.trim():'';if(!url){if(u)u.focus();return;}if(!normUrl(url)){alert('Please enter a web address (http/https) or mailto: link.');return;}
+  var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;r.links=r.links||[];r.links.push({id:uid(),label:l?l.value.trim():'',url:url});save();rerenderCurrent();}
+function delLink(type,rid,id){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;tomb(id);r.links=(r.links||[]).filter(function(x){return x.id!==id;});save();rerenderCurrent();}
+
+/* ---- Long-text viewer/editor (sub-rock comments) ---- */
+var _txtCb=null;
+function openText(title,val,cb){$('#tx-title').textContent=title;var t=$('#tx-val');t.value=val||'';_txtCb=cb;openModal('modal-text');setTimeout(function(){t.focus();},30);}
+function saveText(){var v=$('#tx-val').value;var cb=_txtCb;_txtCb=null;closeModal('modal-text');if(cb)cb(v);}
+function editSubComment(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;openText('Comments · '+(s.title||'Sub-rock'),s.comment||'',function(v){var s2=findSub(type,rid,sid);if(!s2)return;s2.comment=v.replace(/\s+$/,'');save();rerenderCurrent();});}
 
 /* ---- Sub-Rocks tab ---- */
 function portcoOpts(v){return '<option value=""'+(!v?' selected':'')+'>—</option>'+PORTCOS.map(function(p){return '<option'+(v===p?' selected':'')+'>'+esc(p)+'</option>';}).join('');}
 function statusOpts(v){return STATUSES.map(function(s){return '<option'+(v===s?' selected':'')+'>'+esc(s)+'</option>';}).join('');}
 function subrocksTab(type,rock){
   var subs=rock.subrocks||[];
-  var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Sub-Rock</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th></th></tr></thead><tbody>';
+  var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Sub-Rock</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th style="min-width:160px">Comments</th><th></th></tr></thead><tbody>';
   subs.forEach(function(s,si){
     var noTgt=!s.targetDate;
     h+='<tr class="subrow"'+(noTgt?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
@@ -1448,6 +1659,7 @@ function subrocksTab(type,rock){
     h+='<td><input type="date" value="'+esc(s.doneDate)+'" onchange="subDone(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',this.value)"></td>';
     var stored=s.doneDate?'Done':(s.status||'Not Started');var pd=stored!=='At Risk'&&subStatus(s)==='At Risk';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(stored)+'</select>'+(pd?'<div class="pastdue" title="Past its target date and not Done, so it counts as At Risk in the rock roll-up and dashboards.">past due · counts as At Risk</div>':'')+'</td>';
+    h+='<td><div class="subcmt'+(s.comment?'':' empty')+'" title="Click to read or edit" onclick="editSubComment(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">'+(s.comment?esc(s.comment):'+ add comment')+'</div></td>';
     h+='<td><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
   });
   h+='</tbody></table></div>';
@@ -1512,14 +1724,15 @@ function showAddRock(type){
   if(CUR!==type)switchTab(type);
   var f=$('#addform-'+type);if(!f)return;
   f.classList.add('on');
-  f.innerHTML='<div class="row"><div><label>Rock title</label><input id="ar-title-'+type+'" placeholder="What\'s the big quarterly goal?"></div><div><label>Owner</label><input id="ar-owner-'+type+'" list="owner-options" placeholder="Who owns it?"></div></div><div class="acts"><button class="btn" onclick="hideAddRock(\''+type+'\')">Cancel</button><button class="btn pri" onclick="addRock(\''+type+'\')">Add Rock</button></div>';
+  f.innerHTML='<div class="row"><div><label>Rock title</label><input id="ar-title-'+type+'" placeholder="What\'s the big quarterly goal?"></div><div><label>Owner</label><input id="ar-owner-'+type+'" list="owner-options" placeholder="Who owns it?"></div></div><div class="arkind"><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="hard" checked><span><b>Hard rock</b><small>A goal we are committing to this quarter. Counts toward KPIs and completion.</small></span></label><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="project"><span><b>Project assignment</b><small>Something that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</small></span></label></div><div class="acts"><button class="btn" onclick="hideAddRock(\''+type+'\')">Cancel</button><button class="btn pri" onclick="addRock(\''+type+'\')">Add Rock</button></div>';
   setTimeout(function(){var t=$('#ar-title-'+type);if(t)t.focus();},30);
 }
 function hideAddRock(type){var f=$('#addform-'+type);if(f){f.classList.remove('on');f.innerHTML='';}}
 function addRock(type){
   var t=$('#ar-title-'+type),o=$('#ar-owner-'+type);
   var title=t?t.value.trim():'';if(!title){if(t)t.focus();return;}
-  D[ROCK_ARR[type]].push({id:uid(),title:title,dim:'',owner:o?o.value.trim():'',dept:'',portco:'',cat:type,score:'',weight:'',desc:'',comments:[],subrocks:[]});
+  var kEl=document.querySelector('input[name="ar-kind-'+type+'"]:checked');var kind=kEl&&kEl.value==='project'?'project':'hard';
+  D[ROCK_ARR[type]].push({id:uid(),title:title,dim:'',owner:o?o.value.trim():'',dept:'',portco:'',cat:type,kind:kind,score:'',weight:'',desc:'',comments:[],links:[],subrocks:[]});
   save();hideAddRock(type);render(type);updateBadges();
 }
 function delRock(type,id,e){
@@ -1557,25 +1770,27 @@ function setRockStatus(type,id,v){var r=getRocks(type).find(function(x){return x
 function renderDashInd(){
   var p=$('#panel-dash-ind');
   var rby={},sby={};
-  allRocks().forEach(function(x){var ows=ownersOf(x.rock);if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(rby[o]=rby[o]||[]).push(x);});});
-  allSubs().forEach(function(x){var ows=ownersOf(x.sub);if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(sby[o]=sby[o]||[]).push(x);});});
+  allRocks().filter(function(x){return kindOk(x.rock);}).forEach(function(x){var ows=ownersOf(x.rock);if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(rby[o]=rby[o]||[]).push(x);});});
+  allSubs().filter(function(x){return kindOk(x.rock);}).forEach(function(x){var ows=ownersOf(x.sub);if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(sby[o]=sby[o]||[]).push(x);});});
   var nm={};Object.keys(rby).forEach(function(n){nm[n]=1;});Object.keys(sby).forEach(function(n){nm[n]=1;});
   var names=Object.keys(nm).sort(function(a,b){return ((rby[b]||[]).length+(sby[b]||[]).length)-((rby[a]||[]).length+(sby[a]||[]).length);});
   _indLast=names.slice();
+  if(!('ind' in _dashFilter)&&myName()){var hitI=names.find(function(n){return ownerMatches(n,myName());});if(hitI)_dashFilter.ind=hitI;}
   var sel=getDashFilter('ind');
-  var h='<div class="filt"><span class="lbl">Filter:</span><select id="filt-ind" onchange="setDashFilter(\'ind\',this.value)"><option value="">All individuals</option>'+
+  var h='<div class="filt">'+kindFilterBar()+'<span class="lbl" style="margin-left:12px">Filter:</span><select id="filt-ind" onchange="setDashFilter(\'ind\',this.value)"><option value="">All individuals</option>'+
     names.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select>'+
     '<span class="lbl" style="margin-left:12px">Sort:</span><button class="btn sm'+(_indSort!=='due'?' pri':'')+'" onclick="setIndSort(\'\')">Status</button><button class="btn sm'+(_indSort==='due'?' pri':'')+'" onclick="setIndSort(\'due\')">Due date</button><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'ind\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'ind\',false)">Collapse all</button></div>';
   if(!names.length){h+=emptyState('user','No owners yet','Assign owners to rocks or sub-rocks to see workload here.');p.innerHTML=h;return;}
   names.filter(function(n){return !sel||sel===n;}).forEach(function(n){
     var rk=rby[n]||[],sb=sby[n]||[];
-    var doneSubs=sb.filter(function(x){return subStatus(x.sub)==='Done';}).length;
-    var pct=sb.length?Math.round(doneSubs/sb.length*100):(rk.length?Math.round(rk.reduce(function(a,x){return a+rockPct(x.rock);},0)/rk.length):0);
+    var sbH=sb.filter(function(x){return !isProject(x.rock);}),rkH=rk.filter(function(x){return !isProject(x.rock);});
+    var doneSubs=sbH.filter(function(x){return subStatus(x.sub)==='Done';}).length;
+    var pct=sbH.length?Math.round(doneSubs/sbH.length*100):(rkH.length?Math.round(rkH.reduce(function(a,x){return a+rockPct(x.rock);},0)/rkH.length):0);
     var atRisk=sb.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
     var key='ind-'+n;var open=D.indCollapsed[key]!==true;var nq=esc(n).replace(/'/g,"\\'");
     h+='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="toggleGrp(\'ind\',\''+nq+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
     h+='<span class="avatar">'+esc(initials(n))+'</span><span class="nm">'+esc(n)+'</span>';
-    h+='<span class="ct">'+rk.length+' rocks · '+sb.length+' sub-rocks · '+pct+'% done'+(atRisk?' · '+atRisk+' at risk':'')+'</span><span class="spacer"></span>';
+    h+='<span class="ct">'+rk.length+' rocks · '+sb.length+' sub-rocks · '+pct+'% done'+(sbH.length<sb.length&&!sbH.length?' (hard rocks)':'')+(atRisk?' · '+atRisk+' at risk':'')+'</span><span class="spacer"></span>';
     h+='<div style="width:120px"><div class="prog"><span style="width:'+pct+'%"></span></div></div></div>';
     h+='<div class="dgrp-bd"><div class="card" style="padding:4px 0">';
     if(_indSort==='due'){
@@ -1595,21 +1810,27 @@ function renderDashInd(){
 /* ============================================================
    DASHBOARD — By PortCo
    ============================================================ */
+var _pcTab=(function(){try{return localStorage.getItem('dc_pctab')||'';}catch(e){return '';}})(),_pcNames=[];
+function setPcTab(i){_pcTab=i<0?'':_pcNames[i];try{localStorage.setItem('dc_pctab',_pcTab);}catch(e){}render(CUR);window.scrollTo(0,0);}
+function pcTabNames(){var n=PORTCOS.slice();allRocks().forEach(function(x){var rp=rockPortco(x.rock);if(rp&&n.indexOf(rp)<0)n.push(rp);(x.rock.subrocks||[]).forEach(function(s){var sp=(s.portco||'').trim();if(sp&&n.indexOf(sp)<0)n.push(sp);});});Object.keys(WB.portcos||{}).forEach(function(k){if(n.indexOf(k)<0)n.push(k);});return n;}
 function renderDashPortco(){
-  var p=$('#panel-dash-portco');
-  var subs=allSubs().filter(function(x){return (x.sub.portco||'').trim();});
+  var p=$('#panel-dash-portco');_pcNames=pcTabNames();
+  if(_pcTab&&_pcNames.indexOf(_pcTab)<0)_pcTab='';
+  var tabs='<div class="pctabs"><button class="'+(!_pcTab?'on':'')+'" onclick="setPcTab(-1)">All PortCos</button>'+_pcNames.map(function(n,i){return '<button class="'+(_pcTab===n?'on':'')+'" onclick="setPcTab('+i+')">'+esc(n)+'</button>';}).join('')+'</div>';
+  if(_pcTab){p.innerHTML=tabs+renderPortcoTab(_pcTab);return;}
+  var subs=allSubs().filter(function(x){return (x.sub.portco||'').trim()&&kindOk(x.rock);});
   var groups={};
   subs.forEach(function(x){(groups[x.sub.portco]=groups[x.sub.portco]||[]).push(x);});
   var order=PORTCOS.filter(function(pc){return groups[pc];});
   Object.keys(groups).forEach(function(g){if(order.indexOf(g)<0)order.push(g);});
   var sel=getDashFilter('portco');
-  var h='<div class="filt"><span class="lbl">Filter:</span><select id="filt-portco" onchange="setDashFilter(\'portco\',this.value)"><option value="">All PortCos</option>'+
+  var h=tabs+'<div class="filt">'+kindFilterBar()+'<span class="lbl" style="margin-left:12px">Filter:</span><select id="filt-portco" onchange="setDashFilter(\'portco\',this.value)"><option value="">All PortCos</option>'+
     order.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'portco\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'portco\',\'rocks\')">Rocks only</button><button class="btn sm" onclick="setAllGrp(\'portco\',false)">Collapse all</button></div>';
   _pcLast=order.map(function(pc){var ids={};groups[pc].forEach(function(x){ids[x.rock.id]=1;});return {pc:pc,ids:Object.keys(ids)};});
   if(!order.length){h+=emptyState('grid','No PortCo sub-rocks yet','Assign a PortCo to sub-rocks to see them grouped here.');p.innerHTML=h;return;}
   order.filter(function(n){return !sel||sel===n;}).forEach(function(pc){
-    var items=groups[pc];var done=items.filter(function(x){return subStatus(x.sub)==='Done';}).length;
-    var pct=Math.round(done/items.length*100);
+    var items=groups[pc];var itH=items.filter(function(x){return !isProject(x.rock);});var done=itH.filter(function(x){return subStatus(x.sub)==='Done';}).length;
+    var pct=itH.length?Math.round(done/itH.length*100):0;
     var rg={},rorder=[];
     items.forEach(function(x){var id=x.rock.id;if(!rg[id]){rg[id]={rock:x.rock,type:x.type,subs:[]};rorder.push(id);}rg[id].subs.push(x);});
     var key='portco-'+pc;var open=D.portcoCollapsed[key]!==true;var pq=esc(pc).replace(/'/g,"\\'");
@@ -1618,7 +1839,7 @@ function renderDashPortco(){
     h+='<div style="width:120px"><div class="prog"><span style="width:'+pct+'%"></span></div></div></div>';
     h+='<div class="dgrp-bd"><div class="card" style="padding:4px 0">';
     rorder.forEach(function(id){var g=rg[id];var ck=pc+'|'+id;var coll=_pcCollapse[ck];
-      h+='<div class="drow pcrock" onclick="pcToggle(\''+pq+'\',\''+id+'\')"><svg class="chev'+(coll?'':' open')+'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><span class="tag">Rock</span><div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
+      h+='<div class="drow pcrock" onclick="pcToggle(\''+pq+'\',\''+id+'\')"><svg class="chev'+(coll?'':' open')+'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'+kindChip(g.rock)+'<div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
       if(!coll)g.subs.sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).forEach(function(x){
         h+='<div class="drow" style="padding-left:34px">'+avatarStack(ownersOf(x.sub))+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+'</div></div>'+chip(subStatus(x.sub))+'</div>';
       });
@@ -1626,6 +1847,62 @@ function renderDashPortco(){
     h+='</div></div></div>';
   });
   p.innerHTML=h;
+}
+/* ---- One PortCo's dashboard ---- */
+function pcRocks(pc){var out=[];allRocks().forEach(function(x){var rp=rockPortco(x.rock);var ss=(x.rock.subrocks||[]).filter(function(s){var sp=(s.portco||'').trim();return sp?sp===pc:rp===pc;});
+  if(rp===pc||ss.length)out.push({rock:x.rock,type:x.type,subs:ss.map(function(s){return {sub:s,rock:x.rock,type:x.type};})});});return out;}
+function pcInfo(pc){return (WB.portcos||{})[pc]||{};}
+function pcIdx(pc){return _pcNames.indexOf(pc);}
+function pcSet(i,k,v){var pc=_pcNames[i];if(!pc)return;WB.portcos=WB.portcos||{};var o=Object.assign({},WB.portcos[pc]||{});if((o[k]||'')===v)return;o[k]=v;o.updatedAt=new Date().toISOString();o.updatedBy=myName()||(authEmail()||'').split('@')[0];WB.portcos[pc]=o;save();if(k==='status')render(CUR);}
+function pcAddItem(i,list){var pc=_pcNames[i];if(!pc)return;var g=function(f){var e=$('#pc-'+list+'-'+f);return e?e.value.trim():'';};var it={id:uid()};
+  if(list==='links'){it.label=g('l');it.url=g('u');if(!it.url)return;if(!normUrl(it.url)){alert('Please enter a web address (http/https) or mailto: link.');return;}}
+  else{it.name=g('n');it.role=g('r');it.email=g('e');it.phone=g('p');if(!it.name&&!it.email)return;}
+  WB.portcos=WB.portcos||{};var o=Object.assign({},WB.portcos[pc]||{});o[list]=(o[list]||[]).concat([it]);o.updatedAt=new Date().toISOString();o.updatedBy=myName()||(authEmail()||'').split('@')[0];WB.portcos[pc]=o;save();render(CUR);}
+function pcDelItem(i,list,id){var pc=_pcNames[i];var o=(WB.portcos||{})[pc];if(!o)return;tomb(id);o[list]=(o[list]||[]).filter(function(x){return x.id!==id;});save();render(CUR);}
+function pcSummary(title,groups,proj){
+  var rocks=groups.map(function(g){return g.rock;}).filter(function(r){return rockStatus(r)!=='Cancelled';});
+  var subs=[];groups.forEach(function(g){g.subs.forEach(function(x){if(subStatus(x.sub)!=='Cancelled')subs.push(x);});});
+  var done=subs.filter(function(x){return subStatus(x.sub)==='Done';}).length;
+  var risk=subs.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
+  var over=0,soon=0;subs.forEach(function(x){if(subStatus(x.sub)==='Done')return;var d=daysUntil(x.sub.targetDate);if(d===null)return;if(d<0)over++;else if(d<=14)soon++;});
+  var ows={};groups.forEach(function(g){ownersOf(g.rock).forEach(function(o){ows[o]=1;});g.subs.forEach(function(x){ownersOf(x.sub).forEach(function(o){ows[o]=1;});});});
+  var wp=weightedPct(rocks);
+  var h='<div class="card pcsum"><h3>'+title+'<span class="spacer" style="flex:1"></span>'+(proj?'<span class="kmini">not counted in KPIs</span>':'')+'</h3>';
+  if(!groups.length)return h+'<div class="empty" style="padding:14px">None this quarter.</div></div>';
+  h+='<div class="pcnums"><div><b>'+rocks.length+'</b><span>'+(proj?'projects':'hard rocks')+'</span></div><div><b>'+wp+'%</b><span>weighted completion</span></div><div><b>'+done+'/'+subs.length+'</b><span>sub-rocks done</span></div>'+
+    '<div class="'+(risk?'warn':'')+'"><b>'+risk+'</b><span>at risk</span></div><div class="'+(over?'bad':'')+'"><b>'+over+'</b><span>overdue</span></div><div><b>'+soon+'</b><span>due in 2 weeks</span></div></div>';
+  h+='<div class="prog" style="margin-top:12px"><span style="width:'+wp+'%"></span></div>';
+  var on=Object.keys(ows).sort();h+='<div class="pcown">'+(on.length?'Owners: '+esc(on.join(', ')):'No owners assigned')+'</div></div>';return h;}
+function pcRockRows(groups){if(!groups.length)return '<div class="empty" style="padding:14px">None.</div>';var h='';
+  groups.forEach(function(g){h+='<div class="drow pcrock"><span class="tag">Rock</span><div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
+    g.subs.slice().sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).forEach(function(x){var d=daysUntil(x.sub.targetDate);var tag='';if(subStatus(x.sub)!=='Done'&&d!==null){if(d<0)tag='<span class="tag over">'+(-d)+'d over</span>';else if(d<=14)tag='<span class="tag soon">in '+d+'d</span>';}
+      h+='<div class="drow" style="padding-left:34px">'+avatarStack(ownersOf(x.sub))+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+(x.sub.comment?' · '+esc(x.sub.comment.length>80?x.sub.comment.slice(0,78)+'…':x.sub.comment):'')+'</div></div>'+tag+chip(subStatus(x.sub))+'</div>';});});return h;}
+var PC_STATUS=[['','— not set —',''],['ok','On track','pcst-ok'],['watch','Watch','pcst-watch'],['concern','Concern','pcst-bad']];
+function renderPortcoTab(pc){
+  var i=pcIdx(pc),info=pcInfo(pc),all=pcRocks(pc);
+  var hard=all.filter(function(g){return !isProject(g.rock);}),proj=all.filter(function(g){return isProject(g.rock);});
+  var st=PC_STATUS.find(function(x){return x[0]===(info.status||'');})||PC_STATUS[0];
+  var h='<div class="card pchead"><h2>'+esc(pc)+'</h2><select class="ministatus '+st[2]+'" onchange="pcSet('+i+',\'status\',this.value)" title="Overall PortCo status (your call, not automatic)">'+PC_STATUS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===(info.status||'')?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select><span class="spacer" style="flex:1"></span><span class="upd">'+esc(WB.activeQuarter||'')+(info.updatedAt?' · notes updated '+esc(new Date(info.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}))+(info.updatedBy?' by '+esc(info.updatedBy):''):'')+'</span></div>';
+  h+='<div class="grid2">'+pcSummary('Hard rocks',hard,false)+pcSummary('Projects',proj,true)+'</div>';
+  // deadlines + this week
+  var dl=[];all.forEach(function(g){g.subs.forEach(function(x){if(subStatus(x.sub)==='Done'||subStatus(x.sub)==='Cancelled')return;var d=daysUntil(x.sub.targetDate);if(d!==null&&d<=14)dl.push({x:x,d:d});});});dl.sort(function(a,b){return a.d-b.d;});
+  var ids={};all.forEach(function(g){ids[g.rock.id]=1;});var ws=currentWeekStart();
+  var tw=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&t.rockId&&ids[t.rockId];});
+  h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,10).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(o.x.sub).join(', ')||'unassigned')+' · '+esc(o.x.rock.title||'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">linked to this PortCo’s rocks · '+tw.length+'</span></div>'+(tw.length?tw.map(function(t){return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div><div class="rname">'+esc(todoOwnerList(t).join(', '))+'</div></div>'+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos linked this week.</div>')+'</div></div>';
+  // notes + links/contacts
+  h+='<div class="grid2" style="margin-top:16px"><div class="card pcbox"><h3>Status &amp; notes</h3>'+
+    '<label>Highlights</label><textarea rows="3" placeholder="Wins, progress, key numbers…" onblur="pcSet('+i+',\'highlights\',this.value)">'+esc(info.highlights||'')+'</textarea>'+
+    '<label>Risks &amp; issues</label><textarea rows="3" placeholder="What could go wrong or is going wrong…" onblur="pcSet('+i+',\'risks\',this.value)">'+esc(info.risks||'')+'</textarea>'+
+    '<label>Asks / next steps</label><textarea rows="3" placeholder="Decisions or help needed, next steps…" onblur="pcSet('+i+',\'asks\',this.value)">'+esc(info.asks||'')+'</textarea></div>';
+  var links=info.links||[],contacts=info.contacts||[];
+  h+='<div class="card pcbox"><h3>Links</h3><div class="lnkform"><input id="pc-links-l" placeholder="Label, e.g. Data room"><input id="pc-links-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')pcAddItem('+i+',\'links\')"><button class="btn sm pri" onclick="pcAddItem('+i+',\'links\')">Add</button></div>'+linkList(links,function(id){return 'pcDelItem('+i+',\'links\',\''+id+'\')';})+
+    '<h3 style="margin-top:18px">Contacts</h3><div class="lnkform"><input id="pc-contacts-n" placeholder="Name"><input id="pc-contacts-r" placeholder="Role"><input id="pc-contacts-e" placeholder="Email"><input id="pc-contacts-p" placeholder="Phone"><button class="btn sm pri" onclick="pcAddItem('+i+',\'contacts\')">Add</button></div>'+
+    (contacts.length?'<div class="card" style="padding:4px 0">'+contacts.map(function(c){return '<div class="drow"><span class="avatar">'+esc(initials(c.name||c.email))+'</span><div class="grow"><div>'+esc(c.name||c.email)+(c.role?' <span class="rname" style="display:inline">· '+esc(c.role)+'</span>':'')+'</div><div class="rname">'+(c.email?'<a class="lnk" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>':'')+(c.email&&c.phone?' · ':'')+esc(c.phone||'')+'</div></div><button class="btn-del" onclick="pcDelItem('+i+',\'contacts\',\''+c.id+'\')" title="Remove contact">✕</button></div>';}).join('')+'</div>':'<div class="empty" style="padding:18px">No contacts yet.</div>')+'</div></div>';
+  // rocks
+  h+='<div class="sec-head"><h2>Hard rocks</h2><span class="sub">'+hard.length+'</span></div><div class="card" style="padding:4px 0">'+pcRockRows(hard)+'</div>';
+  h+='<div class="sec-head"><h2>Projects</h2><span class="sub">'+proj.length+'</span></div><div class="card" style="padding:4px 0">'+pcRockRows(proj)+'</div>';
+  return h;
 }
 var _dashFilter={};var _pcCollapse={};var _indLast=[],_pcLast=[];
 /* Expand/collapse every group on a dashboard. mode: true=all open, false=all closed,
@@ -1752,7 +2029,8 @@ function setTodoWeeksAll(open){
 function personWeeks(owner){var s={};s[currentWeekStart()]=1;todosOf(owner).forEach(function(t){if(t.weekStart)s[t.weekStart]=1;});
   return Object.keys(s).sort().reverse();}
 function allWeeks(){var s={};s[currentWeekStart()]=1;(WB.todos||[]).forEach(function(t){if(t.weekStart)s[t.weekStart]=1;});return Object.keys(s).sort().reverse();}
-function setTodoPerson(n){_todoPerson=n;render(CUR);}
+var _todoAutoWait=false;
+function setTodoPerson(n){_todoPerson=n;_todoAutoWait=false;render(CUR);}
 function setTodoAllWeek(w){_todoAllWeek=w;render(CUR);}
 function stepTodoAllWeek(dir){var ws=allWeeks().slice().reverse();var i=ws.indexOf(_todoAllWeek);if(i<0)i=ws.indexOf(currentWeekStart());i=Math.max(0,Math.min(ws.length-1,i+dir));_todoAllWeek=ws[i];render(CUR);}
 function addTodoWeek(owner,week,e){if(e)e.stopPropagation();WB.todos=WB.todos||[];WB.todos.push({id:uid(),owner:owner,weekStart:week,desc:'',status:'To Do',time:'',notes:'',rockId:''});
@@ -1862,7 +2140,7 @@ function todoWeekBlock(key,title,sub,items,owner,week,showCarry){
   h+='</div></div></div>';return h;}
 function renderTodos(){
   ensureTodos();ensureDueTodosVisible();var p=$('#panel-todos');var names=todoOwners(currentWeekStart());
-  if(_todoPerson===null)_todoPerson='__all';
+  if(_todoPerson===null||(_todoAutoWait&&myName())){var hitMe=myName()&&names.find(function(n){return ownerMatches(n,myName());});_todoPerson=hitMe||'__all';_todoAutoWait=!myName();}
   if(_todoPerson!=='__all'&&!names.some(function(n){return sameName(n,_todoPerson);}))_todoPerson='__all';
   var h='<datalist id="todo-time-opts">'+TODO_TIME_OPTS.map(function(o){return '<option value="'+o+'"></option>';}).join('')+'</datalist>';
   h+='<div class="filt todo-tabs"><button class="btn sm'+(_todoPerson==='__all'?' pri':'')+'" onclick="setTodoPerson(\'__all\')">Everyone</button>'+
@@ -1930,25 +2208,34 @@ function importTrackerFile(file){
       save();render(CUR);updateBadges();setSync('load','Saving '+add.length+' to-dos…');});
   }).catch(function(e){alert('Import failed: '+(e&&e.message?e.message:e));});
 }
+/* Shared to-dos / sub-rocks ("Renata, Ygor") are listed under each person, never as a combined name. */
+function canonPerson(o){var hit=todoAllOwners().find(function(n){return sameName(n,o);});return hit||o;}
+function personSort(a,b){if(a==='Unassigned')return 1;if(b==='Unassigned')return -1;return a.localeCompare(b);}
+var _twMine=null;
 function renderThisWeek(){
   ensureTodos();var p=$('#panel-thisweek');var ws=currentWeekStart();
   var wsD=new Date(ws+'T00:00:00');var weD=new Date(wsD);weD.setDate(wsD.getDate()+7);
   var items=(WB.todos||[]).filter(function(t){return t.weekStart===ws;});
-  var dueSubs=[];allRocksAllQuarters().forEach(function(x){(x.rock.subrocks||[]).forEach(function(s){if(s.targetDate){var d=new Date(s.targetDate+'T00:00:00');if(!isNaN(d)&&d>=wsD&&d<weD&&subStatus(s)!=='Done')dueSubs.push({s:s,rock:x.rock,q:x.q});}});});
-  var by={};items.forEach(function(t){(by[t.owner||'Unassigned']=by[t.owner||'Unassigned']||[]).push(t);});
-  var people=Object.keys(by);
-  var h='<div class="filt"><span class="tag">'+esc(weekLabel(ws))+'</span><span class="lbl">— current week</span></div>';
-  if(!people.length&&!dueSubs.length){h+=emptyState('spark','Nothing scheduled this week','Add to-dos in the To-Dos tab, or set sub-rock due dates.');p.innerHTML=h;return;}
+  var by={};items.forEach(function(t){var seen={};todoOwnerList(t).forEach(function(o){var n=o==='Unassigned'?o:canonPerson(o);if(seen[n.toLowerCase()])return;seen[n.toLowerCase()]=1;if(n!=='Unassigned'&&!todoActiveIn(n,ws))return;(by[n]=by[n]||[]).push(t);});});
+  var dueBy={},nDue=0;allRocksAllQuarters().forEach(function(x){(x.rock.subrocks||[]).forEach(function(s){if(!s.targetDate)return;var d=new Date(s.targetDate+'T00:00:00');if(isNaN(d)||d<wsD||d>=weD||subStatus(s)==='Done'||subStatus(s)==='Cancelled')return;nDue++;
+    var ows=splitOwners(s.owner||x.rock.owner);if(!ows.length)ows=['Unassigned'];var seen={};ows.forEach(function(o){var n=o==='Unassigned'?o:canonPerson(o);if(seen[n.toLowerCase()])return;seen[n.toLowerCase()]=1;if(n!=='Unassigned'&&!todoActiveIn(n,ws))return;(dueBy[n]=dueBy[n]||[]).push({s:s,rock:x.rock,q:x.q});});});});
+  var mine=_twMine===null?!!myName():_twMine;if(!myName())mine=false;
+  if(mine){Object.keys(by).forEach(function(n){if(!isMe(n))delete by[n];});Object.keys(dueBy).forEach(function(n){if(!isMe(n))delete dueBy[n];});nDue=Object.keys(dueBy).reduce(function(a,n){return a+dueBy[n].length;},0);}
+  var people=Object.keys(by).sort(personSort);
+  var h='<div class="filt"><span class="tag">'+esc(weekLabel(ws))+'</span><span class="lbl">— current week · shared items appear under each person</span>'+(myName()?'<span class="spacer" style="flex:1"></span><button class="btn sm'+(mine?' pri':'')+'" onclick="_twMine=true;render(CUR)">Me</button><button class="btn sm'+(!mine?' pri':'')+'" onclick="_twMine=false;render(CUR)">Everyone</button>':'')+'</div>';
+  if(!people.length&&!nDue){h+=emptyState('spark','Nothing scheduled this week','Add to-dos in the To-Dos tab, or set sub-rock due dates.');p.innerHTML=h;return;}
   people.forEach(function(n){
     h+='<div class="sec-head"><h2>'+esc(n)+'</h2><span class="sub">'+by[n].length+' to-dos</span></div><div class="card" style="padding:4px 0">';
     by[n].slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).forEach(function(t){
-      h+='<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(t.notes?'<div class="rname">'+esc(t.notes)+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';
+      var others=todoOwnerList(t).filter(function(o){return !sameName(o,n);});
+      h+='<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+((t.notes||others.length)?'<div class="rname">'+(others.length?'shared with '+esc(others.join(', '))+(t.notes?' · ':''):'')+esc(t.notes||'')+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';
     });
     h+='</div>';
   });
-  if(dueSubs.length){
-    h+='<div class="sec-head"><h2>Sub-rocks due this week</h2><span class="sub">'+dueSubs.length+'</span></div><div class="card" style="padding:4px 0">';
-    dueSubs.forEach(function(x){h+='<div class="drow"><span class="avatar">'+esc(initials(x.s.owner))+'</span><div class="grow"><div>'+esc(x.s.title||'(untitled)')+'</div><div class="rname">'+esc(x.rock.title||'')+' · '+esc(x.q)+(x.s.portco?' · '+esc(x.s.portco):'')+'</div></div><span class="tag soon">due '+esc(fmtDate(x.s.targetDate))+'</span>'+chip(subStatus(x.s))+'</div>';});
+  var dp=Object.keys(dueBy).sort(personSort);
+  if(dp.length){
+    h+='<div class="sec-head"><h2>Sub-rocks due this week</h2><span class="sub">'+nDue+'</span></div><div class="card" style="padding:4px 0">';
+    dp.forEach(function(n){dueBy[n].forEach(function(x){h+='<div class="drow"><span class="avatar" title="'+esc(n)+'">'+esc(initials(n==='Unassigned'?'':n))+'</span><div class="grow"><div>'+esc(x.s.title||'(untitled)')+'</div><div class="rname">'+esc(n)+' · '+esc(x.rock.title||'')+' · '+esc(x.q)+(x.s.portco?' · '+esc(x.s.portco):'')+'</div></div><span class="tag soon">due '+esc(fmtDate(x.s.targetDate))+'</span>'+chip(subStatus(x.s))+'</div>';});});
     h+='</div>';
   }
   p.innerHTML=h;
@@ -2002,7 +2289,7 @@ function kpiPerson(k){var pp=null;((WB.scorecard&&WB.scorecard.people)||[]).some
 function quarterYear(){var m=/(\d{4})/.exec(WB.activeQuarter||'');return m?+m[1]:new Date().getFullYear();}
 function quarterLabelFor(qn,year){var want=qOrd('Q'+qn+' '+year);var hit=null;Object.keys(WB.quarters||{}).forEach(function(k){if(qOrd(k)===want)hit=k;});return hit;}
 function personSubsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
-  quarterRockList(q).forEach(function(r){(r.subrocks||[]).forEach(function(s){if((s.status||'')==='Cancelled')return;if(splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);}))out.push(s);});});return out;}
+  quarterRockList(q).forEach(function(r){if(isProject(r))return;(r.subrocks||[]).forEach(function(s){if((s.status||'')==='Cancelled')return;if(splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);}))out.push(s);});});return out;}
 function doneBy(s,iso){if(s.doneDate)return s.doneDate<=iso;return (s.status||'')==='Done'&&iso>=isoDate(new Date());}
 function autoRocks(k){if(!isAutoRocksKpi(k))return null;var pp=kpiPerson(k);if(!pp)return null;
   var year=quarterYear(),today=isoDate(new Date()),monthly=[];
@@ -2344,7 +2631,7 @@ function importData(file){
 /* ---- Modals / settings / theme ---- */
 function openModal(id){$('#'+id).classList.add('on');}
 function closeModal(id){$('#'+id).classList.remove('on');}
-function openSettings(){$('#set-q').value=D.quarter||WB.activeQuarter||'';$('#set-start').value=D.qStart||'';openModal('modal-settings');}
+function openSettings(){$('#set-q').value=D.quarter||WB.activeQuarter||'';$('#set-start').value=D.qStart||'';renderAccounts();openModal('modal-settings');}
 function saveSettings(){
   var newName=$('#set-q').value.trim();var newStart=$('#set-start').value;var old=WB.activeQuarter;
   if(newName&&newName!==old&&!WB.quarters[newName]){
@@ -2490,7 +2777,7 @@ function boot(){
       renderQuarterSel();render(CUR);setSync('ok');
     });
   },4000);
-  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');}});
+  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');}});
 
   // load local cache first (migrates legacy single-workbook format into a quarter)
   var localWB=null;
@@ -2502,7 +2789,8 @@ function boot(){
   if(!D)seed();
   _booted=true;
   renderQuarterSel();
-  switchTab('overview');
+  var _seenW=null;try{_seenW=localStorage.getItem('dc_welcomed');localStorage.setItem('dc_welcomed','1');}catch(e){}
+  switchTab(_seenW?'overview':'welcome');
 
   // remote (source of truth) — only once signed in
   var hashType=consumeAuthHash();
@@ -2527,6 +2815,7 @@ function boot(){
     var bAdded=importBuildRocksQ2();                                 // one-time append of Build Q2 rocks from ClickUp
     ensureTodos();var tAdded=importTodos();if(res.ok&&ensureDueTodos(currentWeekStart())+ensureDueTodos(addDaysIso(currentWeekStart(),7)))tAdded=true;                          // one-time append of weekly to-dos
     renderQuarterSel();render(CUR);
+    if(res.ok)setTimeout(maybeAskWho,300);
     if((scAdded||bAdded||tAdded||needPush)&&res.ok&&res.data)save();  // persist imported / recovered data once
   });
  }
