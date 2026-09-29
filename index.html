@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quarterly Rocks Workbook · Downing Capital</title>
+<title>DCG Operating System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
@@ -282,6 +282,24 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .dot.pre{border-color:var(--green)}
 .dot.tgt{border-color:var(--red);border-style:dashed}
 .dot.nowcol{box-shadow:0 0 0 3px var(--blue-bg)}
+.tl{padding:6px 0 0}
+.tlrow{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bdr);min-height:44px}
+.tlrow:last-child{border-bottom:none}
+.tlhead{min-height:26px;border-bottom:1px solid var(--bdr)}
+.tlname{flex:0 0 240px;font-size:12.5px;padding:6px 0;min-width:0}
+.tlname>div:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tltrack{flex:1;position:relative;height:44px}
+.tlhead .tltrack{height:26px}
+.tllab{position:absolute;top:6px;font-family:var(--mono);font-size:10px;color:var(--tx3);padding-left:3px}
+.tlnowlab{position:absolute;top:-2px;transform:translateX(-50%);font-size:9.5px;font-family:var(--mono);color:var(--blue);font-weight:700;background:var(--surf);padding:0 3px}
+.tlw{position:absolute;top:0;bottom:0;border-left:1px dashed var(--bdr)}
+.tlnow{position:absolute;top:0;bottom:0;border-left:2px solid var(--blue);opacity:.7}
+.tlmark{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--bdr2);background:var(--surf);z-index:2}
+.tl-ok{border-color:var(--blue)}.tl-risk{border-color:var(--amber)}.tl-ns{border-color:var(--bdr2)}.tl-done{border-color:var(--green)}
+.tl-fill{background:var(--green)}.tl-tgt{opacity:.45}
+.tlslip{position:absolute;top:50%;height:4px;transform:translateY(-50%);background:var(--red);opacity:.55;border-radius:2px;z-index:1}
+.tlnone{position:absolute;top:50%;left:6px;transform:translateY(-50%);font-size:11px;color:var(--red);font-family:var(--mono)}
+@media(max-width:820px){.tlname{flex-basis:130px}}
 
 /* filters */
 .filt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
@@ -508,7 +526,7 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
       <div class="sync" id="sync"><span class="dot"></span><span id="sync-txt">Saved</span></div>
     </header>
     <main class="content" id="content"><!--PANELS--></main>
-    <footer class="appfoot"><span class="fdot"></span>Downing Capital Group · Quarterly Operating System</footer>
+    <footer class="appfoot"><span class="fdot"></span>Downing Capital Group · DCG Operating System</footer>
   </div>
 </div>
 
@@ -1131,15 +1149,15 @@ var NAV=[
   ]}
 ];
 var PAGE_META={
-  welcome:['Welcome','Where everything lives in DCG Rocks'],
+  welcome:['Welcome','Where everything lives in the DCG Operating System'],
   overview:['Overview','Quarter at a glance'],
   mine:['My Items','Your rocks, sub-rocks, to-dos and KPIs in one place'],
   northstar:['North Star Metrics','Leading & lagging indicators — tracked weekly'],
-  allrocks:['All Rocks','Every Rock across the studio, ranked by score'],
+  allrocks:['All Rocks','Every Rock across DCG, ranked by score'],
   ideation:['Ideation Rocks','Discovering the next opportunities'],
   talent:['Talent Rocks','Building the team and culture'],
   build:['Build Rocks','Shipping product and capability'],
-  ops:['Operations Rocks','Running the studio efficiently'],
+  ops:['Operations Rocks','Running DCG efficiently'],
   ceo:['Office CEO Rocks','Leadership priorities'],
   'dash-ind':['By Individual','Workload and completion by owner'],
   'dash-portco':['By PortCo','One dashboard per portfolio company'],
@@ -1320,16 +1338,22 @@ function renderMine(){
   var rk=allRocks().filter(function(x){return ownersOf(x.rock).some(isMe);});
   var sb=allSubs().filter(function(x){return splitOwners(x.sub.owner||x.rock.owner).some(isMe)&&subStatus(x.sub)!=='Cancelled';});
   var sbH=sb.filter(function(x){return !isProject(x.rock);});var dn=sbH.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pct=sbH.length?Math.round(dn/sbH.length*100):0;
-  var risk=sb.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
+  var risk=sbH.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
+  var sbP=sb.filter(function(x){return isProject(x.rock);});var dnP=sbP.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pctP=sbP.length?Math.round(dnP/sbP.length*100):0;
+  var riskP=sbP.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
+  var prjIds={};sbP.forEach(function(x){prjIds[x.rock.id]=1;});rk.forEach(function(x){if(isProject(x.rock))prjIds[x.rock.id]=1;});var nPrj=Object.keys(prjIds).length;
   var dl=[];sb.forEach(function(x){if(subStatus(x.sub)==='Done')return;var d=daysUntil(x.sub.targetDate);if(d!==null&&d<=14)dl.push({x:x,d:d});});dl.sort(function(a,b){return a.d-b.d;});
-  var over=dl.filter(function(o){return o.d<0;}).length;
+  var over=dl.filter(function(o){return o.d<0&&!isProject(o.x.rock);}).length;var overP=dl.filter(function(o){return o.d<0&&isProject(o.x.rock);}).length;
   var td=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&todoOwnerList(t).some(isMe);});var tdOpen=td.filter(function(t){var s=todoStatus(t);return s!=='Done'&&s!=='Cancelled';}).length;
   var h='<div class="card mehead"><span class="avatar">'+esc(initials(me))+'</span><div><h2>'+esc(me)+'</h2><div class="em">'+esc(authEmail())+' · '+esc(WB.activeQuarter||'')+'</div></div><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="openWho()">Not you? Change</button></div>';
-  h+='<div class="kpis">'+kpi('My completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done · hard rocks','prog'+pct)+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('At risk',risk,'sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'sub-rocks past their target',null,over?'amber':'')+'</div>';
+  h+='<div class="sec-head" style="margin-top:4px"><h2>Hard rocks</h2><span class="sub">count toward KPIs</span></div>';
+  h+='<div class="kpis">'+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('Hard-rock completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done','prog'+pct)+kpi('At risk',risk,'hard-rock sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'hard-rock sub-rocks past their target',null,over?'amber':'')+'</div>';
+  h+='<div class="sec-head" style="margin-top:4px"><h2>Projects</h2><span class="sub">not counted in KPIs</span></div>';
+  h+=nPrj?'<div class="kpis">'+kpi('Projects',nPrj,'projects you own or have sub-rocks in')+kpi('Project completion',pctP+'%',dnP+' of '+sbP.length+' sub-rocks done','prog'+pctP)+kpi('At risk',riskP,'project sub-rocks at risk',null,riskP?'amber':'')+kpi('Overdue',overP,'project sub-rocks past their target',null,overP?'amber':'')+'</div>':'<div class="card" style="margin-bottom:20px"><div class="empty" style="padding:16px">No projects this quarter.</div></div>';
   h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">'+td.length+'</span><span class="spacer"></span><button class="btn sm" onclick="goMyTodos()">Open To-Dos</button></div>'+
     (td.length?td.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).map(function(t){var others=todoOwnerList(t).filter(function(o){return !isMe(o);});return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(others.length?'<div class="rname">shared with '+esc(others.join(', '))+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos this week.</div>')+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,12).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(o.x.rock.title||'')+(o.x.sub.portco?' · '+esc(o.x.sub.portco):'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div></div>';
-  h+='<div class="sec-head"><h2>My rocks</h2><span class="sub">'+rk.length+'</span></div><div class="card" style="padding:4px 0">'+(rk.length?rk.sort(function(a,b){return SORTORD[rockStatus(a.rock)]-SORTORD[rockStatus(b.rock)];}).map(indRockRow).join(''):'<div class="empty" style="padding:14px">No rocks owned this quarter.</div>')+'</div>';
+  h+='<div class="sec-head"><h2>My rocks</h2><span class="sub">'+rk.length+'</span></div><div class="card" style="padding:4px 0">'+(rk.length?rk.sort(function(a,b){return SORTORD[rockStatus(a.rock)]-SORTORD[rockStatus(b.rock)];}).map(function(x){return indRockRow(x).replace('<span class="tag">Rock</span>',kindChip(x.rock));}).join(''):'<div class="empty" style="padding:14px">No rocks owned this quarter.</div>')+'</div>';
   h+='<div class="sec-head"><h2>My sub-rocks</h2><span class="sub">'+sb.length+'</span></div><div class="card" style="padding:4px 0">'+(sb.length?sb.sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).map(indSubRow).join(''):'<div class="empty" style="padding:14px">No sub-rocks this quarter.</div>')+'</div>';
   ensureScorecard();var qn=activeQNum();var pi=-1;(WB.scorecard.people||[]).some(function(pp,i){if(!scRemoved(pp)&&ownerMatches(pp.name,me)){pi=i;return true;}return false;});
   h+='<div class="sec-head"><h2>My KPIs</h2><span class="sub">Q'+qn+'</span></div>';
@@ -1344,12 +1368,12 @@ function goMyTodos(){var me=myName();var hit=todoOwners(currentWeekStart()).find
    ============================================================ */
 function wGo(id,label){return '<button class="btn sm" onclick="switchTab(\''+id+'\')">'+label+' →</button>';}
 function renderWelcome(){
-  var h='<div class="card whero"><h2>Welcome to DCG Rocks</h2><p>This is where the studio plans and tracks each quarter: the rocks we commit to, the projects that come up along the way, who owns what, and what is due this week. Everything saves automatically and syncs to the whole team within a few seconds. The indicator in the top right shows <b>Saved</b> when you are up to date. Use the quarter picker at the top of the sidebar to switch quarters.</p></div>';
+  var h='<div class="card whero"><h2>Welcome to the DCG Operating System</h2><p>This is where DCG plans and tracks each quarter: the rocks we commit to, the projects that come up along the way, who owns what, and what is due this week. Everything saves automatically and syncs to the whole team within a few seconds. The indicator in the top right shows <b>Saved</b> when you are up to date. Use the quarter picker at the top of the sidebar to switch quarters.</p></div>';
   h+='<div class="wgrid">';
-  h+='<div class="card wcard"><h3>Overview</h3><p>The quarter at a glance: % of rocks and sub-rocks completed, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs.</p><p>Completion numbers count <b>hard rocks only</b>.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
+  h+='<div class="card wcard"><h3>Overview</h3><p>The quarter at a glance: % of rocks and sub-rocks completed, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs.</p><p>Hard rocks and projects each have their own completion numbers.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
   h+='<div class="card wcard"><h3>Rocks</h3><p>Each rock lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you add a rock, choose its type:</p><ul><li><b>Hard rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Filter any rock page with <b>Type: All · Hard rocks · Projects</b>.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
-  h+='<div class="card wcard"><h3>Inside a rock</h3><p>Click a rock to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the steps, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Week-by-Week</b>: the plan on a 12-week grid.</li><li><b>To-Dos</b>: weekly to-dos linked to this rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
-  h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: each person’s rocks and sub-rocks, with completion and what is at risk.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (hard rocks and projects shown separately), deadlines, this week’s to-dos, status and notes, and links &amp; contacts.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
+  h+='<div class="card wcard"><h3>Inside a rock</h3><p>Click a rock to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the steps, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Timeline</b>: every sub-rock’s target date across the quarter, so bunched-up or slipping deadlines stand out.</li><li><b>To-Dos</b>: weekly to-dos linked to this rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
+  h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: each person’s rocks and sub-rocks, with completion and what is at risk.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (hard rocks and projects shown separately), deadlines, this week’s to-dos, links &amp; contacts, and the full rock list.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
   h+='<div class="card wcard"><h3>KPIs</h3><p><b>All KPIs</b> lists every KPI by area. <b>By Person</b> shows each person’s quarterly plan vs actual. The <b>Rocks Completion</b> KPI fills in by itself from the share of that person’s hard-rock sub-rocks that are done; only its target is edited by hand.</p><div class="wgo">'+wGo('allkpis','All KPIs')+wGo('scorecard','By Person')+'</div></div>';
   h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: everyone’s to-dos for the current week and the sub-rocks due this week. Shared items show under each person.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, reorder them, or import the Excel tracker. A reminder to-do is created automatically when one of your sub-rocks is due this week or next.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('todos','To-Dos')+'</div></div>';
   h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>1% Better</b>: small improvements.</li><li><b>Blockers</b>: anything stopping a rock.</li><li><b>Support</b>: what the team needs from leadership.</li><li><b>Trash</b>: restore anything deleted recently.</li></ul><div class="wgo">'+wGo('blockers','Blockers')+wGo('trash','Trash')+'</div></div>';
@@ -1390,12 +1414,14 @@ function renderOverview(){
   var openSupport=D.support.filter(function(s){return s.status!=='Resolved';}).length;
 
   var html='';
+  html+='<div class="sec-head" style="margin-top:0"><h2>Hard rocks</h2><span class="sub">committed goals · count toward KPIs</span></div>';
   html+='<div class="kpis">';
-  html+=kpi('Rocks completed',pctRocks+'%',total+' hard rocks · '+doneRocks+' completed · '+atRisk+' at risk'+(nProj?' · '+nProj+' projects not counted':''),'prog'+pctRocks);
+  html+=kpi('Rocks completed',pctRocks+'%',total+' hard rocks · '+doneRocks+' completed · '+atRisk+' at risk'+(nProj?' · '+nProj+' project'+(nProj>1?'s':'')+' not counted':''),'prog'+pctRocks);
   html+=kpi('Sub-rock completion',wPct+'%',subDone+' of '+subs.length+' sub-rocks · weighted','prog'+wPct);
   html+=kpi('Needs attention',(atRisk+unplanned),atRisk+' at risk · '+unplanned+' unplanned',null,(atRisk+unplanned)>0?'amber':'');
   html+=kpi('Open requests',(openBlockers+openSupport),openBlockers+' blockers · '+openSupport+' support',null,(openBlockers+openSupport)>0?'amber':'');
   html+='</div>';
+  html+=projectStatsRow(allRocks().map(function(x){return x.rock;}).filter(isProject),allSubsQ.filter(function(x){return isProject(x.rock);}),'Projects','not counted in KPIs or the numbers above');
 
   html+='<div class="grid3">';
   html+='<div class="card chartbox"><h3>Sub-Rock progress by category <span class="kmini">hard rocks</span></h3><div class="cv"><canvas id="ov-cat"></canvas></div></div>';
@@ -1425,6 +1451,20 @@ function renderOverview(){
   p.innerHTML=html;
   drawOverviewCharts();
 }
+/* Stat tiles for projects (kept apart from hard-rock numbers). */
+function projectStatsRow(prj,psubs,title,note){
+  var h='<div class="sec-head" style="margin-top:4px"><h2>'+title+'</h2><span class="sub">'+note+'</span></div>';
+  prj=prj.filter(function(r){return rockStatus(r)!=='Cancelled';});psubs=psubs.filter(function(x){return subStatus(x.sub)!=='Cancelled';});
+  if(!prj.length)return h+'<div class="card" style="margin-bottom:20px"><div class="empty" style="padding:16px">No projects this quarter.</div></div>';
+  var c=statusCounts(prj);var tw=0,twd=0;prj.forEach(function(r){var w=rockWeight(r);tw+=w;if(rockStatus(r)==='Done')twd+=w;});var pr=tw?Math.round(twd/tw*100):0;
+  var sd=psubs.filter(function(x){return subStatus(x.sub)==='Done';}).length;var ps=weightedPct(prj);
+  var over=psubs.filter(function(x){if(subStatus(x.sub)==='Done')return false;var d=daysUntil(x.sub.targetDate);return d!==null&&d<0;}).length;
+  var att=c['At Risk']+c.Unplanned;
+  h+='<div class="kpis">'+kpi('Projects completed',pr+'%',prj.length+' project'+(prj.length>1?'s':'')+' · '+c.Done+' completed · '+c['At Risk']+' at risk','prog'+pr)+
+    kpi('Project sub-rocks',ps+'%',sd+' of '+psubs.length+' sub-rocks · weighted','prog'+ps)+
+    kpi('Needs attention',att,c['At Risk']+' at risk · '+c.Unplanned+' unplanned',null,att?'amber':'')+
+    kpi('Overdue',over,'project sub-rocks past their target',null,over?'amber':'')+'</div>';
+  return h;}
 function kpi(lab,big,meta,progId,tone){
   var t=tone==='amber'?'style="color:var(--amber)"':'';
   var h='<div class="kpi"><div class="lab">'+lab+'</div><div class="big" '+t+'>'+big+'</div>';
@@ -1580,7 +1620,7 @@ function rockCard(type,rock,idx,readonly){
     h+='<div class="rock-bd">';
     h+=rockMeta(type,rock);
     var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nL=(rock.links||[]).length;var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
-    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Sub-Rocks</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Week-by-Week</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
+    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Sub-Rocks</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Timeline</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
     h+='<div class="subpane'+(tab==='subs'?' on':'')+'">'+subrocksTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='ms'?' on':'')+'">'+milestonesTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='todos'?' on':'')+'">'+todosTab(type,rock)+'</div>';
@@ -1686,33 +1726,30 @@ function subSet(type,rid,sid,k,v){var s=findSub(type,rid,sid);if(!s)return;s[k]=
 function subDone(type,rid,sid,v){var s=findSub(type,rid,sid);if(!s)return;s.doneDate=v;if(v)s.status='Done';else if(s.status==='Done')s.status='On Track';if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function delSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});var s=(r.subrocks||[]).find(function(x){return x.id===sid;});if(s&&s.todoId){var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(t){t.subId='';t.rockId='';}}if(s)trashPush('sub',s.title,s,{quarter:WB.activeQuarter,rockId:rid});tomb(sid);r.subrocks=r.subrocks.filter(function(x){return x.id!==sid;});save();rerenderCurrent();}
 
-/* ---- Week-by-Week milestones grid ---- */
+/* ---- Timeline (read-only): each sub-rock's target date across the quarter's weeks ---- */
 function milestonesTab(type,rock){
-  var subs=rock.subrocks||[];var wk=weekDates();var now=today0();
-  var nowIdx=-1;wk.forEach(function(d,i){if(d<=now)nowIdx=i;});
-  if(!subs.length)return '<div class="empty">Add sub-rocks first to plan them week by week.</div>';
-  var h='<div class="msgrid"><table class="mstable"><thead><tr><th class="name">Sub-Rock</th>';
-  wk.forEach(function(d,i){h+='<th class="'+(i===nowIdx?'now':'')+'">'+fmtWeek(d)+'</th>';});
-  h+='</tr></thead><tbody>';
-  subs.forEach(function(s){
-    var tgtIdx=-1,doneIdx=-1;
-    wk.forEach(function(d,i){
-      if(s.targetDate){var t=new Date(s.targetDate+'T00:00:00');if(t<=d&&tgtIdx<0)tgtIdx=i;}
-      if(s.doneDate){var dn=new Date(s.doneDate+'T00:00:00');if(dn<=d&&doneIdx<0)doneIdx=i;}
-    });
-    h+='<tr><td class="name" title="'+esc(s.title)+'">'+esc(s.title)+'</td>';
-    wk.forEach(function(d,i){
-      var cls='dot';
-      if(doneIdx>=0&&i===doneIdx)cls+=' done';
-      else if(doneIdx>=0&&i<doneIdx)cls+=' pre';
-      else if(tgtIdx>=0&&i===tgtIdx)cls+=' tgt';
-      if(i===nowIdx)cls+=' nowcol';
-      h+='<td><span class="'+cls+'" title="Click: mark done this week · Shift/right-click: set target" onclick="msClick(\''+type+'\',\''+rock.id+'\',\''+s.id+'\','+i+',event)" oncontextmenu="msTarget(\''+type+'\',\''+rock.id+'\',\''+s.id+'\','+i+',event)"></span></td>';
-    });
-    h+='</tr>';
+  var subs=(rock.subrocks||[]).filter(function(s){return subStatus(s)!=='Cancelled';});var wk=weekDates();
+  /* a quarter is ~13 weeks; extend (up to 16) so today and late target/done dates stay on the chart */
+  var last=today0();subs.forEach(function(s){[s.targetDate,s.doneDate].forEach(function(v){if(v){var d=new Date(v+'T00:00:00');if(!isNaN(d)&&d>last)last=d;}});});
+  while(wk.length<16&&(wk.length<13||new Date(wk[wk.length-1].getTime()+7*86400000)<=last)){var nx=new Date(wk[wk.length-1]);nx.setDate(nx.getDate()+7);wk.push(nx);}
+  if(!subs.length)return '<div class="empty">Add sub-rocks first to see them on the timeline.</div>';
+  var t0=wk[0].getTime(),t1=wk[wk.length-1].getTime()+7*86400000,span=t1-t0;
+  function pos(iso){var d=new Date(iso+'T00:00:00');if(isNaN(d))return null;return Math.max(0,Math.min(100,(d.getTime()-t0)/span*100));}
+  var now=today0().getTime();var nowP=(now>=t0&&now<=t1)?(now-t0)/span*100:null;
+  var grid=wk.map(function(d,i){return '<span class="tlw" style="left:'+(i/wk.length*100)+'%"></span>';}).join('');
+  var h='<div class="tl"><div class="tlrow tlhead"><div class="tlname"></div><div class="tltrack">'+wk.map(function(d,i){return '<span class="tllab" style="left:'+(i/wk.length*100)+'%">'+fmtWeek(d)+'</span>';}).join('')+(nowP!==null?'<span class="tlnowlab" style="left:'+nowP+'%">today</span>':'')+'</div></div>';
+  subs.slice().sort(function(a,b){return (a.targetDate||'9999').localeCompare(b.targetDate||'9999');}).forEach(function(s){
+    var st=subStatus(s);var tp=s.targetDate?pos(s.targetDate):null;var dp=s.doneDate?pos(s.doneDate):null;
+    var cls={'Done':'tl-done','At Risk':'tl-risk','On Track':'tl-ok','Not Started':'tl-ns'}[st]||'tl-ns';
+    var d=daysUntil(s.targetDate);var note=!s.targetDate?'no target date':st==='Done'?'done '+fmtDate(s.doneDate||s.targetDate):d<0?(-d)+'d overdue':'due '+fmtDate(s.targetDate);
+    h+='<div class="tlrow"><div class="tlname" title="'+esc(s.title)+'"><div>'+esc(s.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(s).join(', ')||'unassigned')+' · '+esc(note)+'</div></div><div class="tltrack">'+grid+(nowP!==null?'<span class="tlnow" style="left:'+nowP+'%"></span>':'');
+    if(tp!==null&&st!=='Done'&&nowP!==null&&d<0)h+='<span class="tlslip" style="left:'+tp+'%;width:'+Math.max(0,nowP-tp)+'%"></span>';
+    if(tp!==null)h+='<span class="tlmark '+cls+(st==='Done'?' tl-tgt':'')+'" style="left:'+tp+'%" title="Target '+esc(fmtDate(s.targetDate))+' · '+esc(st)+'"></span>';
+    if(dp!==null)h+='<span class="tlmark tl-done tl-fill" style="left:'+dp+'%" title="Done '+esc(fmtDate(s.doneDate))+'"></span>';
+    if(tp===null&&dp===null)h+='<span class="tlnone">no target date</span>';
+    h+='</div></div>';
   });
-  h+='</tbody></table></div>';
-  h+='<div class="hint" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Green = completed week · dashed red = target deadline · highlighted column = current week. Click a dot to mark done, shift- or right-click to set the target.</div>';
+  h+='</div><div class="hint" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Each marker is a sub-rock’s target date, coloured by status; a filled green dot is when it was done, and a red bar shows how far past due it is. The blue line is today. Change dates in the Sub-Rocks tab.</div>';
   return h;
 }
 function isoOf(i){var d=weekDates()[i];return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -1877,12 +1914,15 @@ function pcRockRows(groups){if(!groups.length)return '<div class="empty" style="
   groups.forEach(function(g){h+='<div class="drow pcrock"><span class="tag">Rock</span><div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
     g.subs.slice().sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).forEach(function(x){var d=daysUntil(x.sub.targetDate);var tag='';if(subStatus(x.sub)!=='Done'&&d!==null){if(d<0)tag='<span class="tag over">'+(-d)+'d over</span>';else if(d<=14)tag='<span class="tag soon">in '+d+'d</span>';}
       h+='<div class="drow" style="padding-left:34px">'+avatarStack(ownersOf(x.sub))+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+(x.sub.comment?' · '+esc(x.sub.comment.length>80?x.sub.comment.slice(0,78)+'…':x.sub.comment):'')+'</div></div>'+tag+chip(subStatus(x.sub))+'</div>';});});return h;}
+var _pcSecOpen={};
+function pcSecToggle(i,k){var key=_pcNames[i]+'|'+k;_pcSecOpen[key]=!_pcSecOpen[key];render(CUR);}
+function pcSection(i,k,title,groups){var open=!!_pcSecOpen[_pcNames[i]+'|'+k];var ns=groups.reduce(function(a,g){return a+g.subs.length;},0);
+  return '<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="pcSecToggle('+i+',\''+k+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><span class="nm">'+title+'</span><span class="ct">'+groups.length+' '+(k==='proj'?'projects':'rocks')+' · '+ns+' sub-rocks</span></div><div class="dgrp-bd"><div class="card" style="padding:4px 0">'+pcRockRows(groups)+'</div></div></div>';}
 var PC_STATUS=[['','— not set —',''],['ok','On track','pcst-ok'],['watch','Watch','pcst-watch'],['concern','Concern','pcst-bad']];
 function renderPortcoTab(pc){
   var i=pcIdx(pc),info=pcInfo(pc),all=pcRocks(pc);
   var hard=all.filter(function(g){return !isProject(g.rock);}),proj=all.filter(function(g){return isProject(g.rock);});
-  var st=PC_STATUS.find(function(x){return x[0]===(info.status||'');})||PC_STATUS[0];
-  var h='<div class="card pchead"><h2>'+esc(pc)+'</h2><select class="ministatus '+st[2]+'" onchange="pcSet('+i+',\'status\',this.value)" title="Overall PortCo status (your call, not automatic)">'+PC_STATUS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===(info.status||'')?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select><span class="spacer" style="flex:1"></span><span class="upd">'+esc(WB.activeQuarter||'')+(info.updatedAt?' · notes updated '+esc(new Date(info.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}))+(info.updatedBy?' by '+esc(info.updatedBy):''):'')+'</span></div>';
+  var h='<div class="card pchead"><h2>'+esc(pc)+'</h2><span class="spacer" style="flex:1"></span><span class="upd">'+esc(WB.activeQuarter||'')+'</span></div>';
   h+='<div class="grid2">'+pcSummary('Hard rocks',hard,false)+pcSummary('Projects',proj,true)+'</div>';
   // deadlines + this week
   var dl=[];all.forEach(function(g){g.subs.forEach(function(x){if(subStatus(x.sub)==='Done'||subStatus(x.sub)==='Cancelled')return;var d=daysUntil(x.sub.targetDate);if(d!==null&&d<=14)dl.push({x:x,d:d});});});dl.sort(function(a,b){return a.d-b.d;});
@@ -1890,18 +1930,14 @@ function renderPortcoTab(pc){
   var tw=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&t.rockId&&ids[t.rockId];});
   h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,10).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(o.x.sub).join(', ')||'unassigned')+' · '+esc(o.x.rock.title||'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">linked to this PortCo’s rocks · '+tw.length+'</span></div>'+(tw.length?tw.map(function(t){return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div><div class="rname">'+esc(todoOwnerList(t).join(', '))+'</div></div>'+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos linked this week.</div>')+'</div></div>';
-  // notes + links/contacts
-  h+='<div class="grid2" style="margin-top:16px"><div class="card pcbox"><h3>Status &amp; notes</h3>'+
-    '<label>Highlights</label><textarea rows="3" placeholder="Wins, progress, key numbers…" onblur="pcSet('+i+',\'highlights\',this.value)">'+esc(info.highlights||'')+'</textarea>'+
-    '<label>Risks &amp; issues</label><textarea rows="3" placeholder="What could go wrong or is going wrong…" onblur="pcSet('+i+',\'risks\',this.value)">'+esc(info.risks||'')+'</textarea>'+
-    '<label>Asks / next steps</label><textarea rows="3" placeholder="Decisions or help needed, next steps…" onblur="pcSet('+i+',\'asks\',this.value)">'+esc(info.asks||'')+'</textarea></div>';
+  // links / contacts
+  h+='<div class="grid2" style="margin-top:16px">';
   var links=info.links||[],contacts=info.contacts||[];
-  h+='<div class="card pcbox"><h3>Links</h3><div class="lnkform"><input id="pc-links-l" placeholder="Label, e.g. Data room"><input id="pc-links-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')pcAddItem('+i+',\'links\')"><button class="btn sm pri" onclick="pcAddItem('+i+',\'links\')">Add</button></div>'+linkList(links,function(id){return 'pcDelItem('+i+',\'links\',\''+id+'\')';})+
-    '<h3 style="margin-top:18px">Contacts</h3><div class="lnkform"><input id="pc-contacts-n" placeholder="Name"><input id="pc-contacts-r" placeholder="Role"><input id="pc-contacts-e" placeholder="Email"><input id="pc-contacts-p" placeholder="Phone"><button class="btn sm pri" onclick="pcAddItem('+i+',\'contacts\')">Add</button></div>'+
+  h+='<div class="card pcbox"><h3>Links</h3><div class="lnkform"><input id="pc-links-l" placeholder="Label, e.g. Data room"><input id="pc-links-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')pcAddItem('+i+',\'links\')"><button class="btn sm pri" onclick="pcAddItem('+i+',\'links\')">Add</button></div>'+linkList(links,function(id){return 'pcDelItem('+i+',\'links\',\''+id+'\')';})+'</div>'+
+    '<div class="card pcbox"><h3>Contacts</h3><div class="lnkform"><input id="pc-contacts-n" placeholder="Name"><input id="pc-contacts-r" placeholder="Role"><input id="pc-contacts-e" placeholder="Email"><input id="pc-contacts-p" placeholder="Phone"><button class="btn sm pri" onclick="pcAddItem('+i+',\'contacts\')">Add</button></div>'+
     (contacts.length?'<div class="card" style="padding:4px 0">'+contacts.map(function(c){return '<div class="drow"><span class="avatar">'+esc(initials(c.name||c.email))+'</span><div class="grow"><div>'+esc(c.name||c.email)+(c.role?' <span class="rname" style="display:inline">· '+esc(c.role)+'</span>':'')+'</div><div class="rname">'+(c.email?'<a class="lnk" href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>':'')+(c.email&&c.phone?' · ':'')+esc(c.phone||'')+'</div></div><button class="btn-del" onclick="pcDelItem('+i+',\'contacts\',\''+c.id+'\')" title="Remove contact">✕</button></div>';}).join('')+'</div>':'<div class="empty" style="padding:18px">No contacts yet.</div>')+'</div></div>';
   // rocks
-  h+='<div class="sec-head"><h2>Hard rocks</h2><span class="sub">'+hard.length+'</span></div><div class="card" style="padding:4px 0">'+pcRockRows(hard)+'</div>';
-  h+='<div class="sec-head"><h2>Projects</h2><span class="sub">'+proj.length+'</span></div><div class="card" style="padding:4px 0">'+pcRockRows(proj)+'</div>';
+  h+='<div style="margin-top:22px">'+pcSection(i,'hard','Hard rocks',hard)+pcSection(i,'proj','Projects',proj)+'</div>';
   return h;
 }
 var _dashFilter={};var _pcCollapse={};var _indLast=[],_pcLast=[];
