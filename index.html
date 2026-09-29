@@ -439,6 +439,11 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .subcmt{font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer;border-radius:6px;padding:3px 6px;border:1px solid transparent}
 .subcmt:hover{border-color:var(--bdr);background:var(--surf)}
 .subcmt.empty{color:var(--tx3)}
+.btn-flag{background:none;border:none;color:var(--tx3);width:24px;height:26px;border-radius:6px;font-size:13px;cursor:pointer}.btn-flag:hover{background:var(--amber-bg);color:var(--amber)}
+.flagtag{display:inline-block;margin-left:6px;font-size:10.5px;font-family:var(--mono);font-weight:600;padding:1px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber-tx);white-space:nowrap;cursor:help}
+.kblk{background:var(--red-bg);color:var(--red)}.kask{background:var(--blue-bg);color:var(--blue-tx)}
+.sb-foot .wide{grid-column:1/-1}
+.tbl th.sortable{cursor:pointer}.tbl th.sortable:hover{color:var(--tx)}.tbl th.sortable.on{color:var(--blue)}.tbl th.sortable.on::after{content:" ↓"}
 .todotbl select.pcauto{color:var(--tx2);font-style:italic}
 #tx-val{width:100%;min-height:240px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px;font-size:13.5px;line-height:1.5;resize:vertical;margin-bottom:14px}
 #tx-val:focus{outline:none;border-color:var(--blue)}
@@ -506,6 +511,7 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
       <button id="theme-btn" title="Toggle theme"><svg id="theme-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Theme</button>
       <button id="export-btn" title="Export data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
       <button id="import-btn" title="Restore from an exported file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Import</button><input type="file" id="import-file" accept=".json,application/json" style="display:none">
+      <button id="trash-btn" class="wide" title="Restore recently deleted items" onclick="switchTab('trash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>Trash</button>
       <button id="settings-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </aside>
@@ -577,6 +583,24 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
     </div>
   </div>
 </div>
+<!-- Blocker / ask modal -->
+<div class="overlay" id="modal-blk">
+  <div class="modal" style="max-width:560px">
+    <h3 id="blk-title">Flag a blocker or ask</h3>
+    <p id="blk-ctx" style="font-size:12.5px;color:var(--tx2);margin-bottom:12px"></p>
+    <label>Type</label>
+    <select id="blk-kind" style="width:100%;margin-bottom:14px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px"><option value="blocker">Blocker: something is stopping this</option><option value="ask">Ask: help, a decision or an intro needed</option></select>
+    <label>What’s the issue?</label>
+    <textarea id="blk-desc" rows="3" style="width:100%;margin-bottom:14px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;font-size:13px"></textarea>
+    <div style="display:flex;gap:10px"><div style="flex:1"><label>Needs (who can unblock)</label><input id="blk-from" list="owner-options"></div><div style="flex:1"><label>Raised by</label><input id="blk-who" list="owner-options"></div></div>
+    <div style="display:flex;gap:10px"><div style="flex:0 0 160px"><label>Status</label><select id="blk-status" style="width:100%;margin-bottom:16px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px"></select></div><div style="flex:1"><label>Notes</label><input id="blk-notes"></div></div>
+    <div class="acts">
+      <button class="btn" id="blk-del" style="margin-right:auto;color:var(--red)" onclick="delBlk()">Delete</button>
+      <button class="btn" onclick="closeModal('modal-blk')">Cancel</button>
+      <button class="btn pri" onclick="saveBlk()">Save</button>
+    </div>
+  </div>
+</div>
 <!-- Long text modal -->
 <div class="overlay" id="modal-text">
   <div class="modal" style="max-width:680px">
@@ -643,6 +667,9 @@ function ensureWB(wb){
   ['ns','ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks','better','blockers','support'].forEach(function(k){if(!Array.isArray(wb[k]))wb[k]=[];});
   ['expanded','srTab','arCollapsed','indCollapsed','portcoCollapsed','activeFilter'].forEach(function(k){if(!wb[k]||typeof wb[k]!=='object')wb[k]={};});
   var seen={};['ideation','talent','build','ops','ceo'].forEach(function(t){var k=t+'Rocks';wb[k]=(wb[k]||[]).filter(function(r){if(!r||!r.id)return true;if(!r.cat)r.cat=t;if(seen[r.id])return false;seen[r.id]=1;return true;});});
+  var bIds={};wb.blockers.forEach(function(b){if(b&&b.id)bIds[b.id]=1;});
+  wb.support.forEach(function(x){if(!x||!x.id||bIds[x.id])return;var st=x.status==='Resolved'?'Resolved':x.status==='In Progress'?'In Progress':'Open';
+    wb.blockers.push({id:x.id,kind:'ask',desc:[x.init,x.desc].filter(Boolean).join(' — '),who:x.by||'',from:x.from||'',status:st,notes:[x.type,x.time].filter(Boolean).join(' · '),rockId:'',subId:'',todoId:'',portco:'',at:''});});
   if(wb.quarter==null)wb.quarter='';return wb;
 }
 function quarterKeys(){return Object.keys(WB.quarters);}
@@ -653,7 +680,7 @@ function toWB(raw){
   if(!raw||typeof raw!=='object')return null;
   if(raw.quarters&&typeof raw.quarters==='object'&&Object.keys(raw.quarters).length){
     var aq=raw.activeQuarter&&raw.quarters[raw.activeQuarter]?raw.activeQuarter:Object.keys(raw.quarters)[0];
-    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash,todoPeople:raw.todoPeople,portcos:raw.portcos,accounts:raw.accounts};
+    return {activeQuarter:aq,quarters:raw.quarters,_v:raw._v,scorecard:raw.scorecard,todos:raw.todos,deleted:raw.deleted,trash:raw.trash,todoPeople:raw.todoPeople,portcos:raw.portcos,accounts:raw.accounts,feedback:raw.feedback};
   }
   if(raw.ns||raw.ideationRocks||raw.buildRocks||raw.talentRocks||raw.opsRocks||raw.ceoRocks){
     var q=raw.quarter||'Q2 2026';var bw=blankWorkbook(q,raw.qStart||'2026-04-03');
@@ -662,7 +689,7 @@ function toWB(raw){
   }
   return null;
 }
-function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[],todoPeople:wb.todoPeople||{},portcos:wb.portcos||{},accounts:wb.accounts||{}};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
+function setWB(wb){if(!wb||!wb.quarters||!Object.keys(wb.quarters).length)return false;WB={activeQuarter:wb.activeQuarter,quarters:wb.quarters,_v:wb._v,scorecard:wb.scorecard,todos:wb.todos,deleted:wb.deleted||[],trash:wb.trash||[],todoPeople:wb.todoPeople||{},portcos:wb.portcos||{},accounts:wb.accounts||{},feedback:wb.feedback||[]};var aq=wb.activeQuarter&&wb.quarters[wb.activeQuarter]?wb.activeQuarter:Object.keys(wb.quarters)[0];setActiveQuarter(aq);return true;}
 
 /* ---- Helpers ---- */
 function uid(){return '_'+Math.random().toString(36).substr(2,9);}
@@ -1031,11 +1058,13 @@ function pruneDeleted(wb){
   Object.keys(wb.quarters||{}).forEach(function(qk){var q=wb.quarters[qk];
     ['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'].forEach(function(k){
       q[k]=(q[k]||[]).filter(function(r){return !del[r.id];});
-      q[k].forEach(function(r){r.subrocks=(r.subrocks||[]).filter(function(s){return !del[s.id];});r.comments=(r.comments||[]).filter(function(c){return !del[c.id];});});
+      q[k].forEach(function(r){r.subrocks=(r.subrocks||[]).filter(function(s){return !del[s.id];});r.comments=(r.comments||[]).filter(function(c){return !del[c.id];});if(r.links)r.links=r.links.filter(function(c){return !del[c.id];});});
     });
     ['better','blockers','support'].forEach(function(k){q[k]=(q[k]||[]).filter(function(x){return !(x.id&&del[x.id]);});});
   });
   wb.todos=(wb.todos||[]).filter(function(t){return !del[t.id];});
+  if(wb.feedback)wb.feedback=wb.feedback.filter(function(f){return !del[f.id];});
+  Object.keys(wb.portcos||{}).forEach(function(k){var pc=wb.portcos[k];if(!pc)return;['links','contacts'].forEach(function(l){if(pc[l])pc[l]=pc[l].filter(function(x){return !del[x.id];});});});
   return wb;
 }
 /* 3-way merge of a small keyed object (e.g. {Molly:{removedFrom:'2026-09-28'}}): per key, ours if we changed it, else theirs. */
@@ -1056,6 +1085,7 @@ function mergeWB(local,remote,base){
     todoPeople:mergeObj(local.todoPeople,remote.todoPeople,base.todoPeople),
     portcos:mergePortcos(local.portcos,remote.portcos,base.portcos),
     accounts:mergeObj(local.accounts,remote.accounts,base.accounts),
+    feedback:mergeFlat(local.feedback||[],remote.feedback||[],base.feedback),
     trash:mergeFlat(local.trash||[],remote.trash||[],base.trash).sort(function(a,b){return (b.at||0)-(a.at||0);}).slice(0,60),
     quarters:{}};
   var bq=base.quarters||{};
@@ -1102,6 +1132,8 @@ function pushMergedSave(attempt){
    Navigation + page shells
    ============================================================ */
 var ICONS={
+  review:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
+  chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   home:'<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
   overview:'<path d="M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 14h7v7H3z"/>',
   northstar:'<path d="M12 2l2.4 6.9H22l-6 4.5 2.3 7L12 16l-6.3 4.4L8 13.4 2 8.9h7.6z"/>',
@@ -1136,6 +1168,7 @@ var NAV=[
   ]},
   {grp:'Weekly',items:[
     {id:'thisweek',label:'This Week',icon:'cal'},
+    {id:'review',label:'Weekly Review',icon:'review'},
     {id:'todos',label:'To-Dos',icon:'todo'}
   ]},
   {grp:'KPIs',items:[
@@ -1143,10 +1176,9 @@ var NAV=[
     {id:'scorecard',label:'By Person',icon:'user'}
   ]},
   {grp:'Operations',items:[
+    {id:'blockers',label:'Blockers & Asks',icon:'block'},
     {id:'better',label:'1% Better',icon:'spark'},
-    {id:'blockers',label:'Blockers',icon:'block'},
-    {id:'support',label:'Support',icon:'hand'},
-    {id:'trash',label:'Trash',icon:'trash'}
+    {id:'feedback',label:'Platform feedback',icon:'chat'}
   ]}
 ];
 var PAGE_META={
@@ -1166,8 +1198,10 @@ var PAGE_META={
   scorecard:['KPIs by Person','Quarterly Plan vs Actual, per person'],
   thisweek:['This Week','To-dos and sub-rocks due this week'],
   todos:['Weekly To-Dos','Each person’s weekly tasks'],
-  better:['1% Better','Small improvements compound to 37x by year end'],
-  blockers:['Blockers','Log anything stopping a Rock'],
+  better:['1% Better','Process improvements: small changes to how we work'],
+  review:['Weekly Review','Everything for the weekly meeting on one page'],
+  feedback:['Platform feedback','Bugs, ideas and requests for this platform'],
+  blockers:['Blockers & Asks','What is stopping work, and what help is needed'],
   support:['Support Needed','What does the team need from leadership?'],
   trash:['Trash','Restore recently deleted items, or clear them for good']
 };
@@ -1187,7 +1221,7 @@ function buildNav(){
 }
 function buildPanels(){
   var c=$('#content');
-  var ids=['welcome','overview','mine','northstar','allrocks','ideation','talent','build','ops','ceo','dash-ind','dash-portco','allkpis','scorecard','thisweek','todos','better','blockers','support','trash'];
+  var ids=['welcome','overview','mine','northstar','allrocks','ideation','talent','build','ops','ceo','dash-ind','dash-portco','allkpis','scorecard','thisweek','review','todos','feedback','better','blockers','support','trash'];
   c.innerHTML=ids.map(function(id){return '<section class="panel" id="panel-'+id+'"></section>';}).join('');
 }
 var CUR='overview';
@@ -1238,6 +1272,8 @@ function render(id){
   else if(id==='dash-ind')renderDashInd();
   else if(id==='dash-portco')renderDashPortco();
   else if(id==='thisweek')renderThisWeek();
+  else if(id==='review')renderReview();
+  else if(id==='feedback')renderFeedback();
   else if(id==='todos')renderTodos();
   else if(id==='allkpis')renderAllKpis();
   else if(id==='scorecard')renderScorecard();
@@ -1261,7 +1297,7 @@ function updateBadges(){
   var counts={};
   ROCK_TYPES.forEach(function(t){counts[t]=getRocks(t).length;});
   counts.allrocks=ROCK_TYPES.reduce(function(a,t){return a+counts[t];},0);
-  counts.better=D.better.length;counts.blockers=D.blockers.filter(function(b){return b.status!=='Resolved';}).length;
+  counts.better=D.better.length;counts.blockers=blkList().filter(blkOpen).length;counts.feedback=fbList().filter(function(f){return f.status==='New';}).length;
   counts.support=D.support.filter(function(s){return s.status!=='Resolved';}).length;
   counts.northstar=D.ns.length;
   $all('[data-badge]').forEach(function(b){
@@ -1357,6 +1393,8 @@ function personView(who,self){
   h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">'+td.length+'</span><span class="spacer"></span><button class="btn sm" onclick="goTodosOf(\''+esc(who).replace(/'/g,"\\'")+'\')">Open To-Dos</button></div>'+
     (td.length?td.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).map(function(t){var others=todoOwnerList(t).filter(function(o){return !isP(o);});return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(others.length?'<div class="rname">shared with '+esc(others.join(', '))+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos this week.</div>')+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,12).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(o.x.rock.title||'')+(o.x.sub.portco?' · '+esc(o.x.sub.portco):'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div></div>';
+  var pb=openBlkFor(function(b){return blkInvolves(b,who);});
+  h+='<div class="card" style="padding:16px;margin-top:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Blockers &amp; asks</h2><span class="sub">raised by, waiting on, or on '+(self?'your':esc(who)+'’s')+' items · '+pb.length+'</span><span class="spacer"></span><button class="btn sm" onclick="openBlk({})">'+ic2('plus')+'New</button></div>'+blkRows(pb)+'</div>';
   var rk=rkAll.filter(function(x){return kindOk(x.rock)&&closedOk(x.rock);});
   var sb=sbAll.filter(function(x){return kindOk(x.rock)&&closedOk(x.rock)&&(_showClosed||subStatus(x.sub)!=='Done');});
   var pre=self?'My ':'';
@@ -1378,6 +1416,138 @@ function goTodosOf(n){var hit=todoOwners(currentWeekStart()).find(function(x){re
 function goMyTodos(){goTodosOf(myName());}
 
 /* ============================================================
+   BLOCKERS & ASKS — one list (replaces Blockers + Support), attached to rocks / sub-rocks / to-dos
+   ============================================================ */
+var BLK_STATUS=['Open','In Progress','Resolved'];
+function blkStatus(b){var s=b.status||'Open';return s==='Blocked'||s==='Needed'?'Open':s;}
+function blkOpen(b){return blkStatus(b)!=='Resolved';}
+function blkKind(b){return b.kind==='ask'?'ask':'blocker';}
+function blkList(){return (D&&D.blockers)||[];}
+function blkRock(b){return b.rockId?findRockById(b.rockId):null;}
+function blkSub(b){var r=blkRock(b);return r&&b.subId?(r.subrocks||[]).find(function(x){return x.id===b.subId;}):null;}
+function blkTodo(b){return b.todoId?(WB.todos||[]).find(function(x){return x.id===b.todoId;}):null;}
+function blkContext(b){var r=blkRock(b),s=blkSub(b),t=blkTodo(b);if(s)return (r.title||'')+' › '+(s.title||'');if(t)return 'To-do: '+(t.desc||'')+(r?' · '+(r.title||''):'');if(r)return r.title||'';return b.rock||'';}
+function blkPortco(b){if((b.portco||'').trim())return b.portco.trim();var s=blkSub(b);if(s&&(s.portco||'').trim())return s.portco.trim();var t=blkTodo(b);if(t&&todoPortco(t))return todoPortco(t);var r=blkRock(b);return r?rockPortco(r):'';}
+function blkAge(b){if(!b.at)return null;var d=new Date(b.at);if(isNaN(d))return null;return Math.max(0,Math.round((today0()-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000));}
+function blkInvolves(b,n){if(!n)return false;var m=function(x){return splitOwners(x).some(function(o){return ownerMatches(o,n);});};if(m(b.who)||m(b.from))return true;var s=blkSub(b),t=blkTodo(b),r=blkRock(b);if(s&&m(s.owner))return true;if(t&&todoOwnerList(t).some(function(o){return ownerMatches(o,n);}))return true;return !s&&!t&&r&&m(r.owner);}
+function openBlkFor(pred){return blkList().filter(function(b){return blkOpen(b)&&pred(b);});}
+function blkChip(b){return b&&blkKind(b)==='ask'?'<span class="kchip kask">Ask</span>':'<span class="kchip kblk">Blocker</span>';}
+function blkFlagTag(list){if(!list.length)return '';var nb=list.filter(function(b){return blkKind(b)==='blocker';}).length;return '<span class="flagtag" title="'+esc(list.map(function(b){return (blkKind(b)==='ask'?'Ask: ':'Blocker: ')+(b.desc||'');}).join('\n'))+'">⚑ '+(nb?nb+' blocked':'')+(nb&&list.length>nb?' · ':'')+(list.length>nb?(list.length-nb)+' ask'+(list.length-nb>1?'s':''):'')+'</span>';}
+function blkRows(list,opts){opts=opts||{};if(!list.length)return '<div class="empty" style="padding:16px">'+(opts.empty||'No open blockers or asks.')+'</div>';
+  return list.slice().sort(function(a,b){return (blkOpen(b)-blkOpen(a))||((blkAge(b)||0)-(blkAge(a)||0));}).map(function(b){var age=blkAge(b);var ctx=blkContext(b);
+    return '<div class="drow">'+blkChip(b)+'<div class="grow" style="cursor:pointer" onclick="openBlk({id:\''+b.id+'\'})"><div>'+esc(b.desc||'(no description)')+'</div><div class="rname">'+esc([ctx,b.who?'raised by '+b.who:'',b.from?'needs '+b.from:'',blkPortco(b)].filter(Boolean).join(' · '))+'</div></div>'+(age!==null&&blkOpen(b)?'<span class="tag'+(age>=7?' over':'')+'">'+age+'d open</span>':'')+
+      '<select class="ministatus '+({Open:'p-up','In Progress':'p-ar',Resolved:'p-ot'}[blkStatus(b)])+'" onclick="event.stopPropagation()" onchange="blkSet(\''+b.id+'\',\'status\',this.value)">'+selOpts(BLK_STATUS,blkStatus(b))+'</select></div>';}).join('');}
+function blkSet(id,k,v){var b=blkList().find(function(x){return x.id===id;});if(!b)return;b[k]=v;if(k==='status')b.resolvedAt=v==='Resolved'?isoDate(new Date()):'';save();render(CUR);updateBadges();}
+var _blkCtx=null;
+function openBlk(o){o=o||{};var b=o.id?blkList().find(function(x){return x.id===o.id;}):null;_blkCtx=b?{id:b.id}:{rockId:o.rockId||'',subId:o.subId||'',todoId:o.todoId||''};
+  var tmp=b||_blkCtx;var ctx=blkContext(tmp);
+  $('#blk-title').textContent=b?'Edit '+(blkKind(b)==='ask'?'ask':'blocker'):'Flag a blocker or ask';
+  $('#blk-ctx').textContent=ctx?'On: '+ctx:'Not linked to a rock (general)';
+  $('#blk-kind').value=b?blkKind(b):'blocker';$('#blk-desc').value=b?(b.desc||''):'';$('#blk-from').value=b?(b.from||''):'';$('#blk-who').value=b?(b.who||''):(myName()||'');
+  $('#blk-status').innerHTML=selOpts(BLK_STATUS,b?blkStatus(b):'Open');$('#blk-notes').value=b?(b.notes||''):'';
+  $('#blk-del').style.display=b?'':'none';openModal('modal-blk');setTimeout(function(){$('#blk-desc').focus();},30);}
+function saveBlk(){var desc=$('#blk-desc').value.trim();if(!desc){$('#blk-desc').focus();return;}
+  var vals={kind:$('#blk-kind').value,desc:desc,from:$('#blk-from').value.trim(),who:$('#blk-who').value.trim(),status:$('#blk-status').value,notes:$('#blk-notes').value.trim()};
+  if(_blkCtx&&_blkCtx.id){var b=blkList().find(function(x){return x.id===_blkCtx.id;});if(b){var was=blkStatus(b);Object.assign(b,vals);if(vals.status!==was)b.resolvedAt=vals.status==='Resolved'?isoDate(new Date()):'';}}
+  else{D.blockers.push(Object.assign({id:uid(),rockId:_blkCtx.rockId,subId:_blkCtx.subId,todoId:_blkCtx.todoId,portco:'',at:new Date().toISOString(),resolvedAt:''},vals));}
+  closeModal('modal-blk');save();render(CUR);updateBadges();}
+function delBlk(){if(!_blkCtx||!_blkCtx.id)return;var b=blkList().find(function(x){return x.id===_blkCtx.id;});if(b){trashPush('log',b.desc||'blocker',b,{which:'blockers',quarter:WB.activeQuarter});tomb(b.id);}D.blockers=D.blockers.filter(function(x){return x.id!==_blkCtx.id;});closeModal('modal-blk');save();render(CUR);updateBadges();}
+var _blkShowAll=false,_blkKind='';
+function renderBlockers(){
+  var p=$('#panel-blockers');var all=blkList();var open=all.filter(blkOpen);
+  var list=all.filter(function(b){return (_blkShowAll||blkOpen(b))&&(!_blkKind||blkKind(b)===_blkKind);});
+  var nb=open.filter(function(b){return blkKind(b)==='blocker';}).length,na=open.length-nb;var old=open.filter(function(b){return (blkAge(b)||0)>=7;}).length;
+  var h='<div class="kpis">'+kpi('Open blockers',nb,'something stopping a rock or to-do',null,nb?'amber':'')+kpi('Open asks',na,'help, decisions or intros needed')+kpi('Open 7+ days',old,'waiting a week or more',null,old?'amber':'')+kpi('Resolved',all.length-open.length,'this quarter')+'</div>';
+  h+='<div class="filt"><button class="btn pri sm" onclick="openBlk({})">'+ic2('plus')+'New blocker or ask</button><span class="spacer" style="flex:1"></span><span class="lbl">Type:</span>'+[['','All'],['blocker','Blockers'],['ask','Asks']].map(function(x){return '<button class="btn sm'+(_blkKind===x[0]?' pri':'')+'" onclick="_blkKind=\''+x[0]+'\';render(CUR)">'+x[1]+'</button>';}).join('')+
+    '<span class="lbl" style="margin-left:12px">Show:</span><button class="btn sm'+(!_blkShowAll?' pri':'')+'" onclick="_blkShowAll=false;render(CUR)">Open</button><button class="btn sm'+(_blkShowAll?' pri':'')+'" onclick="_blkShowAll=true;render(CUR)">All</button></div>';
+  h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Flag a blocker or ask right where the work is: the ⚑ button on any sub-rock or to-do. It then shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard.</div>';
+  h+='<div class="card" style="padding:4px 0">'+blkRows(list,{empty:all.length?'Nothing matches this filter.':'No blockers or asks yet.'})+'</div>';
+  p.innerHTML=h;
+}
+
+/* ============================================================
+   1% BETTER (process improvements) + PLATFORM FEEDBACK (requests for this tool)
+   ============================================================ */
+function renderBetter(){
+  var p=$('#panel-better');
+  var h='<div class="sec-head"><h2>Process improvements</h2><span class="sub">small changes to how we work, with an owner and a measured result</span><span class="spacer"></span><button class="btn pri" onclick="toggleAdd(\'better\')">'+ic2('plus')+'Log idea</button></div>';
+  h+='<div class="addform" id="add-better"><div class="row"><div><label>Area</label><input id="b-area" placeholder="e.g. Onboarding"></div><div><label>Suggested by</label><input id="b-who" list="owner-options" value="'+esc(myName())+'"></div><div><label>Owner</label><input id="b-owner" list="owner-options" placeholder="Who will make it happen"></div></div>'+
+    '<div class="row"><div><label>What can be done better</label><input id="b-what"></div></div>'+
+    '<div class="row"><div><label>Expected impact</label><input id="b-impact" placeholder="Expected outcome"></div><div><label>Level</label><select id="b-level">'+selOpts(BETTER_LEVELS,'Medium')+'</select></div><div><label>Status</label><select id="b-status">'+selOpts(BETTER_STATUS,'Suggested')+'</select></div></div>'+
+    '<div class="acts"><button class="btn" onclick="toggleAdd(\'better\')">Cancel</button><button class="btn pri" onclick="addBetter()">Save</button></div></div>';
+  h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Requests about this platform belong in <a href="#" onclick="switchTab(\'feedback\');return false">Platform feedback</a>. Use “→ Feedback” to move one there.</div>';
+  if(!D.better.length){h+=emptyState('spark','No ideas yet','Every small improvement counts. Log the first one.');p.innerHTML=h;return;}
+  var lvlCls={Critical:'p-up',High:'p-ar',Medium:'p-lead',Low:'p-ns'};
+  h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>Area</th><th>What</th><th>Expected impact</th><th>Level</th><th>Suggested by</th><th>Owner</th><th>Status</th><th style="min-width:150px">Measured result</th><th></th></tr></thead><tbody>';
+  D.better.forEach(function(r,i){
+    h+='<tr><td>'+esc(r.area)+'</td><td>'+esc(r.what)+'</td><td>'+esc(r.impact)+'</td><td>'+logPill(r.level,lvlCls)+'</td><td>'+esc(r.who)+'</td>'+
+      '<td><input class="ownin" list="owner-options" value="'+esc(r.owner||'')+'" placeholder="—" onchange="logSet(\'better\','+i+',\'owner\',this.value.trim())"></td>'+
+      '<td><select onchange="logSet(\'better\','+i+',\'status\',this.value)">'+selOpts(BETTER_STATUS,r.status)+'</select></td>'+
+      '<td><input value="'+esc(r.result||'')+'" placeholder="'+(r.status==='Implemented'?'What changed? (numbers if you have them)':'after it’s implemented')+'" onchange="logSet(\'better\','+i+',\'result\',this.value.trim())"></td>'+
+      '<td style="white-space:nowrap"><button class="btn sm linkish" title="Move to Platform feedback" onclick="betterToFeedback('+i+')">→ Feedback</button><button class="btn-del" onclick="logDel(\'better\','+i+')">✕</button></td></tr>';
+  });
+  h+='</tbody></table></div>';p.innerHTML=h;
+}
+function addBetter(){
+  var v=function(id){return ($('#'+id)||{}).value||'';};
+  if(!v('b-area').trim()&&!v('b-what').trim())return;
+  D.better.push({id:uid(),area:v('b-area').trim(),who:v('b-who').trim(),owner:v('b-owner').trim(),what:v('b-what').trim(),impact:v('b-impact').trim(),level:v('b-level'),status:v('b-status'),result:'',at:new Date().toISOString()});
+  save();renderBetter();updateBadges();
+}
+var FB_STATUS=['New','Planned','In Progress','Done',"Won't do"];
+function fbList(){WB.feedback=WB.feedback||[];return WB.feedback;}
+function betterToFeedback(i){var r=D.better[i];if(!r)return;var st={Implemented:'Done','In Progress':'In Progress'}[r.status]||'New';
+  fbList().push({id:uid(),what:[r.area,r.what].filter(Boolean).join(' — '),who:r.who||'',status:st,at:r.at||new Date().toISOString(),notes:r.impact||''});tomb(r.id);D.better.splice(i,1);save();render(CUR);updateBadges();}
+function addFeedback(){var w=$('#fb-what').value.trim();if(!w){$('#fb-what').focus();return;}fbList().push({id:uid(),what:w,who:$('#fb-who').value.trim(),status:'New',at:new Date().toISOString(),notes:''});save();render(CUR);updateBadges();}
+function fbSet(id,k,v){var f=fbList().find(function(x){return x.id===id;});if(f){f[k]=v;save();updateBadges();if(k==='status')render(CUR);}}
+function fbDel(id){var f=fbList().find(function(x){return x.id===id;});if(f){trashPush('log',f.what,f,{which:'feedback'});tomb(id);}WB.feedback=fbList().filter(function(x){return x.id!==id;});save();render(CUR);updateBadges();}
+var _fbShowDone=false;
+function renderFeedback(){
+  var p=$('#panel-feedback');var all=fbList();var open=all.filter(function(f){return f.status!=='Done'&&f.status!=="Won't do";});
+  var h='<div class="filt"><input id="fb-what" placeholder="What should the platform do better?" style="flex:1 1 320px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px" onkeydown="if(event.key===\'Enter\')addFeedback()"><input id="fb-who" list="owner-options" value="'+esc(myName())+'" placeholder="Your name" style="width:140px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px"><button class="btn pri sm" onclick="addFeedback()">Add</button>'+
+    '<span class="spacer" style="flex:1"></span><span class="lbl">Show:</span><button class="btn sm'+(!_fbShowDone?' pri':'')+'" onclick="_fbShowDone=false;render(CUR)">Open ('+open.length+')</button><button class="btn sm'+(_fbShowDone?' pri':'')+'" onclick="_fbShowDone=true;render(CUR)">All ('+all.length+')</button></div>';
+  var list=(_fbShowDone?all:open).slice().sort(function(a,b){return FB_STATUS.indexOf(a.status)-FB_STATUS.indexOf(b.status)||String(b.at||'').localeCompare(String(a.at||''));});
+  if(!list.length){h+=emptyState('spark',all.length?'Nothing open':'No feedback yet','Bugs, ideas and requests for this platform go here, so 1% Better stays about how we work.');p.innerHTML=h;return;}
+  var stCls={New:'p-lead',Planned:'p-ns','In Progress':'p-ar',Done:'p-ot',"Won't do":'p-cancel'};
+  h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>Request</th><th>By</th><th>Added</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>'+list.map(function(f){
+    return '<tr><td>'+esc(f.what)+'</td><td>'+esc(f.who||'')+'</td><td>'+(f.at?esc(fmtDate(String(f.at).slice(0,10))):'')+'</td><td><select class="ministatus '+(stCls[f.status]||'p-ns')+'" onchange="fbSet(\''+f.id+'\',\'status\',this.value)">'+selOpts(FB_STATUS,f.status||'New')+'</select></td><td><input value="'+esc(f.notes||'')+'" onchange="fbSet(\''+f.id+'\',\'notes\',this.value.trim())"></td><td><button class="btn-del" onclick="fbDel(\''+f.id+'\')">✕</button></td></tr>';}).join('')+'</tbody></table></div>';
+  p.innerHTML=h;
+}
+
+/* ============================================================
+   WEEKLY REVIEW — one page for the team meeting
+   ============================================================ */
+function renderReview(){
+  var p=$('#panel-review');var ws=currentWeekStart(),lws=addDaysIso(ws,-7),today=isoDate(new Date()),wk7=addDaysIso(today,-7);
+  var subs=allSubs().filter(function(x){var st=subStatus(x.sub);return st!=='Cancelled';});
+  var open=blkList().filter(blkOpen);
+  var overdue=subs.filter(function(x){if(subStatus(x.sub)==='Done')return false;var d=daysUntil(x.sub.targetDate);return d!==null&&d<0;}).sort(function(a,b){return a.sub.targetDate.localeCompare(b.sub.targetDate);});
+  var slipped=[];subs.forEach(function(x){if(subStatus(x.sub)==='Done')return;var sl=(x.sub.slips||[]).filter(function(z){return z.at>=wk7;});if(sl.length)slipped.push({x:x,from:sl[0].from,to:sl[sl.length-1].to,why:'target moved'});else if(x.sub.targetDate&&x.sub.targetDate>=wk7&&x.sub.targetDate<today)slipped.push({x:x,from:x.sub.targetDate,to:'',why:'became overdue'});});
+  var doneLast=subs.filter(function(x){return x.sub.doneDate&&x.sub.doneDate>=wk7&&x.sub.doneDate<=today;});
+  var due=subs.filter(function(x){if(subStatus(x.sub)==='Done')return false;var d=daysUntil(x.sub.targetDate);return d!==null&&d>=0&&d<=13;}).sort(function(a,b){return a.sub.targetDate.localeCompare(b.sub.targetDate);});
+  var lt=(WB.todos||[]).filter(function(t){return t.weekStart===lws;});var byP={};lt.forEach(function(t){todoOwnerList(t).forEach(function(o){if(o!=='Unassigned'&&!todoActiveIn(o,ws))return;var n=o==='Unassigned'?o:canonPerson(o);var e=byP[n]=byP[n]||{n:0,d:0};var st=todoStatus(t);if(st==='Cancelled')return;e.n++;if(st==='Done')e.d++;});});
+  var tdN=0,tdD=0;Object.keys(byP).forEach(function(k){tdN+=byP[k].n;tdD+=byP[k].d;});var tdPct=tdN?Math.round(tdD/tdN*100):0;
+  var d14=addDaysIso(today,-14);var ideas=(D.better||[]).filter(function(r){return r.at&&String(r.at).slice(0,10)>=d14;});var fbNew=fbList().filter(function(f){return f.status==='New';});
+  var h='<div class="filt"><span class="tag">'+esc(weekLabel(ws))+'</span><span class="lbl">— for the weekly meeting · last week = '+esc(weekRangeLabel(lws))+' · '+esc(WB.activeQuarter||'')+'</span></div>';
+  h+='<div class="kpis">'+kpi('Open blockers & asks',open.length,open.filter(function(b){return (blkAge(b)||0)>=7;}).length+' open 7+ days',null,open.length?'amber':'')+kpi('Slipped this week',slipped.length,'target moved later or became overdue',null,slipped.length?'amber':'')+kpi('Overdue sub-rocks',overdue.length,'past target, not done',null,overdue.length?'amber':'')+kpi('Done last 7 days',doneLast.length,'sub-rocks completed')+kpi('Last week’s to-dos',tdPct+'%',tdD+' of '+tdN+' done','prog'+tdPct)+'</div>';
+  function subRow(x,tag){return '<div class="drow">'+kindChip(x.rock)+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+' · '+esc(x.rock.title||'')+(x.sub.portco?' · '+esc(x.sub.portco):'')+'</div></div>'+tag+'</div>';}
+  h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Blockers &amp; asks</h2><span class="sub">'+open.length+' open</span><span class="spacer"></span><button class="btn sm" onclick="openBlk({})">'+ic2('plus')+'New</button></div>'+blkRows(open)+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Slipped since last week</h2><span class="sub">'+slipped.length+'</span></div>'+(slipped.length?slipped.map(function(z){return subRow(z.x,'<span class="tag over">'+(z.why==='target moved'?esc(fmtDate(z.from))+' → '+esc(fmtDate(z.to)):'due '+esc(fmtDate(z.from)))+'</span>');}).join(''):'<div class="empty" style="padding:16px">Nothing slipped this week.</div>')+'</div></div>';
+  h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Due in the next 2 weeks</h2><span class="sub">'+due.length+'</span></div>'+(due.length?due.slice(0,15).map(function(x){var d=daysUntil(x.sub.targetDate);return subRow(x,'<span class="tag soon">'+(d===0?'today':'in '+d+'d')+'</span>');}).join('')+(due.length>15?'<div class="empty" style="padding:8px">+'+(due.length-15)+' more</div>':''):'<div class="empty" style="padding:16px">Nothing due.</div>')+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Done in the last 7 days</h2><span class="sub">'+doneLast.length+'</span></div>'+(doneLast.length?doneLast.map(function(x){return subRow(x,'<span class="pill p-ot">Done '+esc(fmtDate(x.sub.doneDate))+'</span>');}).join(''):'<div class="empty" style="padding:16px">Nothing completed this week.</div>')+'</div></div>';
+  var pp=Object.keys(byP).sort(personSort);
+  h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Last week’s to-dos by person</h2><span class="sub">'+esc(weekRangeLabel(lws))+'</span></div>'+(pp.length?pp.map(function(n){var e=byP[n];var pc=e.n?Math.round(e.d/e.n*100):0;return '<div class="drow"><span class="avatar">'+esc(initials(n==='Unassigned'?'':n))+'</span><div class="grow"><div>'+esc(n)+'</div><div class="rname">'+e.d+' of '+e.n+' done</div></div><div style="width:120px"><div class="prog"><span style="width:'+pc+'%"></span></div></div><span class="pct">'+pc+'%</span></div>';}).join(''):'<div class="empty" style="padding:16px">No to-dos last week.</div>')+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Overdue by owner</h2><span class="sub">'+overdue.length+'</span></div>';
+  var ob={};overdue.forEach(function(x){var ows=splitOwners(x.sub.owner||x.rock.owner).map(function(o){return canonPerson(o);});if(!ows.length)ows=['Unassigned'];ows.forEach(function(o){(ob[o]=ob[o]||[]).push(x);});});
+  var on=Object.keys(ob).sort(function(a,b){return ob[b].length-ob[a].length;});
+  h+=on.length?on.map(function(n){return '<div class="drow"><span class="avatar">'+esc(initials(n==='Unassigned'?'':n))+'</span><div class="grow"><div>'+esc(n)+'</div><div class="rname">oldest: '+esc(ob[n][0].sub.title||'')+' ('+(-daysUntil(ob[n][0].sub.targetDate))+'d)</div></div><span class="tag over">'+ob[n].length+' overdue</span></div>';}).join(''):'<div class="empty" style="padding:16px">Nothing overdue.</div>';
+  h+='</div></div>';
+  h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>New 1% Better ideas</h2><span class="sub">last 2 weeks · '+ideas.length+'</span><span class="spacer"></span><button class="btn sm" onclick="switchTab(\'better\')">Open</button></div>'+(ideas.length?ideas.map(function(r){return '<div class="drow"><div class="grow"><div>'+esc(r.what||r.area||'')+'</div><div class="rname">'+esc(r.area||'')+(r.who?' · '+esc(r.who):'')+(r.owner?' · owner '+esc(r.owner):'')+'</div></div><span class="pill p-lead">'+esc(r.status||'')+'</span></div>';}).join(''):'<div class="empty" style="padding:16px">No new ideas.</div>')+'</div>';
+  h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Platform feedback</h2><span class="sub">'+fbNew.length+' new</span><span class="spacer"></span><button class="btn sm" onclick="switchTab(\'feedback\')">Open</button></div>'+(fbNew.length?fbNew.slice(0,8).map(function(f){return '<div class="drow"><div class="grow"><div>'+esc(f.what)+'</div><div class="rname">'+esc(f.who||'')+'</div></div></div>';}).join(''):'<div class="empty" style="padding:16px">Nothing new.</div>')+'</div></div>';
+  p.innerHTML=h;
+}
+
+/* ============================================================
    WELCOME
    ============================================================ */
 function wGo(id,label){return '<button class="btn sm" onclick="switchTab(\''+id+'\')">'+label+' →</button>';}
@@ -1388,9 +1558,9 @@ function renderWelcome(){
   h+='<div class="card wcard"><h3>Rocks &amp; Projects</h3><p>Each one lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you click <b>+ Add</b>, choose its type:</p><ul><li><b>Rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Done and cancelled items are hidden; use <b>Show: All</b> to see them. Filter by <b>Type: All · Rocks · Projects</b>.</p><p>At the end of a quarter, anything still open is carried into the next quarter <b>as a project</b> (with its open sub-rocks and links). The owner switches it back to a rock with the Type field if it is still a committed goal.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
   h+='<div class="card wcard"><h3>Inside a rock or project</h3><p>Click one to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the milestones, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Timeline</b>: every sub-rock’s target date across the quarter, so bunched-up or slipping deadlines stand out.</li><li><b>To-Dos</b>: weekly to-dos linked to it. Linking a to-do to a rock just lists it here; it does not add a sub-rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
   h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: the same view as My Items for anyone on the team; pick the person at the top, or Everyone for the full list.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (rocks and projects shown separately), deadlines, this week’s to-dos, links &amp; contacts, and the full list.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
-  h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: to-dos for the current week and the sub-rocks due this week. Shared items show under each person.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, reorder them, or import the Excel tracker. Click <b>Notes / blockers</b> to read or edit the full text. Pick a rock in the Rock column to list the to-do under that rock. The <b>PortCo</b> column fills in from the rock (shown in italics) and can be changed; it decides which PortCo dashboard the to-do appears on.</li><li><b>Reminders</b>: when one of your sub-rocks is due this week or next, a reminder to-do appears automatically. It shares its status and its notes with the sub-rock (notes = the sub-rock’s comments), so updating either one updates both.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('todos','To-Dos')+'</div></div>';
+  h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: to-dos for the current week, the sub-rocks due this week and open blockers. Shared items show under each person.</li><li><b>Weekly Review</b>: one page for the team meeting: open blockers &amp; asks, what slipped since last week, what’s overdue and due soon, what got done, last week’s to-do completion by person, and new ideas.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, drag to reorder, sort by status, PortCo or rock (buttons or the column headers), or import the Excel tracker. Click <b>Notes / blockers</b> to read or edit the full text. Pick a rock in the Rock column to list the to-do under that rock. The <b>PortCo</b> column fills in from the rock (shown in italics) and can be changed; it decides which PortCo dashboard the to-do appears on.</li><li><b>Reminders</b>: when one of your sub-rocks is due this week or next, a reminder to-do appears automatically. It shares its status and its notes with the sub-rock (notes = the sub-rock’s comments), so updating either one updates both.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('review','Weekly Review')+wGo('todos','To-Dos')+'</div></div>';
   h+='<div class="card wcard"><h3>KPIs</h3><p><b>All KPIs</b> lists every KPI by area. <b>By Person</b> shows each person’s quarterly plan vs actual. The <b>Rocks Completion</b> KPI fills in by itself from the share of that person’s rock sub-rocks that are done (projects don’t count); only its target is edited by hand.</p><div class="wgo">'+wGo('allkpis','All KPIs')+wGo('scorecard','By Person')+'</div></div>';
-  h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>1% Better</b>: small improvements.</li><li><b>Blockers</b>: anything stopping a rock.</li><li><b>Support</b>: what the team needs from leadership.</li><li><b>Trash</b>: restore anything deleted recently.</li></ul><div class="wgo">'+wGo('blockers','Blockers')+wGo('trash','Trash')+'</div></div>';
+  h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>Blockers &amp; Asks</b>: one list for anything stopping work (blocker) or help needed (ask). Flag one with the ⚑ button on any sub-rock or to-do; it shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard until it is resolved.</li><li><b>1% Better</b>: process improvements, each with an owner and a measured result.</li><li><b>Platform feedback</b>: bugs and requests for this platform.</li></ul><p><b>Trash</b> (bottom of the sidebar) restores anything deleted recently.</p><div class="wgo">'+wGo('blockers','Blockers & Asks')+wGo('better','1% Better')+wGo('feedback','Platform feedback')+'</div></div>';
   h+='<div class="card wcard"><h3>Account &amp; data</h3><p>Sign in with your @downingcap.com email. The first time, you pick your name so your login is linked to you: <b>My Items</b>, To-Dos, This Week and By Individual then open on your own work, and your name fills in on comments. Change the link any time in <b>Settings</b>. Your name and a <b>Sign out</b> link are at the bottom of the sidebar. <b>Export</b> downloads a full backup and <b>Import</b> restores one. <b>Theme</b> switches light and dark mode.</p></div>';
   h+='</div>';
   $('#panel-welcome').innerHTML=h;
@@ -1424,8 +1594,7 @@ function renderOverview(){
   });
   over.sort(function(a,b){return a.d-b.d;});soon.sort(function(a,b){return a.d-b.d;});
 
-  var openBlockers=D.blockers.filter(function(b){return b.status!=='Resolved';}).length;
-  var openSupport=D.support.filter(function(s){return s.status!=='Resolved';}).length;
+  var openBlk=blkList().filter(blkOpen);var openBlockers=openBlk.filter(function(b){return blkKind(b)==='blocker';}).length;var openSupport=openBlk.length-openBlockers;
 
   var html='';
   html+='<div class="sec-head" style="margin-top:0"><h2>Rocks</h2><span class="sub">committed goals · count toward KPIs</span></div>';
@@ -1433,7 +1602,7 @@ function renderOverview(){
   html+=kpi('Rocks completed',pctRocks+'%',total+' rocks · '+doneRocks+' completed · '+atRisk+' at risk'+(nProj?' · '+nProj+' project'+(nProj>1?'s':'')+' not counted':''),'prog'+pctRocks);
   html+=kpi('Sub-rock completion',wPct+'%',subDone+' of '+subs.length+' sub-rocks · weighted','prog'+wPct);
   html+=kpi('Needs attention',(atRisk+unplanned),atRisk+' at risk · '+unplanned+' unplanned',null,(atRisk+unplanned)>0?'amber':'');
-  html+=kpi('Open requests',(openBlockers+openSupport),openBlockers+' blockers · '+openSupport+' support',null,(openBlockers+openSupport)>0?'amber':'');
+  html+=kpi('Blockers & asks',(openBlockers+openSupport),openBlockers+' blockers · '+openSupport+' asks open',null,(openBlockers+openSupport)>0?'amber':'');
   html+='</div>';
   html+=projectStatsRow(allRocks().map(function(x){return x.rock;}).filter(isProject),allSubsQ.filter(function(x){return isProject(x.rock);}),'Projects','not counted in KPIs or the numbers above');
 
@@ -1453,6 +1622,7 @@ function renderOverview(){
   else html+=soon.slice(0,7).map(function(o){return alertRow(o.x,o.d);}).join('');
   html+='</div></div>';
 
+  if(openBlk.length)html+='<div class="card" style="padding:16px;margin-top:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Blockers &amp; asks</h2><span class="sub">'+openBlk.length+' open</span><span class="spacer"></span><button class="btn sm" onclick="switchTab(\'blockers\')">Open list</button></div>'+blkRows(openBlk.slice(0,6))+'</div>';
   // Team KPI dashboard
   html+=ovKpiSection();
 
@@ -1624,6 +1794,7 @@ function rockCard(type,rock,idx,readonly){
   else h+='<input class="ownin ownin-hd" list="owner-options" value="'+esc(rock.owner||'')+'" placeholder="owners (comma-separated)" title="Separate multiple owners with commas" onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'owner\',this.value);rerenderCurrent()">';
   h+=kindChip(rock);
   if(rock.carriedFrom&&rock.carriedFrom.q)h+='<span class="tag" title="Carried over as a project'+(rock.carriedFrom.kind==='project'?'':' (was a rock)')+'">from '+esc(rock.carriedFrom.q)+'</span>';
+  h+=blkFlagTag(openBlkFor(function(b){return b.rockId===rock.id;}));
   if(rock.carriedTo)h+='<span class="tag" title="Open items were carried to '+esc(rock.carriedTo)+'">→ '+esc(rock.carriedTo)+'</span>';
   if(rock.portco)h+='<span class="tag pctag">'+esc(rock.portco)+'</span>';
   h+='<span class="spacer"></span>';
@@ -1709,7 +1880,7 @@ function subrocksTab(type,rock){
   subs.forEach(function(s,si){
     var noTgt=!s.targetDate;
     h+='<tr class="subrow"'+(noTgt?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
-    h+='<td><span class="ce" contenteditable onblur="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'title\',this.textContent)">'+esc(s.title)+'</span></td>';
+    h+='<td><span class="ce" contenteditable onblur="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'title\',this.textContent)">'+esc(s.title)+'</span>'+blkFlagTag(openBlkFor(function(b){return b.subId===s.id;}))+'</td>';
     h+='<td><input class="ownin" list="owner-options" value="'+esc(s.owner)+'" placeholder="Owner(s)" title="Separate multiple owners with commas" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'owner\',this.value)"></td>';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'portco\',this.value)">'+portcoOpts(s.portco)+'</select></td>';
     h+='<td><input type="date" value="'+esc(s.targetDate)+'" onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'targetDate\',this.value)"></td>';
@@ -1717,7 +1888,7 @@ function subrocksTab(type,rock){
     var stored=s.doneDate?'Done':(s.status||'Not Started');var pd=stored!=='At Risk'&&subStatus(s)==='At Risk';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(stored)+'</select>'+(pd?'<div class="pastdue" title="Past its target date and not Done, so it counts as At Risk in the rock roll-up and dashboards.">past due · counts as At Risk</div>':'')+'</td>';
     h+='<td><div class="subcmt'+(s.comment?'':' empty')+'" title="Click to read or edit" onclick="editSubComment(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">'+(s.comment?esc(s.comment):'+ add comment')+'</div></td>';
-    h+='<td><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
+    h+='<td style="white-space:nowrap"><button class="btn-flag" title="Flag a blocker or ask on this sub-rock" onclick="openBlk({rockId:\''+rock.id+'\',subId:\''+s.id+'\'})">⚑</button><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
   });
   h+='</tbody></table></div>';
   h+='<div style="display:flex;gap:8px;margin-top:10px"><input id="newsub-'+rock.id+'" placeholder="New sub-rock title…" style="flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px" onkeydown="if(event.key===\'Enter\')addSub(\''+type+'\',\''+rock.id+'\')"><button class="btn sm" onclick="addSub(\''+type+'\',\''+rock.id+'\')">Add sub-rock</button></div>';
@@ -1739,7 +1910,9 @@ function subDragEnd(){_subDrag=null;_subArm=false;document.querySelectorAll('tr.
 function subDrop(e,type,rid,to){e.preventDefault();var from=_subDrag;subDragEnd();if(from===null||from===to)return;
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r||!r.subrocks)return;
   var it=r.subrocks.splice(from,1)[0];r.subrocks.splice(to,0,it);save();rerenderCurrent();}
-function subSet(type,rid,sid,k,v){var s=findSub(type,rid,sid);if(!s)return;s[k]=v.trim?v.trim():v;if(k==='status'){if(s.status==='Done'&&!s.doneDate){var t=new Date();s.doneDate=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);}else if(s.status!=='Done'){s.doneDate='';}}if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
+/* Record when a sub-rock's target date moves later (shown on the Weekly Review as "slipped"). */
+function noteSlip(s,oldV,newV){if(oldV&&newV&&newV>oldV){s.slips=(s.slips||[]).concat([{from:oldV,to:newV,at:isoDate(new Date()),by:(typeof myName==='function'&&myName())||''}]).slice(-10);}}
+function subSet(type,rid,sid,k,v){var s=findSub(type,rid,sid);if(!s)return;if(k==='targetDate')noteSlip(s,s.targetDate,v);s[k]=v.trim?v.trim():v;if(k==='status'){if(s.status==='Done'&&!s.doneDate){var t=new Date();s.doneDate=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);}else if(s.status!=='Done'){s.doneDate='';}}if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function subDone(type,rid,sid,v){var s=findSub(type,rid,sid);if(!s)return;s.doneDate=v;if(v)s.status='Done';else if(s.status==='Done')s.status='On Track';if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function delSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});var s=(r.subrocks||[]).find(function(x){return x.id===sid;});if(s&&s.todoId){var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(t){t.subId='';t.rockId='';}}if(s)trashPush('sub',s.title,s,{quarter:WB.activeQuarter,rockId:rid});tomb(sid);r.subrocks=r.subrocks.filter(function(x){return x.id!==sid;});save();rerenderCurrent();}
 
@@ -1959,6 +2132,8 @@ function renderPortcoTab(pc){
   var tw=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&todoPortco(t)===pc;});
   h+='<div class="grid2" style="margin-top:16px"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,10).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(o.x.sub).join(', ')||'unassigned')+' · '+esc(o.x.rock.title||'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">tagged '+esc(pc)+' · '+tw.length+'</span></div>'+(tw.length?tw.map(function(t){return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div><div class="rname">'+esc(todoOwnerList(t).join(', '))+'</div></div>'+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos linked this week.</div>')+'</div></div>';
+  var pcb=openBlkFor(function(b){return blkPortco(b)===pc;});
+  h+='<div class="card" style="padding:16px;margin-top:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Blockers &amp; asks</h2><span class="sub">'+pcb.length+' open</span></div>'+blkRows(pcb)+'</div>';
   // links / contacts
   h+='<div class="grid2" style="margin-top:16px">';
   var links=info.links||[],contacts=info.contacts||[];
@@ -2030,7 +2205,7 @@ function todoSubOf(t){if(!t.subId||!t.rockId)return null;var r=findRockById(t.ro
 /* Sync an edit on a linked to-do to its sub-rock. Only the edited field is copied (no field = full sync when first linking),
    so e.g. editing notes on a carried-forward to-do doesn't silently move the sub-rock's target date. */
 function pushTodoToSub(t,field){var s=todoSubOf(t);if(!s)return;var all=!field;
-  if(all||field==='desc')s.title=t.desc;if(all||field==='owner')s.owner=t.owner;if((all||field==='weekStart')&&t.weekStart)s.targetDate=addDaysIso(t.weekStart,4);
+  if(all||field==='desc')s.title=t.desc;if(all||field==='owner')s.owner=t.owner;if((all||field==='weekStart')&&t.weekStart){var nt=addDaysIso(t.weekStart,4);noteSlip(s,s.targetDate,nt);s.targetDate=nt;}
   if(all||field==='status'){var st=td2sub(t.status);s.status=st;if(st==='Done'){if(!s.doneDate)s.doneDate=t.weekStart||currentWeekStart();}else{s.doneDate='';}}
   if(field==='notes')s.comment=t.notes||'';else if(all){if(t.notes)s.comment=t.notes;else t.notes=s.comment||'';}}
 function pushSubToTodo(s){if(!s.todoId)return;var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(!t)return;t.desc=s.title;t.owner=s.owner;if(s.targetDate)t.weekStart=isoDate(mondayOf(new Date(s.targetDate+'T00:00:00')));t.status=sub2td((s.doneDate?'Done':(s.status||'Not Started')));t.notes=s.comment||'';}
@@ -2178,19 +2353,29 @@ function ensureDueTodosVisible(){var n=ensureDueTodos(currentWeekStart())+ensure
 function todoTimeInput(t){return '<input class="num" list="todo-time-opts" style="width:80px" value="'+esc(t.time==null?'':t.time)+'" onchange="todoSet(\''+t.id+'\',\'time\',this.value)">';}
 function todoTable(items,owner,week){
   var oq=esc(owner).replace(/'/g,"\\'");
-  var h='<table class="tbl todotbl"><thead><tr><th style="width:28px"></th><th style="width:38%">To-Do</th><th style="width:17%">Rock</th><th style="width:120px">PortCo</th><th style="width:150px">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
+  var h='<table class="tbl todotbl"><thead><tr><th style="width:28px"></th><th style="width:38%">To-Do</th><th style="width:17%" class="sortable'+(_todoSortBy==='rock'?' on':'')+'" onclick="setTodoSort(\'rock\')" title="Sort by rock">Rock</th><th style="width:120px" class="sortable'+(_todoSortBy==='portco'?' on':'')+'" onclick="setTodoSort(\'portco\')" title="Sort by PortCo">PortCo</th><th style="width:150px" class="sortable'+(_todoSortBy==='status'?' on':'')+'" onclick="setTodoSort(\'status\')" title="Sort by status">Status</th><th style="width:92px">Time</th><th>Notes / blockers</th><th style="width:30px"></th></tr></thead><tbody>';
   items.forEach(function(t,ti){
     h+='<tr class="todorow" ondragstart="todoDragStart(event,\''+oq+'\',\''+week+'\','+ti+')" ondragover="todoDragOver(event,\''+oq+'\',\''+week+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="todoDrop(event,\''+oq+'\',\''+week+'\','+ti+')" ondragend="todoDragEnd()">'+
-      '<td class="draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span></td>'+
+      (_todoSortBy?'<td></td>':'<td class="draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span></td>')+
       '<td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
       '<td>'+rockLinkSelect(t)+'</td><td>'+todoPortcoSel(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked sub-rock was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
-      '<td>'+notesCell(t)+'</td>'+
-      '<td><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
+      '<td>'+notesCell(t)+blkFlagTag(openBlkFor(function(b){return b.todoId===t.id||(t.subId&&b.subId===t.subId&&!b.todoId);}))+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn-flag" title="Flag a blocker or ask on this to-do" onclick="openBlk({todoId:\''+t.id+'\',rockId:\''+(t.rockId||'')+'\',subId:\''+(t.subId||'')+'\'})">⚑</button><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
   });
   h+='</tbody></table>';return h;}
 /* Order within a week: by status until someone drags a row; after that the block keeps its manual order
    (t.ord). Items added later without an order go to the bottom. */
-function todoSort(items){var manual=items.some(function(t){return typeof t.ord==='number';});
+/* Sort: '' = your own order (drag) falling back to status; or by status / PortCo / rock. Remembered per viewer. */
+var _todoSortBy=(function(){try{return localStorage.getItem('dc_todosort')||'';}catch(e){return '';}})();
+function setTodoSort(v){_todoSortBy=_todoSortBy===v&&v?'':v;try{localStorage.setItem('dc_todosort',_todoSortBy);}catch(e){}render(CUR);}
+function todoRockLabel(t){var r=t.rockId?findRockById(t.rockId):null;return r?(r.title||''):'';}
+function todoSortBar(){var o=[['','My order'],['status','Status'],['portco','PortCo'],['rock','Rock']];
+  return '<div class="filt"><span class="lbl">Sort:</span>'+o.map(function(x){return '<button class="btn sm'+(_todoSortBy===x[0]?' pri':'')+'" onclick="setTodoSort(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+(_todoSortBy?'<span class="lbl" style="margin-left:8px">Drag to reorder is off while sorted.</span>':'')+'</div>';}
+function todoSort(items){var manual=!_todoSortBy&&items.some(function(t){return typeof t.ord==='number';});
+  var st=function(t){return TODO_STATUS.indexOf(todoStatus(t));};
+  if(_todoSortBy){var key=_todoSortBy==='portco'?todoPortco:_todoSortBy==='rock'?todoRockLabel:null;
+    return items.slice().sort(function(a,b){if(key){var ka=(key(a)||'').toLowerCase(),kb=(key(b)||'').toLowerCase();if(ka!==kb){if(!ka)return 1;if(!kb)return -1;return ka.localeCompare(kb);}}
+      return st(a)-st(b)||((typeof a.ord==='number'?a.ord:1e9)-(typeof b.ord==='number'?b.ord:1e9));});}
   return items.slice().sort(function(a,b){
     if(manual){var oa=typeof a.ord==='number'?a.ord:1e9,ob=typeof b.ord==='number'?b.ord:1e9;if(oa!==ob)return oa-ob;}
     return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));});}
@@ -2198,7 +2383,7 @@ var _todoDrag=null;
 function todoDragStart(e,owner,week,i){_todoDrag={owner:owner,week:week,i:i};try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));}catch(x){}e.currentTarget.classList.add('dragging');}
 function todoDragOver(e,owner,week){if(!_todoDrag||_todoDrag.owner!==owner||_todoDrag.week!==week)return;e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(x){}e.currentTarget.classList.add('dropto');}
 function todoDragEnd(){_todoDrag=null;_subArm=false;document.querySelectorAll('tr.todorow').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
-function todoDrop(e,owner,week,to){e.preventDefault();var d=_todoDrag;todoDragEnd();if(!d||d.owner!==owner||d.week!==week||d.i===to)return;
+function todoDrop(e,owner,week,to){e.preventDefault();var d=_todoDrag;todoDragEnd();if(_todoSortBy||!d||d.owner!==owner||d.week!==week||d.i===to)return;
   var list=todoSort(todosOf(owner,week));var it=list.splice(d.i,1)[0];list.splice(to,0,it);
   list.forEach(function(t,k){t.ord=k;});save();render(CUR);}
 function todoWeekBlock(key,title,sub,items,owner,week,showCarry){
@@ -2225,6 +2410,7 @@ function renderTodos(){
     (_todoPerson!=='__all'?'<button class="btn sm" onclick="removeTodoPerson(\''+esc(_todoPerson).replace(/'/g,"\\'")+'\',currentWeekStart())" title="Hide this person from To-Dos from this week onward">Remove '+esc(_todoPerson)+'</button>':'')+
     (function(){var g=todoAllOwners().filter(function(n){return !todoActiveIn(n,currentWeekStart());});return g.length?'<button class="btn sm linkish" onclick="_showRemovedTodo=!_showRemovedTodo;render(CUR)" title="People removed from To-Dos">Removed ('+g.length+')</button>':'';})()+
     '<button class="btn sm" onclick="$(\'#todo-xlsx\').click()" title="Add to-dos from the Weekly To-Do Tracker spreadsheet">Import Excel</button><input type="file" id="todo-xlsx" accept=".xlsx,.xls" style="display:none" onchange="if(this.files[0])importTrackerFile(this.files[0]);this.value=\'\'"></div>';
+  h+=todoSortBar();
   var gone=todoAllOwners().filter(function(n){return !todoActiveIn(n,currentWeekStart());});
   if(gone.length&&_showRemovedTodo)h+='<div class="removedlist"><span class="lbl">Removed people</span>'+gone.map(function(n){return '<span class="rmitem">'+esc(n)+' <span class="lbl">since '+esc(weekRangeLabel(todoRemovedFrom(n)))+'</span> <button class="btn sm" onclick="restoreTodoPerson(\''+esc(n).replace(/'/g,"\\'")+'\')">Restore</button></span>';}).join('')+'<button class="btn sm" onclick="_showRemovedTodo=false;render(CUR)">Close</button></div>';
   if(_todoPerson==='__all'){
@@ -2307,6 +2493,8 @@ function renderThisWeek(){
     });
     h+='</div>';
   });
+  var twb=openBlkFor(function(b){return !mine||blkInvolves(b,myName());});
+  if(twb.length)h+='<div class="sec-head"><h2>Open blockers &amp; asks</h2><span class="sub">'+twb.length+'</span></div><div class="card" style="padding:4px 0">'+blkRows(twb)+'</div>';
   var dp=Object.keys(dueBy).sort(personSort);
   if(dp.length){
     h+='<div class="sec-head"><h2>Sub-rocks due this week</h2><span class="sub">'+nDue+'</span></div><div class="card" style="padding:4px 0">';
@@ -2549,55 +2737,6 @@ function ovKpiSection(){
 function selOpts(arr,v){return arr.map(function(o){return '<option'+(v===o?' selected':'')+'>'+esc(o)+'</option>';}).join('');}
 function logPill(val,map){return '<span class="pill '+(map[val]||'p-ns')+'">'+esc(val)+'</span>';}
 
-function renderBetter(){
-  var p=$('#panel-better');
-  var h='<div class="sec-head"><h2>1% Better log</h2><span class="spacer"></span><button class="btn pri" onclick="toggleAdd(\'better\')">'+ic2('plus')+'Log idea</button></div>';
-  h+='<div class="addform" id="add-better"><div class="row"><div><label>Area</label><input id="b-area" placeholder="e.g. Onboarding"></div><div><label>By whom</label><input id="b-who"></div></div>'+
-    '<div class="row"><div><label>What can be done better</label><input id="b-what"></div></div>'+
-    '<div class="row"><div><label>Impact</label><input id="b-impact" placeholder="Expected outcome"></div><div><label>Level</label><select id="b-level">'+selOpts(BETTER_LEVELS,'Medium')+'</select></div><div><label>Status</label><select id="b-status">'+selOpts(BETTER_STATUS,'Suggested')+'</select></div></div>'+
-    '<div class="acts"><button class="btn" onclick="toggleAdd(\'better\')">Cancel</button><button class="btn pri" onclick="addBetter()">Save</button></div></div>';
-  if(!D.better.length){h+=emptyState('spark','No ideas yet','Every small improvement counts. Log the first one.');p.innerHTML=h;return;}
-  var lvlCls={Critical:'p-up',High:'p-ar',Medium:'p-lead',Low:'p-ns'};
-  var stCls={Suggested:'p-lead','In Progress':'p-ar',Implemented:'p-ot'};
-  h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>Area</th><th>What</th><th>Impact</th><th>Level</th><th>By</th><th>Status</th><th></th></tr></thead><tbody>';
-  D.better.forEach(function(r,i){
-    h+='<tr><td>'+esc(r.area)+'</td><td>'+esc(r.what)+'</td><td>'+esc(r.impact)+'</td><td>'+logPill(r.level,lvlCls)+'</td><td>'+esc(r.who)+'</td>'+
-      '<td><select onchange="logSet(\'better\','+i+',\'status\',this.value)">'+selOpts(BETTER_STATUS,r.status)+'</select></td>'+
-      '<td><button class="btn-del" onclick="logDel(\'better\','+i+')">✕</button></td></tr>';
-  });
-  h+='</tbody></table></div>';p.innerHTML=h;
-}
-function addBetter(){
-  var v=function(id){return ($('#'+id)||{}).value||'';};
-  if(!v('b-area').trim()&&!v('b-what').trim())return;
-  D.better.push({id:uid(),area:v('b-area').trim(),who:v('b-who').trim(),what:v('b-what').trim(),impact:v('b-impact').trim(),level:v('b-level'),status:v('b-status')});
-  save();renderBetter();updateBadges();
-}
-
-function renderBlockers(){
-  var p=$('#panel-blockers');
-  var h='<div class="sec-head"><h2>Blockers</h2><span class="spacer"></span><button class="btn pri" onclick="toggleAdd(\'blockers\')">'+ic2('plus')+'Log blocker</button></div>';
-  h+='<div class="addform" id="add-blockers"><div class="row"><div><label>Blocked Rock</label><input id="bl-rock"></div><div><label>By whom</label><input id="bl-who"></div><div><label>Support from</label><input id="bl-from"></div></div>'+
-    '<div class="row"><div><label>Description</label><input id="bl-desc"></div><div><label>Support needed</label><input id="bl-support"></div></div>'+
-    '<div class="row"><div><label>Status</label><select id="bl-status">'+selOpts(BLOCK_STATUS,'Blocked')+'</select></div><div><label>Notes</label><input id="bl-notes"></div></div>'+
-    '<div class="acts"><button class="btn" onclick="toggleAdd(\'blockers\')">Cancel</button><button class="btn pri" onclick="addBlocker()">Save</button></div></div>';
-  if(!D.blockers.length){h+=emptyState('block','No blockers','Nothing is blocking a Rock right now.');p.innerHTML=h;return;}
-  var stCls={Blocked:'p-up','In Progress':'p-ar',Resolved:'p-ot'};
-  h+='<div class="card tablecard"><table class="tbl"><thead><tr><th>Rock</th><th>Description</th><th>Support needed</th><th>From</th><th>By</th><th>Status</th><th></th></tr></thead><tbody>';
-  D.blockers.forEach(function(r,i){
-    h+='<tr><td>'+esc(r.rock)+'</td><td>'+esc(r.desc)+'</td><td>'+esc(r.support)+'</td><td>'+esc(r.from)+'</td><td>'+esc(r.who)+'</td>'+
-      '<td><select onchange="logSet(\'blockers\','+i+',\'status\',this.value)">'+selOpts(BLOCK_STATUS,r.status)+'</select></td>'+
-      '<td><button class="btn-del" onclick="logDel(\'blockers\','+i+')">✕</button></td></tr>';
-  });
-  h+='</tbody></table></div>';p.innerHTML=h;
-}
-function addBlocker(){
-  var v=function(id){return ($('#'+id)||{}).value||'';};
-  if(!v('bl-rock').trim()&&!v('bl-desc').trim())return;
-  D.blockers.push({id:uid(),rock:v('bl-rock').trim(),who:v('bl-who').trim(),from:v('bl-from').trim(),desc:v('bl-desc').trim(),support:v('bl-support').trim(),status:v('bl-status'),notes:v('bl-notes').trim()});
-  save();renderBlockers();updateBadges();
-}
-
 function renderSupport(){
   var p=$('#panel-support');
   var h='<div class="sec-head"><h2>Support requests</h2><span class="spacer"></span><button class="btn pri" onclick="toggleAdd(\'support\')">'+ic2('plus')+'Log request</button></div>';
@@ -2738,6 +2877,8 @@ function carryOpenRocks(fromQ,toQ){var list=uncarried(fromQ,toQ);var dst=WB.quar
   list.forEach(function(r){var c=JSON.parse(JSON.stringify(r));c.id=uid();c.kind='project';c.carriedFrom={q:fromQ,id:r.id,kind:r.kind||'hard'};delete c.carriedTo;c.score='';c.comments=[];c.status=(r.subrocks&&r.subrocks.length)?'':(r.status==='Unplanned'?'':r.status||'');
     c.links=(r.links||[]).map(function(l){return Object.assign({},l,{id:uid()});});
     c.subrocks=(r.subrocks||[]).filter(function(s){var st=subStatus(s);return st!=='Done'&&st!=='Cancelled';}).map(function(s){var n=JSON.parse(JSON.stringify(s));n.id=uid();n.todoId='';n.doneDate='';return n;});
+    var subMap={};(r.subrocks||[]).forEach(function(s0,i0){});c.subrocks.forEach(function(n){var o=(r.subrocks||[]).find(function(s0){return s0.title===n.title&&s0.targetDate===n.targetDate;});if(o)subMap[o.id]=n.id;});
+    ((WB.quarters[fromQ]||{}).blockers||[]).forEach(function(b){if(b.rockId!==r.id||!blkOpen(b))return;dst.blockers=dst.blockers||[];dst.blockers.push(Object.assign({},b,{id:uid(),rockId:c.id,subId:subMap[b.subId]||'',carriedFrom:b.id}));});
     var cat=(r.cat&&ROCK_ARR[r.cat])?r.cat:'build';dst[ROCK_ARR[cat]]=dst[ROCK_ARR[cat]]||[];dst[ROCK_ARR[cat]].push(c);r.carriedTo=toQ;});
   return list.length;}
 function askCarry(fromQ,toQ){var n=uncarried(fromQ,toQ).length;if(!n)return;
@@ -2873,7 +3014,7 @@ function boot(){
       renderQuarterSel();render(CUR);setSync('ok');
     });
   },4000);
-  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');}});
+  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');closeModal('modal-blk');}});
 
   // load local cache first (migrates legacy single-workbook format into a quarter)
   var localWB=null;
