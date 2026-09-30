@@ -442,6 +442,9 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .pvrock{cursor:pointer;background:var(--surf2)}.pvrock .chev{transition:transform .15s;flex:0 0 auto}.pvrock .chev.open{transform:rotate(90deg)}
 .pvsub{padding-left:38px}
 .statnote{font-size:12.5px;color:var(--tx2);background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--r);padding:7px 11px;margin:-4px 0 12px}.statnote a{color:var(--blue-tx);font-weight:600}
+.rgrip{cursor:grab;color:var(--tx3);user-select:none;font-size:14px;margin-right:-6px}.rgrip:hover{color:var(--tx)}
+.rock.dragging{opacity:.4}.rock.dropto{box-shadow:0 -3px 0 var(--green)}
+.mvopt{display:flex!important;gap:8px;align-items:flex-start;font-size:13px!important;color:var(--tx)!important;margin:6px 0!important;font-weight:400!important;text-transform:none!important;letter-spacing:0!important}.mvopt input{width:auto!important;margin:3px 0 0!important}
 .hidnote{text-align:center;font-size:12.5px;color:var(--tx3);padding:14px 0}.hidnote a{color:var(--blue-tx)}
 .btn-flag{background:none;border:none;color:var(--tx3);width:24px;height:26px;border-radius:6px;font-size:13px;cursor:pointer}.btn-flag:hover{background:var(--amber-bg);color:var(--amber)}
 .flagtag{display:inline-block;margin-left:6px;font-size:10.5px;font-family:var(--mono);font-weight:600;padding:1px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber-tx);white-space:nowrap;cursor:help}
@@ -603,6 +606,17 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
       <button class="btn" onclick="closeModal('modal-blk')">Cancel</button>
       <button class="btn pri" onclick="saveBlk()">Save</button>
     </div>
+  </div>
+</div>
+<!-- Move into modal -->
+<div class="overlay" id="modal-move">
+  <div class="modal" style="max-width:560px">
+    <h3 id="mv-title">Move into…</h3>
+    <p style="font-size:12.5px;color:var(--tx2);margin-bottom:12px">It becomes a sub-rock of the one you pick (same owner, PortCo, status, latest target date; the description and comments go into its comments). Its to-dos, blockers and links follow. The original goes to Trash, so you can undo by restoring it.</p>
+    <label>Rock or project</label>
+    <select id="mv-target" style="width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px"></select>
+    <div id="mv-subs"></div>
+    <div class="acts" style="margin-top:16px"><button class="btn" onclick="_mv=null;closeModal('modal-move')">Cancel</button><button class="btn pri" onclick="doMoveInto()">Move</button></div>
   </div>
 </div>
 <!-- Long text modal -->
@@ -1587,7 +1601,7 @@ function renderWelcome(){
   var h='<div class="card whero"><h2>Welcome to the DCG Operating System</h2><p>This is where DCG plans and tracks each quarter: the rocks we commit to, the projects that come up along the way, who owns what, and what is due this week. Everything saves automatically and syncs to the whole team within a few seconds. The indicator in the top right shows <b>Saved</b> when you are up to date. Use the quarter picker at the top of the sidebar to switch quarters.</p></div>';
   h+='<div class="wgrid">';
   h+='<div class="card wcard"><h3>Overview &amp; My Items</h3><p><b>Overview</b> is the quarter at a glance: completion, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs. Rocks and projects each have their own numbers.</p><p><b>My Items</b> shows your own rocks, projects, sub-rocks, this week’s to-dos, deadlines and KPIs.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
-  h+='<div class="card wcard"><h3>Rocks &amp; Projects</h3><p>Each one lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you click <b>+ Add</b>, choose its type:</p><ul><li><b>Rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Done and cancelled items are hidden; use <b>Show: All</b> to see them. Filter by <b>Type: All · Rocks · Projects</b>.</p><p>At the end of a quarter, anything still open is carried into the next quarter <b>as a project</b> (with its open sub-rocks and links). The owner switches it back to a rock with the Type field if it is still a committed goal.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
+  h+='<div class="card wcard"><h3>Rocks &amp; Projects</h3><p>Each one lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you click <b>+ Add</b>, choose its type:</p><ul><li><b>Rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Drag the ⠿ handle to put rocks and projects in the order you want (shared with the team). <b>Move into…</b> (inside a rock) turns one into a sub-rock of another. Done and cancelled items are hidden; use <b>Show: All</b> to see them. Filter by <b>Type: All · Rocks · Projects</b>.</p><p>At the end of a quarter, anything still open is carried into the next quarter <b>as a project</b> (with its open sub-rocks and links). The owner switches it back to a rock with the Type field if it is still a committed goal.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
   h+='<div class="card wcard"><h3>Inside a rock or project</h3><p>Click one to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the milestones, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Timeline</b>: every sub-rock’s target date across the quarter, so bunched-up or slipping deadlines stand out.</li><li><b>To-Dos</b>: weekly to-dos linked to it. Linking a to-do to a rock just lists it here; it does not add a sub-rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
   h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: the same view as My Items for anyone on the team; pick the person at the top, or Everyone for the full list.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (rocks and projects shown separately), deadlines, this week’s to-dos, links &amp; contacts, and the full list.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
   h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: to-dos for the current week, the sub-rocks due this week and open blockers. Shared items show under each person.</li><li><b>Weekly Review</b>: one page for the team meeting: open blockers &amp; asks, what slipped since last week, what’s overdue and due soon, what got done, last week’s to-do completion by person, and new ideas.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, drag to reorder, sort by status, PortCo or rock (buttons or the column headers), or import the Excel tracker. Click <b>Notes / blockers</b> to read or edit the full text. Pick a rock in the Rock column to list the to-do under that rock. The <b>PortCo</b> column fills in from the rock (shown in italics) and can be changed; it decides which PortCo dashboard the to-do appears on.</li><li><b>Reminders</b>: when one of your sub-rocks is due this week or next, a reminder to-do appears automatically. It shares its status and its notes with the sub-rock (notes = the sub-rock’s comments), so updating either one updates both.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('review','Weekly Review')+wGo('todos','To-Dos')+'</div></div>';
@@ -1784,12 +1798,13 @@ function renderRockPanel(type){
   if(rocks.length)h+=completionBar(rocks);
   var gb=_grpBy[type]||'';
   if(rocksAll.length)h+='<div class="filt">'+kindFilterBar()+closedFilterBar(rocks.filter(isClosed).length)+'<span class="lbl" style="margin-left:12px">Group:</span><button class="btn sm'+(!gb?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'\')">None</button><button class="btn sm'+(gb==='portco'?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'portco\')">By PortCo</button></div>';
+  if(rocksAll.some(hasOrd))h+='<div class="statnote" style="background:var(--surf2);border-color:var(--bdr)">Custom order (drag ⠿ to move) · <a href="#" onclick="resetRockOrder(\''+type+'\');return false">Sort by status instead</a></div>';
   h+=statFilterNote(type);
   h+='<div class="addform" id="addform-'+type+'"></div>';
   var flt=statF(type);
   var shown=rocksAll.map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&(flt==='Done'||closedOk(o.r));});
   if(flt)shown=shown.filter(function(o){return rockStatus(o.r)===flt;});
-  shown.sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));});
+  shown.sort(rockOrderCmp(rocksAll));
   if(!rocksAll.length)h+=emptyState('rocks','No rocks yet','Click “+ Add” to create your first rock or project for this quarter.');
   else if(!shown.length)h+='<div class="empty">No rocks match this filter.</div>';
   else if(gb==='portco'){
@@ -1815,7 +1830,7 @@ function renderAllRocks(){
     var rs=getRocks(t).map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&(flt==='Done'||closedOk(o.r));});
     if(flt)rs=rs.filter(function(o){return rockStatus(o.r)===flt;});
     if(!rs.length)return;
-    rs.sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));});
+    rs.sort(rockOrderCmp(getRocks(t)));
     h+='<div class="sec-head"><h2>'+ROCK_LABELS[t]+'</h2><span class="sub">'+rs.length+'</span></div>';
     h+='<div class="rocklist">'+rs.map(function(o){return rockCard(t,o.r,o.i,true);}).join('')+'</div>';
   });
@@ -1828,9 +1843,9 @@ function rockCard(type,rock,idx,readonly){
   var st=rockStatus(rock);var pct=rockPct(rock);var key=type+'-'+rock.id;
   var open=!readonly&&D.expanded[key];
   var unp=st==='Unplanned';
-  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+(isProject(rock)?' proj':' hard')+'" data-key="'+key+'">';
+  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+(isProject(rock)?' proj':' hard')+'" data-key="'+key+'"'+(readonly?'':' ondragstart="rockDragStart(event,\''+type+'\',\''+rock.id+'\')" ondragover="rockDragOver(event,\''+type+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="rockDrop(event,\''+type+'\',\''+rock.id+'\')" ondragend="rockDragEnd()"')+'>';
   h+='<div class="rock-hd" onclick="toggleRock(\''+key+'\',event)">';
-  if(!readonly)h+='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
+  if(!readonly)h+='<span class="rgrip" title="Drag to reorder" onmousedown="rockArm(this)" onmouseup="_subArm=false;this.closest(\'.rock\').draggable=false" onclick="event.stopPropagation()">⠿</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
   h+=avatarStack(ownersOf(rock));
   h+='<span class="ttl" '+(readonly?'':'contenteditable onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'title\',this.textContent)"')+' onclick="event.stopPropagation()">'+esc(rock.title||'Untitled rock')+'</span>';
   if(readonly)h+='<span class="owner">'+(rock.owner?esc(rock.owner):'<span style="color:var(--tx3)">unassigned</span>')+'</span>';
@@ -1862,6 +1877,48 @@ function rockCard(type,rock,idx,readonly){
   h+='</div>';
   return h;
 }
+/* ---- Manual order of rocks & projects (shared with the team). Once someone drags, the page follows that order;
+   new items go to the bottom. "Sort by status instead" clears it. ---- */
+function hasOrd(r){return typeof r.ord==='number';}
+function rockOrderCmp(list){var manual=list.some(hasOrd);return function(a,b){
+  if(manual){var oa=hasOrd(a.r)?a.r.ord:1e9,ob=hasOrd(b.r)?b.r.ord:1e9;if(oa!==ob)return oa-ob;}
+  return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));};}
+function resetRockOrder(type){getRocks(type).forEach(function(r){delete r.ord;});save();render(CUR);}
+var _rockDrag=null;
+function rockArm(el){_subArm=true;var c=el.closest('.rock');if(c)c.draggable=true;}
+function rockDragStart(e,type,id){_rockDrag={type:type,id:id};try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}catch(x){}e.currentTarget.classList.add('dragging');}
+function rockDragOver(e,type){if(!_rockDrag||_rockDrag.type!==type)return;e.preventDefault();e.currentTarget.classList.add('dropto');}
+function rockDragEnd(){_rockDrag=null;_subArm=false;document.querySelectorAll('.rock').forEach(function(r){r.classList.remove('dragging','dropto');r.draggable=false;});}
+function rockDrop(e,type,toId){e.preventDefault();var d=_rockDrag;rockDragEnd();if(!d||d.type!==type||d.id===toId)return;
+  var arr=getRocks(type);var disp=arr.map(function(r,i){return {r:r,i:i};}).sort(rockOrderCmp(arr)).map(function(o){return o.r;});
+  var from=disp.findIndex(function(r){return r.id===d.id;}),to=disp.findIndex(function(r){return r.id===toId;});if(from<0||to<0)return;
+  var it=disp.splice(from,1)[0];disp.splice(to,0,it);disp.forEach(function(r,i){r.ord=i;});save();rerenderCurrent();}
+
+/* ---- Move a rock/project into another one as a sub-rock ---- */
+var _mv=null;
+function openMoveInto(type,id){var r=getRocks(type).find(function(x){return x.id===id;});if(!r)return;_mv={type:type,id:id};
+  var opts=ROCK_TYPES.map(function(t){var rs=getRocks(t).filter(function(x){return x.id!==id;});if(!rs.length)return '';return '<optgroup label="'+esc(ROCK_LABELS[t])+'">'+rs.map(function(x){return '<option value="'+t+'|'+x.id+'">'+(isProject(x)?'[Project] ':'')+esc(rockOptLabel(x))+'</option>';}).join('')+'</optgroup>';}).join('');
+  var subs=(r.subrocks||[]).length;
+  $('#mv-title').textContent='Move “'+(r.title||'Untitled')+'” into…';
+  $('#mv-target').innerHTML='<option value="">— pick a rock or project —</option>'+opts;
+  $('#mv-subs').innerHTML=subs?'<label style="margin-top:12px">Its '+subs+' sub-rock'+(subs>1?'s':'')+'</label><label class="mvopt"><input type="radio" name="mv-sub" value="move" checked> Move them too, as separate sub-rocks under the new one</label><label class="mvopt"><input type="radio" name="mv-sub" value="note"> Don’t move them; list them in the new sub-rock’s comments</label>':'';
+  openModal('modal-move');}
+function doMoveInto(){if(!_mv)return;var v=$('#mv-target').value;if(!v){$('#mv-target').focus();return;}var tt=v.split('|')[0],tid=v.split('|')[1];
+  var src=getRocks(_mv.type).find(function(x){return x.id===_mv.id;}),dst=getRocks(tt).find(function(x){return x.id===tid;});if(!src||!dst)return;
+  var mode=(document.querySelector('input[name="mv-sub"]:checked')||{}).value||'move';
+  var st=rockStatus(src);var subSt={'Done':'Done','Cancelled':'Cancelled','At Risk':'At Risk','On Track':'On Track'}[st]||'Not Started';
+  var ss=src.subrocks||[];var tds=ss.map(function(x){return x.targetDate;}).filter(Boolean).sort();var dds=ss.map(function(x){return x.doneDate;}).filter(Boolean).sort();
+  var notes=[];if(src.desc)notes.push(src.desc);
+  if(mode==='note'&&ss.length)notes.push('Sub-rocks:\n'+ss.map(function(x){return '- '+(x.title||'')+' ('+subStatus(x)+(x.targetDate?', due '+x.targetDate:'')+')';}).join('\n'));
+  (src.comments||[]).forEach(function(c){notes.push((c.who?c.who+' ':'')+(c.ts?'('+c.ts+')':'')+': '+(c.text||''));});
+  var ns={id:uid(),title:src.title||'(untitled)',kr:'',owner:src.owner||'',dept:'',portco:(src.portco||'').trim()||rockPortco(src)||(dst.portco||''),score:'',targetDate:tds.length?tds[tds.length-1]:'',doneDate:st==='Done'?(dds.length?dds[dds.length-1]:isoDate(new Date())):'',status:subSt,comment:notes.join('\n\n'),movedFrom:src.id};
+  dst.subrocks=dst.subrocks||[];dst.subrocks.push(ns);
+  if(mode==='move')ss.forEach(function(x){dst.subrocks.push(x);});
+  if(src.links&&src.links.length){dst.links=(dst.links||[]).concat(src.links.map(function(l){return Object.assign({},l,{id:uid()});}));}
+  (WB.todos||[]).forEach(function(t){if(t.rockId===src.id){t.rockId=dst.id;if(mode!=='move')t.subId='';}});
+  (D.blockers||[]).forEach(function(b){if(b.rockId===src.id){b.rockId=dst.id;if(!b.subId||mode!=='move')b.subId=b.subId&&mode==='move'?b.subId:ns.id;}});
+  trashPush('rock',src.title,src,{quarter:WB.activeQuarter,cat:(src.cat||_mv.type)});tomb(src.id);D[ROCK_ARR[_mv.type]]=getRocks(_mv.type).filter(function(x){return x.id!==src.id;});
+  var key=tt+'-'+dst.id;D.expanded[key]=true;D.srTab[key]='subs';_mv=null;closeModal('modal-move');save();render(CUR);updateBadges();setSync('load','Moved into “'+(dst.title||'')+'”…');}
 function toggleRock(key,e){if(e&&e.target.closest('.btn-del,.ttl'))return;D.expanded[key]=!D.expanded[key];save();rerenderCurrent();}
 function srTab(key,t){D.srTab[key]=t;save();rerenderCurrent();}
 function rockSet(type,id,k,v){var r=getRocks(type).find(function(x){return x.id===id;});if(!r)return;r[k]=v.trim?v.trim():v;
@@ -1876,6 +1933,7 @@ function rockMeta(type,rock){
     '<div class="rmeta-w" style="flex:0 0 132px"><label>PortCo</label><select onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'portco\',this.value);rerenderCurrent()">'+portcoOptsRock(rock.portco)+'</select></div>'+
     '<div class="rmeta-w" style="flex:0 0 132px"><label>Type</label><select onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'kind\',this.value);rerenderCurrent()"><option value="hard"'+(isProject(rock)?'':' selected')+'>Rock</option><option value="project"'+(isProject(rock)?' selected':'')+'>Project</option></select></div>'+
     '<div class="rmeta-w" style="flex:0 0 140px"><label>Category</label><select onclick="event.stopPropagation()" onchange="moveRock(\''+type+'\',\''+rock.id+'\',this.value)">'+catOpts(type)+'</select></div>'+
+    '<div class="rmeta-w" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn sm" title="Turn this into a sub-rock of another rock or project" onclick="event.stopPropagation();openMoveInto(\''+type+'\',\''+rock.id+'\')">Move into…</button></div>'+
     '<div class="rmeta-d"><label>Description</label><textarea rows="2" placeholder="What is this rock and why does it matter this quarter?" onclick="event.stopPropagation()" onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'desc\',this.value)">'+esc(rock.desc||'')+'</textarea></div>'+
     '</div>';
 }
@@ -3065,7 +3123,7 @@ function boot(){
       renderQuarterSel();render(CUR);setSync('ok');
     });
   },4000);
-  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');closeModal('modal-blk');}});
+  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');closeModal('modal-blk');closeModal('modal-move');}});
 
   // load local cache first (migrates legacy single-workbook format into a quarter)
   var localWB=null;
