@@ -441,6 +441,7 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .subcmt.empty{color:var(--tx3)}
 .pvrock{cursor:pointer;background:var(--surf2)}.pvrock .chev{transition:transform .15s;flex:0 0 auto}.pvrock .chev.open{transform:rotate(90deg)}
 .pvsub{padding-left:38px}
+.statnote{font-size:12.5px;color:var(--tx2);background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--r);padding:7px 11px;margin:-4px 0 12px}.statnote a{color:var(--blue-tx);font-weight:600}
 .hidnote{text-align:center;font-size:12.5px;color:var(--tx3);padding:14px 0}.hidnote a{color:var(--blue-tx)}
 .btn-flag{background:none;border:none;color:var(--tx3);width:24px;height:26px;border-radius:6px;font-size:13px;cursor:pointer}.btn-flag:hover{background:var(--amber-bg);color:var(--amber)}
 .flagtag{display:inline-block;margin-left:6px;font-size:10.5px;font-family:var(--mono);font-weight:600;padding:1px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber-tx);white-space:nowrap;cursor:help}
@@ -1328,7 +1329,7 @@ function kindOk(r){return !_kind||(_kind==='project'?isProject(r):!isProject(r))
 function kindFilterBar(){return '<span class="lbl">Type:</span><button class="btn sm'+(!_kind?' pri':'')+'" onclick="setKind(\'\')">All</button><button class="btn sm'+(_kind==='hard'?' pri':'')+'" onclick="setKind(\'hard\')">Rocks</button><button class="btn sm'+(_kind==='project'?' pri':'')+'" onclick="setKind(\'project\')">Projects</button>';}
 function isClosed(r){var st=rockStatus(r);return st==='Done'||st==='Cancelled';}
 var _showClosed=(function(){try{return localStorage.getItem('dc_showclosed')==='1';}catch(e){return false;}})();
-function setShowClosed(v){_showClosed=!!v;try{localStorage.setItem('dc_showclosed',v?'1':'0');}catch(e){}render(CUR);}
+function setShowClosed(v){if(ROCK_PANELS[CUR])setStatF(CUR,null);_showClosed=!!v;try{localStorage.setItem('dc_showclosed',v?'1':'0');}catch(e){}render(CUR);}
 function closedOk(r){return _showClosed||!isClosed(r);}
 function closedFilterBar(n){return '<span class="lbl" style="margin-left:12px">Show:</span><button class="btn sm'+(!_showClosed?' pri':'')+'" onclick="setShowClosed(false)">Open</button><button class="btn sm'+(_showClosed?' pri':'')+'" onclick="setShowClosed(true)" title="Include done and cancelled">All'+(n?' (+'+n+' done/cancelled)':'')+'</button>';}
 function kindChip(r){return isProject(r)?'<span class="kchip kproj" title="Project assignment: not counted in KPIs or completion stats">Project</span>':'<span class="kchip khard" title="Rock: committed quarterly goal">Rock</span>';}
@@ -1762,13 +1763,18 @@ function addNSRow(){D.ns.push({type:'LAGGING',metric:'New metric',owner:'',targe
    ============================================================ */
 function statRow(counts,tabKey){
   var defs=[['Unplanned','--red'],['Not Started','--bdr2'],['On Track','--green'],['At Risk','--amber'],['Done','--blue']];
-  var active=D.activeFilter[tabKey];
+  var active=statF(tabKey);
   return '<div class="stats">'+defs.map(function(d){
     var on=active===d[0];
     return '<div class="stat'+(on?' on':'')+'" onclick="toggleFilter(\''+tabKey+'\',\''+d[0]+'\')"><div class="n">'+(counts[d[0]]||0)+'</div><div class="l"><span class="sw" style="background:var('+d[1]+')"></span>'+d[0]+'</div></div>';
   }).join('')+'</div>';
 }
-function toggleFilter(tabKey,status){D.activeFilter[tabKey]=D.activeFilter[tabKey]===status?null:status;save();render(CUR);}
+/* Status-tile filter: per viewer (this browser), per quarter + page. Not saved to the shared data, so one person's filter never hides rocks for others. */
+var _statF=(function(){try{return JSON.parse(localStorage.getItem('dc_statf')||'{}')||{};}catch(e){return {};}})();
+function statF(tab){return _statF[(WB.activeQuarter||'')+'|'+tab]||null;}
+function setStatF(tab,v){var k=(WB.activeQuarter||'')+'|'+tab;if(v)_statF[k]=v;else delete _statF[k];try{localStorage.setItem('dc_statf',JSON.stringify(_statF));}catch(e){}}
+function toggleFilter(tabKey,status){setStatF(tabKey,statF(tabKey)===status?null:status);render(CUR);}
+function statFilterNote(tab){var f=statF(tab);return f?'<div class="statnote">Showing <b>'+esc(f)+'</b> only · <a href="#" onclick="toggleFilter(\''+tab+'\',\''+esc(f)+'\');return false">Show all statuses</a></div>':'';}
 var _grpBy={};
 function setGrpBy(t,v){_grpBy[t]=v;render(CUR);}
 function renderRockPanel(type){
@@ -1778,8 +1784,9 @@ function renderRockPanel(type){
   if(rocks.length)h+=completionBar(rocks);
   var gb=_grpBy[type]||'';
   if(rocksAll.length)h+='<div class="filt">'+kindFilterBar()+closedFilterBar(rocks.filter(isClosed).length)+'<span class="lbl" style="margin-left:12px">Group:</span><button class="btn sm'+(!gb?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'\')">None</button><button class="btn sm'+(gb==='portco'?' pri':'')+'" onclick="setGrpBy(\''+type+'\',\'portco\')">By PortCo</button></div>';
+  h+=statFilterNote(type);
   h+='<div class="addform" id="addform-'+type+'"></div>';
-  var flt=D.activeFilter[type];
+  var flt=statF(type);
   var shown=rocksAll.map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&(flt==='Done'||closedOk(o.r));});
   if(flt)shown=shown.filter(function(o){return rockStatus(o.r)===flt;});
   shown.sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)]||((parseFloat(b.r.score)||0)-(parseFloat(a.r.score)||0));});
@@ -1800,9 +1807,10 @@ function renderAllRocks(){
   var rocksAll0=allRocks();var rocks=rocksAll0.filter(function(x){return kindOk(x.rock);});var counts=statusCounts(rocks.map(function(x){return x.rock;}));
   var h=statRow(counts,'allrocks');
   if(rocksAll0.length)h+='<div class="filt">'+kindFilterBar()+closedFilterBar(rocks.filter(function(x){return isClosed(x.rock);}).length)+'</div>';
+  h+=statFilterNote('allrocks');
   h+=carryBanner();
   if(rocks.length)h+=completionBar(rocks.map(function(x){return x.rock;}));
-  var flt=D.activeFilter.allrocks;
+  var flt=statF('allrocks');
   ROCK_TYPES.forEach(function(t){
     var rs=getRocks(t).map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&(flt==='Done'||closedOk(o.r));});
     if(flt)rs=rs.filter(function(o){return rockStatus(o.r)===flt;});
