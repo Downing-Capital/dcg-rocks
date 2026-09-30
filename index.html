@@ -439,6 +439,9 @@ tr.subrow.dropto td{border-top:2px solid var(--green)}
 .subcmt{font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer;border-radius:6px;padding:3px 6px;border:1px solid transparent}
 .subcmt:hover{border-color:var(--bdr);background:var(--surf)}
 .subcmt.empty{color:var(--tx3)}
+.pvrock{cursor:pointer;background:var(--surf2)}.pvrock .chev{transition:transform .15s;flex:0 0 auto}.pvrock .chev.open{transform:rotate(90deg)}
+.pvsub{padding-left:38px}
+.hidnote{text-align:center;font-size:12.5px;color:var(--tx3);padding:14px 0}.hidnote a{color:var(--blue-tx)}
 .btn-flag{background:none;border:none;color:var(--tx3);width:24px;height:26px;border-radius:6px;font-size:13px;cursor:pointer}.btn-flag:hover{background:var(--amber-bg);color:var(--amber)}
 .flagtag{display:inline-block;margin-left:6px;font-size:10.5px;font-family:var(--mono);font-weight:600;padding:1px 7px;border-radius:5px;background:var(--amber-bg);color:var(--amber-tx);white-space:nowrap;cursor:help}
 .kblk{background:var(--red-bg);color:var(--red)}.kask{background:var(--blue-bg);color:var(--blue-tx)}
@@ -1034,7 +1037,8 @@ function tomb(id){if(!id)return;WB.deleted=WB.deleted||[];if(WB.deleted.indexOf(
 /* ---- Trash (soft-delete + restore) ---- */
 function trashPush(kind,label,obj,extra){
   WB.trash=WB.trash||[];
-  var e=Object.assign({id:uid(),kind:kind,label:label||'(untitled)',at:Date.now(),obj:JSON.parse(JSON.stringify(obj||{}))},extra||{});
+  var by='';try{by=(typeof myName==='function'&&myName())||(typeof authEmail==='function'?(authEmail()||'').split('@')[0]:'');}catch(x){}
+  var e=Object.assign({id:uid(),kind:kind,label:label||'(untitled)',at:Date.now(),by:by,obj:JSON.parse(JSON.stringify(obj||{}))},extra||{});
   WB.trash.unshift(e);
   if(WB.trash.length>60)WB.trash=WB.trash.slice(0,60);
 }
@@ -1383,7 +1387,7 @@ function personView(who,self){
   var isP=function(n){return !!n&&ownerMatches(n,who);};var ws=currentWeekStart();
   var rkAll=allRocks().filter(function(x){return ownersOf(x.rock).some(isP);});
   var sbAll=allSubs().filter(function(x){return splitOwners(x.sub.owner||x.rock.owner).some(isP)&&subStatus(x.sub)!=='Cancelled';});
-  var sbH=sbAll.filter(function(x){return !isProject(x.rock);});var dn=sbH.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pct=sbH.length?Math.round(dn/sbH.length*100):0;
+  var sbH=sbAll.filter(function(x){return !isProject(x.rock);});var dn=sbH.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pct=Math.round(weightedDone(personRockGroupsIn(WB.activeQuarter,who),isoDate(new Date()))*100);
   var risk=sbH.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
   var sbP=sbAll.filter(function(x){return isProject(x.rock);});var dnP=sbP.filter(function(x){return subStatus(x.sub)==='Done';}).length;var pctP=sbP.length?Math.round(dnP/sbP.length*100):0;
   var riskP=sbP.filter(function(x){return subStatus(x.sub)==='At Risk';}).length;
@@ -1392,7 +1396,7 @@ function personView(who,self){
   var over=dl.filter(function(o){return o.d<0&&!isProject(o.x.rock);}).length;var overP=dl.filter(function(o){return o.d<0&&isProject(o.x.rock);}).length;
   var td=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&todoOwnerList(t).some(isP);});var tdOpen=td.filter(function(t){var s=todoStatus(t);return s!=='Done'&&s!=='Cancelled';}).length;
   var h='<div class="sec-head" style="margin-top:4px"><h2>Rocks</h2><span class="sub">count toward KPIs</span></div>';
-  h+='<div class="kpis">'+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('Rock completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done','prog'+pct)+kpi('At risk',risk,'sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'sub-rocks past their target',null,over?'amber':'')+'</div>';
+  h+='<div class="kpis">'+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('Rock completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done · weighted','prog'+pct)+kpi('At risk',risk,'sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'sub-rocks past their target',null,over?'amber':'')+'</div>';
   h+='<div class="sec-head" style="margin-top:4px"><h2>Projects</h2><span class="sub">not counted in KPIs</span></div>';
   h+=nPrj?'<div class="kpis">'+kpi('Projects',nPrj,'projects owned or with sub-rocks')+kpi('Project completion',pctP+'%',dnP+' of '+sbP.length+' sub-rocks done','prog'+pctP)+kpi('At risk',riskP,'project sub-rocks at risk',null,riskP?'amber':'')+kpi('Overdue',overP,'project sub-rocks past their target',null,overP?'amber':'')+'</div>':'<div class="card" style="margin-bottom:20px"><div class="empty" style="padding:16px">No projects this quarter.</div></div>';
   h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">'+td.length+'</span><span class="spacer"></span><button class="btn sm" onclick="goTodosOf(\''+esc(who).replace(/'/g,"\\'")+'\')">Open To-Dos</button></div>'+
@@ -1404,14 +1408,35 @@ function personView(who,self){
   var sb=sbAll.filter(function(x){return kindOk(x.rock)&&closedOk(x.rock)&&(_showClosed||subStatus(x.sub)!=='Done');});
   var pre=self?'My ':'';
   h+='<div class="filt" style="margin-top:22px">'+kindFilterBar()+closedFilterBar(rkAll.filter(function(x){return isClosed(x.rock);}).length)+'</div>';
-  h+='<div class="sec-head" style="margin-top:6px"><h2>'+pre+'rocks &amp; projects</h2><span class="sub">'+rk.length+'</span></div><div class="card" style="padding:4px 0">'+(rk.length?rk.sort(function(a,b){return SORTORD[rockStatus(a.rock)]-SORTORD[rockStatus(b.rock)];}).map(function(x){return indRockRow(x).replace('<span class="tag">Rock</span>',kindChip(x.rock));}).join(''):'<div class="empty" style="padding:14px">Nothing to show.</div>')+'</div>';
-  h+='<div class="sec-head"><h2>'+pre+'sub-rocks</h2><span class="sub">'+sb.length+(_showClosed?'':' open')+'</span></div><div class="card" style="padding:4px 0">'+(sb.length?sb.sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).map(indSubRow).join(''):'<div class="empty" style="padding:14px">Nothing to show.</div>')+'</div>';
+  var groups=[],gi={};
+  rkAll.forEach(function(x){gi[x.rock.id]={x:x,own:true,subs:[]};groups.push(gi[x.rock.id]);});
+  sbAll.forEach(function(x){var g=gi[x.rock.id];if(!g){g=gi[x.rock.id]={x:{rock:x.rock,type:x.type},own:false,subs:[]};groups.push(g);}});
+  groups.forEach(function(g){var all=(g.x.rock.subrocks||[]).filter(function(s){return subStatus(s)!=='Cancelled';});
+    g.subs=all.filter(function(s){return g.own||splitOwners(s.owner||g.x.rock.owner).some(isP);}).map(function(s){return {sub:s,rock:g.x.rock,type:g.x.type};});});
+  var vis=groups.filter(function(g){return kindOk(g.x.rock)&&closedOk(g.x.rock);});
+  vis.sort(function(a,b){return SORTORD[rockStatus(a.x.rock)]-SORTORD[rockStatus(b.x.rock)];});
+  var nSub=0;vis.forEach(function(g){nSub+=g.subs.filter(function(y){return _showClosed||subStatus(y.sub)!=='Done';}).length;});
+  h+='<div class="sec-head" style="margin-top:6px"><h2>'+pre+'rocks &amp; projects</h2><span class="sub">'+vis.length+' · '+nSub+(_showClosed?'':' open')+' sub-rocks</span><span class="spacer"></span><button class="btn sm" onclick="pvAll(true)">Expand all</button><button class="btn sm" onclick="pvAll(false)">Collapse all</button></div><div class="card" style="padding:4px 0">';
+  _pvLast=vis.map(function(g){return g.x.rock.id;});
+  if(!vis.length)h+='<div class="empty" style="padding:14px">Nothing to show.</div>';
+  vis.forEach(function(g){var rid=g.x.rock.id;var coll=!!_pvColl[rid];var ss=g.subs.filter(function(y){return _showClosed||subStatus(y.sub)!=='Done';}).sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];});
+    var row=indRockRow(g.x).replace('<span class="tag">Rock</span>','<svg class="chev'+(coll?'':' open')+'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'+kindChip(g.x.rock));
+    row=row.replace('<div class="drow">','<div class="drow pcrock pvrock" onclick="pvToggle(\''+rid+'\',event)">');
+    if(!g.own)row=row.replace('% complete','% complete · '+esc(ownersOf(g.x.rock).join(', ')||'unassigned')+'’s rock');
+    h+=row;
+    if(!coll){ss.forEach(function(y){h+=indSubRow(y).replace('<div class="drow">','<div class="drow pvsub">').replace('<span class="tag">Sub</span>','');});
+      if(!ss.length)h+='<div class="drow pvsub"><span class="rname">'+(g.subs.length?'All '+(self?'your':'their')+' sub-rocks here are done.':'No sub-rocks yet.')+'</span></div>';}
+  });
+  h+='</div>';
   ensureScorecard();var qn=activeQNum();var pi=-1;(WB.scorecard.people||[]).some(function(pp,i){if(!scRemoved(pp)&&ownerMatches(pp.name,who)){pi=i;return true;}return false;});
   h+='<div class="sec-head"><h2>'+pre+'KPIs</h2><span class="sub">Q'+qn+'</span></div>';
   if(pi<0)h+='<div class="card"><div class="empty" style="padding:18px">No KPIs set up for '+esc(who)+' on the scorecard.</div></div>';
   else{var pp=WB.scorecard.people[pi];h+=pp.kpis.length?'<div class="kpicards">'+pp.kpis.map(function(k,ki){return kpiCard(pi,ki,qn,false);}).join('')+'</div>':'<div class="card"><div class="empty" style="padding:18px">No KPIs yet.</div></div>';}
   return h;
 }
+var _pvColl={},_pvLast=[];
+function pvToggle(id,e){if(e&&e.target.closest('select,button,input'))return;_pvColl[id]=!_pvColl[id];render(CUR);}
+function pvAll(open){_pvLast.forEach(function(id){_pvColl[id]=!open;});render(CUR);}
 function renderMine(){
   var p=$('#panel-mine');var me=myName();
   if(!me){p.innerHTML=emptyState('user','Your login isn’t linked to a name yet','Link it once and this page shows your rocks, projects, sub-rocks, to-dos and KPIs.')+'<div style="text-align:center;margin-top:-10px"><button class="btn pri" onclick="openWho()">Link my login</button></div>';return;}
@@ -1766,6 +1791,8 @@ function renderRockPanel(type){
     order.forEach(function(pc){h+='<div class="sec-head"><h2>'+esc(pc)+'</h2><span class="sub">'+groups[pc].length+' · '+weightedPct(hardRocks(groups[pc].map(function(o){return o.r;})))+'%</span></div><div class="rocklist">'+groups[pc].map(function(o){return rockCard(type,o.r,o.i);}).join('')+'</div>';});
   }
   else h+='<div class="rocklist">'+shown.map(function(o){return rockCard(type,o.r,o.i);}).join('')+'</div>';
+  var nHid=(!_showClosed&&flt!=='Done')?rocks.filter(isClosed).length:0;
+  if(nHid)h+='<div class="hidnote">'+nHid+' done or cancelled '+(nHid>1?'are':'is')+' hidden · <a href="#" onclick="setShowClosed(true);return false">Show them</a></div>';
   p.innerHTML=h;
 }
 function renderAllRocks(){
@@ -1785,6 +1812,8 @@ function renderAllRocks(){
     h+='<div class="rocklist">'+rs.map(function(o){return rockCard(t,o.r,o.i,true);}).join('')+'</div>';
   });
   if(!rocksAll0.length)h+=emptyState('rocks','No rocks yet','Add rocks under each category to see them here.');else if(!rocks.length)h+='<div class="empty">No rocks match this filter.</div>';
+  var nHidA=(!_showClosed&&flt!=='Done')?rocks.filter(function(x){return isClosed(x.rock);}).length:0;
+  if(nHidA)h+='<div class="hidnote">'+nHidA+' done or cancelled '+(nHidA>1?'are':'is')+' hidden · <a href="#" onclick="setShowClosed(true);return false">Show them</a></div>';
   p.innerHTML=h;
 }
 function rockCard(type,rock,idx,readonly){
@@ -1827,7 +1856,8 @@ function rockCard(type,rock,idx,readonly){
 }
 function toggleRock(key,e){if(e&&e.target.closest('.btn-del,.ttl'))return;D.expanded[key]=!D.expanded[key];save();rerenderCurrent();}
 function srTab(key,t){D.srTab[key]=t;save();rerenderCurrent();}
-function rockSet(type,id,k,v){var r=getRocks(type).find(function(x){return x.id===id;});if(r){r[k]=v.trim?v.trim():v;save();}}
+function rockSet(type,id,k,v){var r=getRocks(type).find(function(x){return x.id===id;});if(!r)return;r[k]=v.trim?v.trim():v;
+  if(k==='portco'&&r.portco)(r.subrocks||[]).forEach(function(sb){if(!(sb.portco||'').trim())sb.portco=r.portco;});save();}
 function rockSetWeight(type,id,v){var r=getRocks(type).find(function(x){return x.id===id;});if(r){r.weight=v;save();rerenderCurrent();}}
 function portcoOptsRock(v){return '<option value=""'+(!v?' selected':'')+'>—</option>'+PORTCOS.map(function(pc){return '<option'+(v===pc?' selected':'')+'>'+esc(pc)+'</option>';}).join('');}
 function catOpts(cur){return ROCK_TYPES.map(function(t){return '<option value="'+t+'"'+(t===cur?' selected':'')+'>'+esc(ROCK_LABELS[t].replace(' Rocks',''))+'</option>';}).join('');}
@@ -1905,7 +1935,7 @@ function addSub(type,rid){
   var inp=$('#newsub-'+rid);var t=inp?inp.value.trim():'';if(!t)return;
   var r=getRocks(type).find(function(x){return x.id===rid;});
   r.subrocks=r.subrocks||[];
-  r.subrocks.push({id:uid(),title:t,kr:'',owner:'',dept:'',portco:'',score:'',targetDate:'',doneDate:'',status:'Not Started',milestones:Array(12).fill(''),msNotes:Array(12).fill('')});
+  r.subrocks.push({id:uid(),title:t,kr:'',owner:'',dept:'',portco:(r.portco||'').trim()||rockPortco(r)||'',score:'',targetDate:'',doneDate:'',status:'Not Started',milestones:Array(12).fill(''),msNotes:Array(12).fill('')});
   save();rerenderCurrent();
 }
 function findSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===sid;});}
@@ -1957,7 +1987,7 @@ function showAddRock(type){
   if(CUR!==type)switchTab(type);
   var f=$('#addform-'+type);if(!f)return;
   f.classList.add('on');
-  f.innerHTML='<div class="row"><div><label>Title</label><input id="ar-title-'+type+'" placeholder="What\'s the goal or project?"></div><div><label>Owner</label><input id="ar-owner-'+type+'" list="owner-options" placeholder="Who owns it?"></div></div><div class="arkind"><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="hard" checked><span><b>Rock</b><small>A goal we are committing to this quarter. Counts toward KPIs and completion.</small></span></label><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="project"><span><b>Project</b><small>Something that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</small></span></label></div><div class="acts"><button class="btn" onclick="hideAddRock(\''+type+'\')">Cancel</button><button class="btn pri" onclick="addRock(\''+type+'\')">Add</button></div>';
+  f.innerHTML='<div class="row"><div><label>Title</label><input id="ar-title-'+type+'" placeholder="What\'s the goal or project?"></div><div><label>Owner</label><input id="ar-owner-'+type+'" list="owner-options" placeholder="Who owns it?"></div><div><label>PortCo</label><select id="ar-pc-'+type+'">'+portcoOptsRock('')+'</select></div></div><div class="arkind"><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="hard" checked><span><b>Rock</b><small>A goal we are committing to this quarter. Counts toward KPIs and completion.</small></span></label><label class="arkopt"><input type="radio" name="ar-kind-'+type+'" value="project"><span><b>Project</b><small>Something that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</small></span></label></div><div class="acts"><button class="btn" onclick="hideAddRock(\''+type+'\')">Cancel</button><button class="btn pri" onclick="addRock(\''+type+'\')">Add</button></div>';
   setTimeout(function(){var t=$('#ar-title-'+type);if(t)t.focus();},30);
 }
 function hideAddRock(type){var f=$('#addform-'+type);if(f){f.classList.remove('on');f.innerHTML='';}}
@@ -1965,7 +1995,8 @@ function addRock(type){
   var t=$('#ar-title-'+type),o=$('#ar-owner-'+type);
   var title=t?t.value.trim():'';if(!title){if(t)t.focus();return;}
   var kEl=document.querySelector('input[name="ar-kind-'+type+'"]:checked');var kind=kEl&&kEl.value==='project'?'project':'hard';
-  D[ROCK_ARR[type]].push({id:uid(),title:title,dim:'',owner:o?o.value.trim():'',dept:'',portco:'',cat:type,kind:kind,score:'',weight:'',desc:'',comments:[],links:[],subrocks:[]});
+  var pcEl=$('#ar-pc-'+type);
+  D[ROCK_ARR[type]].push({id:uid(),title:title,dim:'',owner:o?o.value.trim():'',dept:'',portco:pcEl?pcEl.value:'',cat:type,kind:kind,score:'',weight:'',desc:'',comments:[],links:[],subrocks:[]});
   save();hideAddRock(type);render(type);updateBadges();
 }
 function delRock(type,id,e){
@@ -2235,8 +2266,10 @@ function rockPortco(r){if(!r)return '';var pc=(r.portco||'').trim();if(pc)return
   var m=/PortCo:\s*([^\n,;|]+)/i.exec(r.desc||'');if(m)return m[1].trim();
   var c={},best='',bn=0;(r.subrocks||[]).forEach(function(s){var p=(s.portco||'').trim();if(p){c[p]=(c[p]||0)+1;if(c[p]>bn){bn=c[p];best=p;}}});return best;}
 function rockOptLabel(r){var pc=rockPortco(r);var t=(r.title||'untitled');return (pc?'['+pc+'] ':'')+(t.length>60?t.slice(0,58)+'…':t);}
+/* The quarter a date falls in: the latest quarter whose start date is on/before it. */
+function quarterForDate(iso){if(!iso)return '';var best='',bs='';Object.keys(WB.quarters||{}).forEach(function(k){var st=(WB.quarters[k]||{}).qStart||'';if(st&&st<=iso&&st>bs){bs=st;best=k;}});return best;}
 function rockLinkSelect(t){
-  var q=WB.quarters[WB.activeQuarter]||{};var rocks=[];
+  var q=WB.quarters[quarterForDate(t.weekStart||currentWeekStart())||WB.activeQuarter]||{};var rocks=[];
   ['ideationRocks','talentRocks','buildRocks','opsRocks','ceoRocks'].forEach(function(k){(q[k]||[]).forEach(function(r){rocks.push(r);});});
   var owner=(t.owner||'').trim();
   var assoc=rocks.filter(function(r){
@@ -2559,14 +2592,18 @@ function quarterYear(){var m=/(\d{4})/.exec(WB.activeQuarter||'');return m?+m[1]
 function quarterLabelFor(qn,year){var want=qOrd('Q'+qn+' '+year);var hit=null;Object.keys(WB.quarters||{}).forEach(function(k){if(qOrd(k)===want)hit=k;});return hit;}
 function personSubsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
   quarterRockList(q).forEach(function(r){if(isProject(r))return;(r.subrocks||[]).forEach(function(s){if((s.status||'')==='Cancelled')return;if(splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);}))out.push(s);});});return out;}
+/* Weighted by rock: each rock counts by its weight; within a rock, the share of the person's sub-rocks done. */
+function personRockGroupsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
+  quarterRockList(q).forEach(function(r){if(isProject(r))return;var ss=(r.subrocks||[]).filter(function(s){return (s.status||'')!=='Cancelled'&&splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);});});if(ss.length)out.push({w:rockWeight(r),subs:ss});});return out;}
+function weightedDone(groups,iso){var tw=0,acc=0;groups.forEach(function(g){tw+=g.w;acc+=g.w*g.subs.filter(function(s){return doneBy(s,iso);}).length/g.subs.length;});return tw?acc/tw:0;}
 function doneBy(s,iso){if(s.doneDate)return s.doneDate<=iso;return (s.status||'')==='Done'&&iso>=isoDate(new Date());}
 function autoRocks(k){if(!isAutoRocksKpi(k))return null;var pp=kpiPerson(k);if(!pp)return null;
   var year=quarterYear(),today=isoDate(new Date()),monthly=[];
   for(var mi=0;mi<12;mi++){var qn=Math.floor(mi/3)+1,ql=quarterLabelFor(qn,year);var first=isoDate(new Date(year,mi,1)),last=isoDate(new Date(year,mi+1,0));
-    if(!ql||first>today){monthly.push('');continue;}var subs=personSubsIn(ql,pp.name);if(!subs.length){monthly.push('');continue;}
-    var cut=last<today?last:today;monthly.push(Math.round(subs.filter(function(s){return doneBy(s,cut);}).length/subs.length*1000)/1000);}
+    if(!ql||first>today){monthly.push('');continue;}var gr=personRockGroupsIn(ql,pp.name);if(!gr.length){monthly.push('');continue;}
+    var cut=last<today?last:today;monthly.push(Math.round(weightedDone(gr,cut)*1000)/1000);}
   var qn0=parseInt(activeQNum(),10),ql0=quarterLabelFor(qn0,year),subs0=ql0?personSubsIn(ql0,pp.name):[];
-  var done0=subs0.filter(function(s){return doneBy(s,today);}).length;var actual=subs0.length?Math.round(done0/subs0.length*1000)/1000:'';
+  var done0=subs0.filter(function(s){return doneBy(s,today);}).length;var gr0=ql0?personRockGroupsIn(ql0,pp.name):[];var actual=subs0.length?Math.round(weightedDone(gr0,today)*1000)/1000:'';
   var plan=k.q&&k.q[qn0]?k.q[qn0].plan:'';var status='';
   if(typeof plan==='number'&&typeof actual==='number'){var qs=new Date(year,(qn0-1)*3,1),qe=new Date(year,qn0*3,1),now=new Date();
     var frac=Math.max(0,Math.min(1,(now-qs)/(qe-qs)));var exp=plan*frac;status=actual>=exp-1e-9?'On Track':actual>=exp*0.8?'Behind':'Off Track';}
@@ -2783,7 +2820,7 @@ function renderTrash(){
   h+='<div class="card" style="padding:6px 0">';
   items.forEach(function(e){
     var q=e.quarter?' · '+esc(e.quarter):'';
-    h+='<div class="drow"><span class="tag">'+(KIND[e.kind]||esc(e.kind))+'</span><div class="grow"><div>'+esc(e.label||'(untitled)')+'</div><div class="rname">deleted '+esc(fmtWhen(e.at))+q+'</div></div><button class="btn sm pri" onclick="restoreTrash(\''+e.id+'\')">Restore</button><button class="btn-del" onclick="purgeTrash(\''+e.id+'\')" title="Delete permanently">✕</button></div>';
+    h+='<div class="drow"><span class="tag">'+(KIND[e.kind]||esc(e.kind))+'</span><div class="grow"><div>'+esc(e.label||'(untitled)')+'</div><div class="rname">deleted '+esc(fmtWhen(e.at))+(e.by?' by '+esc(e.by):'')+q+'</div></div><button class="btn sm pri" onclick="restoreTrash(\''+e.id+'\')">Restore</button><button class="btn-del" onclick="purgeTrash(\''+e.id+'\')" title="Delete permanently">✕</button></div>';
   });
   h+='</div>';p.innerHTML=h;
 }
