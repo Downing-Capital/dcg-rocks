@@ -310,6 +310,8 @@ tr.subrow.sr-done>td{background:var(--green-bg)}tr.subrow.sr-risk>td{background:
 .btn-flag.on{color:var(--teal);background:var(--teal-bg)}
 .pvadd{gap:8px}.pvadd input{flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:6px 9px}.pvadd input[type=date]{flex:0 0 140px}
 .sublnk{margin-right:8px}
+tr.subrow .btn-flag,tr.subrow .btn-del{width:20px;padding:0}tr.subrow td:last-child{padding-left:2px;padding-right:2px}
+.arsec .chev{transition:transform .15s;margin-right:6px;flex:0 0 auto}.arsec .chev.open{transform:rotate(90deg)}.arsec .spacer{flex:1}.arsec .btn{margin-left:6px}
 .filt .lbl{font-size:12px;color:var(--tx2)}
 
 /* dashboard group */
@@ -1857,6 +1859,16 @@ function rockFilterBar(tab){var pc=rf('pc'),who=rf('who'),st=statF(tab)||'';
     ((pc||who||st)?'<a href="#" class="lbl" style="margin-left:8px" onclick="clearRf(\''+tab+'\');return false">Clear filters</a>':'')+'</div>';}
 function srCls(sub){var st=subStatus(sub);return st==='Done'?' sr-done':st==='At Risk'?' sr-risk':'';}
 function normDesc(x){return String(x||'').trim().replace(/\s+/g,' ').toLowerCase();}
+/* All Rocks sections: hide/show a whole section (per viewer) and open/close every rock in it */
+var _arHide=(function(){try{return JSON.parse(localStorage.getItem('dc_arhide')||'{}')||{};}catch(e){return {};}})();
+var _arSets={};
+function arToggleSec(k){if(_arHide[k])delete _arHide[k];else _arHide[k]=1;try{localStorage.setItem('dc_arhide',JSON.stringify(_arHide));}catch(e){}render(CUR);}
+function arOpenAll(k,open){delete _arHide[k];try{localStorage.setItem('dc_arhide',JSON.stringify(_arHide));}catch(e){}(_arSets[k]||[]).forEach(function(key){D.expanded[key]=open;});save();render(CUR);}
+function arGroup(k,title,sub,items){_arSets[k]=items.map(function(o){return o.t+'-'+o.r.id;});var hid=!!_arHide[k];var kq=esc(k).replace(/'/g,"\\'");
+  var h='<div class="sec-head arsec" onclick="arToggleSec(\''+kq+'\')" style="cursor:pointer"><svg class="chev'+(hid?'':' open')+'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><h2>'+title+'</h2><span class="sub">'+sub+'</span><span class="spacer"></span>'+
+    '<button class="btn sm" onclick="event.stopPropagation();arOpenAll(\''+kq+'\',true)">Expand all</button><button class="btn sm" onclick="event.stopPropagation();arOpenAll(\''+kq+'\',false)">Collapse all</button></div>';
+  if(!hid)h+='<div class="rocklist">'+items.map(function(o){return rockCard(o.t,o.r,o.i,false,true);}).join('')+'</div>';
+  return h;}
 function renderAllRocks(){
   var p=$('#panel-allrocks');
   var rocksAll0=allRocks();var rocks=rocksAll0.filter(function(x){return kindOk(x.rock)&&rfOk(x.rock);});var counts=statusCounts(rocks.map(function(x){return x.rock;}));
@@ -1871,28 +1883,28 @@ function renderAllRocks(){
       var pc=rockPortco(r)||'— No PortCo';(pg[pc]=pg[pc]||[]).push({t:t,r:r,i:i});});});
     var po=PORTCOS.filter(function(pc){return pg[pc];});Object.keys(pg).forEach(function(k){if(po.indexOf(k)<0)po.push(k);});
     po.forEach(function(pc){var it=pg[pc].sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)];});
-      h+='<div class="sec-head"><h2>'+esc(pc)+'</h2><span class="sub">'+it.length+' · '+weightedPct(hardRocks(it.map(function(o){return o.r;})))+'%</span></div><div class="rocklist">'+it.map(function(o){return rockCard(o.t,o.r,o.i,true);}).join('')+'</div>';});
+      h+=arGroup('pc|'+pc,esc(pc),it.length+' · '+weightedPct(hardRocks(it.map(function(o){return o.r;})))+'%',it);});
   }
   else ROCK_TYPES.forEach(function(t){
     var rs=getRocks(t).map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&rfOk(o.r)&&(flt==='Done'||flt==='Cancelled'||closedOk(o.r));});
     if(flt)rs=rs.filter(function(o){return rockStatus(o.r)===flt;});
     if(!rs.length)return;
     rs.sort(rockOrderCmp(getRocks(t)));
-    h+='<div class="sec-head"><h2>'+ROCK_LABELS[t]+'</h2><span class="sub">'+rs.length+'</span></div>';
-    h+='<div class="rocklist">'+rs.map(function(o){return rockCard(t,o.r,o.i,true);}).join('')+'</div>';
+    h+=arGroup('cat|'+t,ROCK_LABELS[t],rs.length,rs.map(function(o){return {t:t,r:o.r,i:o.i};}));
   });
   if(!rocksAll0.length)h+=emptyState('rocks','No rocks yet','Add rocks under each category to see them here.');else if(!rocks.length)h+='<div class="empty">No rocks match this filter.</div>';
   var nHidA=(!_showClosed&&flt!=='Done'&&flt!=='Cancelled')?rocks.filter(function(x){return isClosed(x.rock);}).length:0;
   if(nHidA)h+='<div class="hidnote">'+nHidA+' done or cancelled '+(nHidA>1?'are':'is')+' hidden · <a href="#" onclick="setShowClosed(true);return false">Show them</a></div>';
   p.innerHTML=h;
 }
-function rockCard(type,rock,idx,readonly){
+function rockCard(type,rock,idx,readonly,nodrag){
   var st=rockStatus(rock);var pct=rockPct(rock);var key=type+'-'+rock.id;
   var open=!readonly&&D.expanded[key];
   var unp=st==='Unplanned';
-  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+(isProject(rock)?' proj':' hard')+'" data-key="'+key+'"'+(readonly?'':' ondragstart="rockDragStart(event,\''+type+'\',\''+rock.id+'\')" ondragover="rockDragOver(event,\''+type+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="rockDrop(event,\''+type+'\',\''+rock.id+'\')" ondragend="rockDragEnd()"')+'>';
+  var h='<div class="rock'+(open?' open':'')+(unp?' unp':'')+(st==='Done'?' done':'')+(isProject(rock)?' proj':' hard')+'" data-key="'+key+'"'+(readonly||nodrag?'':' ondragstart="rockDragStart(event,\''+type+'\',\''+rock.id+'\')" ondragover="rockDragOver(event,\''+type+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="rockDrop(event,\''+type+'\',\''+rock.id+'\')" ondragend="rockDragEnd()"')+'>';
   h+='<div class="rock-hd" onclick="toggleRock(\''+key+'\',event)">';
-  if(!readonly)h+='<span class="rgrip" title="Drag to reorder" onmousedown="rockArm(this)" onmouseup="_subArm=false;this.closest(\'.rock\').draggable=false" onclick="event.stopPropagation()">⠿</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
+  if(!readonly&&!nodrag)h+='<span class="rgrip" title="Drag to reorder" onmousedown="rockArm(this)" onmouseup="_subArm=false;this.closest(\'.rock\').draggable=false" onclick="event.stopPropagation()">⠿</span>';
+  if(!readonly)h+='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
   h+=avatarStack(ownersOf(rock));
   h+='<span class="ttl" '+(readonly?'':'contenteditable onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'title\',this.textContent)"')+' onclick="event.stopPropagation()">'+esc(rock.title||'Untitled rock')+'</span>';
   if(readonly)h+='<span class="owner">'+(rock.owner?esc(rock.owner):'<span style="color:var(--tx3)">unassigned</span>')+'</span>';
