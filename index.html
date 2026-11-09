@@ -1861,12 +1861,19 @@ function renderAllRocks(){
   var p=$('#panel-allrocks');
   var rocksAll0=allRocks();var rocks=rocksAll0.filter(function(x){return kindOk(x.rock)&&rfOk(x.rock);});var counts=statusCounts(rocks.map(function(x){return x.rock;}));
   var h=statRow(counts,'allrocks');
-  if(rocksAll0.length)h+='<div class="filt">'+kindFilterBar()+closedFilterBar(rocks.filter(function(x){return isClosed(x.rock);}).length)+'</div>'+rockFilterBar('allrocks');
+  if(rocksAll0.length)h+='<div class="filt">'+kindFilterBar()+closedFilterBar(rocks.filter(function(x){return isClosed(x.rock);}).length)+'<span class="lbl" style="margin-left:12px">Group:</span><button class="btn sm'+(_grpBy.allrocks!=='portco'?' pri':'')+'" onclick="setGrpBy(\'allrocks\',\'\')">Category</button><button class="btn sm'+(_grpBy.allrocks==='portco'?' pri':'')+'" onclick="setGrpBy(\'allrocks\',\'portco\')">By PortCo</button></div>'+rockFilterBar('allrocks');
   h+=statFilterNote('allrocks');
   h+=carryBanner();
   if(rocks.length)h+=completionBar(rocks.map(function(x){return x.rock;}));
   var flt=statF('allrocks');
-  ROCK_TYPES.forEach(function(t){
+  if(_grpBy.allrocks==='portco'){var pg={};
+    ROCK_TYPES.forEach(function(t){getRocks(t).forEach(function(r,i){if(!(kindOk(r)&&rfOk(r)&&(flt==='Done'||flt==='Cancelled'||closedOk(r))))return;if(flt&&rockStatus(r)!==flt)return;
+      var pc=rockPortco(r)||'— No PortCo';(pg[pc]=pg[pc]||[]).push({t:t,r:r,i:i});});});
+    var po=PORTCOS.filter(function(pc){return pg[pc];});Object.keys(pg).forEach(function(k){if(po.indexOf(k)<0)po.push(k);});
+    po.forEach(function(pc){var it=pg[pc].sort(function(a,b){return SORTORD[rockStatus(a.r)]-SORTORD[rockStatus(b.r)];});
+      h+='<div class="sec-head"><h2>'+esc(pc)+'</h2><span class="sub">'+it.length+' · '+weightedPct(hardRocks(it.map(function(o){return o.r;})))+'%</span></div><div class="rocklist">'+it.map(function(o){return rockCard(o.t,o.r,o.i,true);}).join('')+'</div>';});
+  }
+  else ROCK_TYPES.forEach(function(t){
     var rs=getRocks(t).map(function(r,i){return {r:r,i:i};}).filter(function(o){return kindOk(o.r)&&rfOk(o.r)&&(flt==='Done'||flt==='Cancelled'||closedOk(o.r));});
     if(flt)rs=rs.filter(function(o){return rockStatus(o.r)===flt;});
     if(!rs.length)return;
@@ -1906,7 +1913,7 @@ function rockCard(type,rock,idx,readonly){
   if(!readonly){
     h+='<div class="rock-bd">';
     h+=rockMeta(type,rock);
-    var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nL=(rock.links||[]).length;var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
+    var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nL=(rock.links||[]).length+subLinkCount(rock);var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
     h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Deliverables</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Timeline</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
     h+='<div class="subpane'+(tab==='subs'?' on':'')+'">'+subrocksTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='ms'?' on':'')+'">'+milestonesTab(type,rock)+'</div>';
@@ -2004,7 +2011,14 @@ function linkList(links,delFn){if(!links.length)return '<div class="empty" style
   return '<div class="card" style="padding:4px 0">'+links.map(function(l){var u=normUrl(l.url);return '<div class="drow"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="flex:0 0 auto;color:var(--tx3)"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><div class="grow"><div>'+(u?'<a class="lnk" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(l.label||u)+'</a>':esc(l.label||l.url))+'</div><div class="rname">'+esc(l.url||'')+'</div></div><button class="btn-del" onclick="'+delFn(l.id)+'" title="Remove link">✕</button></div>';}).join('')+'</div>';}
 function linksTab(type,rock){var ls=rock.links||[];
   var h='<div class="lnkform"><input id="lnk-l-'+rock.id+'" placeholder="Label, e.g. Board deck"><input id="lnk-u-'+rock.id+'" placeholder="https://…" onkeydown="if(event.key===\'Enter\')addLink(\''+type+'\',\''+rock.id+'\')"><button class="btn sm pri" onclick="addLink(\''+type+'\',\''+rock.id+'\')">Add link</button></div>';
-  return h+linkList(ls,function(id){return 'delLink(\''+type+'\',\''+rock.id+'\',\''+id+'\')';});}
+  return h+linkList(ls,function(id){return 'delLink(\''+type+'\',\''+rock.id+'\',\''+id+'\')';})+subLinkSection((rock.subrocks||[]).map(function(sb){return {type:type,rock:rock,sub:sb};}),false);}
+/* Links added on deliverables, listed under their rock and on their PortCo page. Removing one here removes it from the deliverable. */
+function subLinkCount(rock){return (rock.subrocks||[]).reduce(function(a,sb){return a+(sb.links||[]).length;},0);}
+function subLinkSection(entries,showRock){var rows='',n=0;
+  entries.forEach(function(e){(e.sub.links||[]).forEach(function(l){var u=normUrl(l.url);n++;
+    rows+='<div class="drow">'+LNK_SVG+'<div class="grow"><div>'+(u?'<a class="lnk" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(l.label||u)+'</a>':esc(l.label||l.url))+'</div><div class="rname">Deliverable: '+esc(e.sub.title||'(untitled)')+(showRock?' · '+esc(e.rock.title||''):'')+'</div></div><button class="btn-del" onclick="delSubLinkAt(\''+e.type+'\',\''+e.rock.id+'\',\''+e.sub.id+'\',\''+l.id+'\')" title="Remove link from the deliverable">✕</button></div>';});});
+  return n?'<div class="sec-head" style="margin:14px 0 8px"><h2 style="font-size:13px">From deliverables</h2><span class="sub">'+n+'</span></div><div class="card" style="padding:4px 0">'+rows+'</div>':'';}
+function delSubLinkAt(type,rid,sid,id){var sb=findSub(type,rid,sid);if(!sb)return;sb.links=(sb.links||[]).filter(function(x){return x.id!==id;});save();render(CUR);}
 function addLink(type,rid){var l=$('#lnk-l-'+rid),u=$('#lnk-u-'+rid);var url=u?u.value.trim():'';if(!url){if(u)u.focus();return;}if(!normUrl(url)){alert('Please enter a web address (http/https) or mailto: link.');return;}
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;r.links=r.links||[];r.links.push({id:uid(),label:l?l.value.trim():'',url:url});save();rerenderCurrent();}
 function delLink(type,rid,id){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;tomb(id);r.links=(r.links||[]).filter(function(x){return x.id!==id;});save();rerenderCurrent();}
@@ -2307,7 +2321,7 @@ function renderPortcoTab(pc){
   // links / contacts
   h+='<div style="margin-top:16px">';
   var links=info.links||[];
-  h+='<div class="card pcbox"><h3>Links</h3><div class="lnkform"><input id="pc-links-l" placeholder="Label, e.g. Data room"><input id="pc-links-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')pcAddItem('+i+',\'links\')"><button class="btn sm pri" onclick="pcAddItem('+i+',\'links\')">Add</button></div>'+linkList(links,function(id){return 'pcDelItem('+i+',\'links\',\''+id+'\')';})+'</div>'+
+  h+='<div class="card pcbox"><h3>Links</h3><div class="lnkform"><input id="pc-links-l" placeholder="Label, e.g. Data room"><input id="pc-links-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')pcAddItem('+i+',\'links\')"><button class="btn sm pri" onclick="pcAddItem('+i+',\'links\')">Add</button></div>'+linkList(links,function(id){return 'pcDelItem('+i+',\'links\',\''+id+'\')';})+subLinkSection([].concat.apply([],all.map(function(g){return g.subs;})),true)+'</div>'+
     '</div>';
   // rocks
   var nClosed=all.filter(function(g){return isClosed(g.rock);}).length;
