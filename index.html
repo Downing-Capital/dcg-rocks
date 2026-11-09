@@ -441,7 +441,7 @@ tr.subrow.sr-done>td{background:var(--green-bg)}tr.subrow.sr-risk>td{background:
 .addform label.arkopt input{width:auto;margin-top:3px}
 .arkopt small{display:block;color:var(--tx2);font-size:11.5px;margin-top:2px;font-weight:400}
 .arkopt:has(input:checked){border-color:var(--purple);background:var(--purple-bg)}
-/* sub-rock comments */
+/* deliverable comments */
 .subcmt{font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer;border-radius:6px;padding:3px 6px;border:1px solid transparent}
 .subcmt:hover{border-color:var(--bdr);background:var(--surf)}
 .subcmt.empty{color:var(--tx3)}
@@ -561,6 +561,9 @@ tr.subrow.sr-done>td{background:var(--green-bg)}tr.subrow.sr-risk>td{background:
     <label>Quarter start date (week 1)</label>
     <input id="set-start" type="date">
     <div id="set-accounts"></div>
+    <label>Backups</label>
+    <p style="font-size:12.5px;color:var(--tx2);margin:0 0 8px">Every hour while people are editing, a copy of all data is saved (kept hourly for 7 days, then one per day for 90 days).</p>
+    <div style="margin-bottom:16px"><button class="btn sm" onclick="openHistory()">Version history…</button></div>
     <div class="acts">
       <button class="btn" onclick="closeModal('modal-settings')">Cancel</button>
       <button class="btn pri" onclick="saveSettings()">Save</button>
@@ -614,11 +617,20 @@ tr.subrow.sr-done>td{background:var(--green-bg)}tr.subrow.sr-risk>td{background:
     </div>
   </div>
 </div>
+<!-- Version history modal -->
+<div class="overlay" id="modal-hist">
+  <div class="modal" style="max-width:560px">
+    <h3>Version history</h3>
+    <p style="font-size:12.5px;color:var(--tx2);margin-bottom:10px">Copies of all the data, saved automatically: every hour while people are editing (kept for 7 days), then one per day (kept for 90 days). Restoring replaces everything for everyone, and the current version is saved first so you can undo.</p>
+    <div id="hist-list" class="card" style="max-height:52vh;overflow:auto;padding:4px 0"></div>
+    <div class="acts" style="margin-top:14px"><button class="btn" style="margin-right:auto" onclick="saveSnapshotManual()">Save a snapshot now</button><button class="btn" onclick="closeModal('modal-hist')">Close</button></div>
+  </div>
+</div>
 <!-- Move into modal -->
 <div class="overlay" id="modal-move">
   <div class="modal" style="max-width:560px">
     <h3 id="mv-title">Move into…</h3>
-    <p style="font-size:12.5px;color:var(--tx2);margin-bottom:12px">It becomes a sub-rock of the one you pick (same owner, PortCo, status, latest target date; the description and comments go into its comments). Its to-dos, blockers and links follow. The original goes to Trash, so you can undo by restoring it.</p>
+    <p style="font-size:12.5px;color:var(--tx2);margin-bottom:12px">It becomes a deliverable of the one you pick (same owner, PortCo, status, latest target date; the description and comments go into its comments). Its to-dos, blockers and links follow. The original goes to Trash, so you can undo by restoring it.</p>
     <label>Rock or project</label>
     <select id="mv-target" style="width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px"></select>
     <div id="mv-subs"></div>
@@ -738,7 +750,7 @@ function fmtDate(s){if(!s)return '';var d=new Date(s+'T00:00:00');if(isNaN(d))re
 function today0(){var t=new Date();t.setHours(0,0,0,0);return t;}
 function daysUntil(s){if(!s)return null;var d=new Date(s+'T00:00:00');if(isNaN(d))return null;return Math.round((d-today0())/86400000);}
 
-/* ---- Sub-rock / rock status logic (matches original roll-up) ---- */
+/* ---- Deliverable / rock status logic (matches original roll-up) ---- */
 function rockStatus(rock){
   var subs=rock.subrocks||[];
   if(!subs.length)return rock.status||'Unplanned';
@@ -1214,7 +1226,7 @@ var NAV=[
 var PAGE_META={
   welcome:['Welcome','Where everything lives in the DCG Operating System'],
   overview:['Overview','Quarter at a glance'],
-  mine:['My Items','Your rocks, sub-rocks, to-dos and KPIs in one place'],
+  mine:['My Items','Your rocks, deliverables, to-dos and KPIs in one place'],
   northstar:['North Star Metrics','Leading & lagging indicators — tracked weekly'],
   allrocks:['All Rocks','Every Rock across DCG, ranked by score'],
   ideation:['Ideation Rocks','Discovering the next opportunities'],
@@ -1226,7 +1238,7 @@ var PAGE_META={
   'dash-portco':['By PortCo','One dashboard per portfolio company'],
   allkpis:['All KPIs','Every KPI across the team, grouped by area'],
   scorecard:['KPIs by Person','Quarterly Plan vs Actual, per person'],
-  thisweek:['This Week','To-dos and sub-rocks due this week'],
+  thisweek:['This Week','To-dos and deliverables due this week'],
   todos:['Weekly To-Dos','Each person’s weekly tasks'],
   better:['1% Better','Process improvements: small changes to how we work'],
   review:['Weekly Review','Everything for the weekly meeting on one page'],
@@ -1340,7 +1352,7 @@ function updateBadges(){
    Aggregation helpers
    ============================================================ */
 /* Rock type: 'hard' = committed quarterly goal (default, incl. every existing rock); 'project' = assignment that came up during the quarter.
-   Projects behave like rocks everywhere (sub-rocks, reminders, to-dos) but are left out of KPIs and completion stats. */
+   Projects behave like rocks everywhere (deliverables, reminders, to-dos) but are left out of KPIs and completion stats. */
 function isProject(r){return !!r&&r.kind==='project';}
 function hardRocks(rocks){return rocks.filter(function(r){return !isProject(r);});}
 var _kind=(function(){try{return localStorage.getItem('dc_kind')||'';}catch(e){return '';}})();
@@ -1417,9 +1429,9 @@ function personView(who,self){
   var over=dl.filter(function(o){return o.d<0&&!isProject(o.x.rock);}).length;var overP=dl.filter(function(o){return o.d<0&&isProject(o.x.rock);}).length;
   var td=(WB.todos||[]).filter(function(t){return t.weekStart===ws&&todoOwnerList(t).some(isP);});var tdOpen=td.filter(function(t){var s=todoStatus(t);return s!=='Done'&&s!=='Cancelled';}).length;
   var h='<div class="sec-head" style="margin-top:4px"><h2>Rocks</h2><span class="sub">count toward KPIs</span></div>';
-  h+='<div class="kpis">'+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('Rock completion',pct+'%',dn+' of '+sbH.length+' sub-rocks done · weighted','prog'+pct)+kpi('At risk',risk,'sub-rocks at risk',null,risk?'amber':'')+kpi('Overdue',over,'sub-rocks past their target',null,over?'amber':'')+'</div>';
+  h+='<div class="kpis">'+kpi('This week',tdOpen,td.length+' to-dos · '+tdOpen+' still open')+kpi('Rock completion',pct+'%',dn+' of '+sbH.length+' deliverables done · weighted','prog'+pct)+kpi('At risk',risk,'deliverables at risk',null,risk?'amber':'')+kpi('Overdue',over,'deliverables past their target',null,over?'amber':'')+'</div>';
   h+='<div class="sec-head" style="margin-top:4px"><h2>Projects</h2><span class="sub">not counted in KPIs</span></div>';
-  h+=nPrj?'<div class="kpis">'+kpi('Projects',nPrj,'projects owned or with sub-rocks')+kpi('Project completion',pctP+'%',dnP+' of '+sbP.length+' sub-rocks done','prog'+pctP)+kpi('At risk',riskP,'project sub-rocks at risk',null,riskP?'amber':'')+kpi('Overdue',overP,'project sub-rocks past their target',null,overP?'amber':'')+'</div>':'<div class="card" style="margin-bottom:20px"><div class="empty" style="padding:16px">No projects this quarter.</div></div>';
+  h+=nPrj?'<div class="kpis">'+kpi('Projects',nPrj,'projects owned or with deliverables')+kpi('Project completion',pctP+'%',dnP+' of '+sbP.length+' deliverables done','prog'+pctP)+kpi('At risk',riskP,'project deliverables at risk',null,riskP?'amber':'')+kpi('Overdue',overP,'project deliverables past their target',null,overP?'amber':'')+'</div>':'<div class="card" style="margin-bottom:20px"><div class="empty" style="padding:16px">No projects this quarter.</div></div>';
   h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>This week’s to-dos</h2><span class="sub">'+td.length+'</span><span class="spacer"></span><button class="btn sm" onclick="goTodosOf(\''+esc(who).replace(/'/g,"\\'")+'\')">Open To-Dos</button></div>'+
     (td.length?td.slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).map(function(t){var others=todoOwnerList(t).filter(function(o){return !isP(o);});return '<div class="drow"><div class="grow"><div>'+esc(t.desc||'(untitled)')+'</div>'+(others.length?'<div class="rname">shared with '+esc(others.join(', '))+'</div>':'')+'</div>'+(t.time?'<span class="tag">'+esc(t.time)+'</span>':'')+todoStatusSel(t.id,todoStatus(t))+'</div>';}).join(''):'<div class="empty" style="padding:18px">No to-dos this week.</div>')+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Deadlines</h2><span class="sub">overdue and next 2 weeks · '+dl.length+'</span></div>'+(dl.length?dl.slice(0,12).map(function(o){return '<div class="drow">'+kindChip(o.x.rock)+'<div class="grow"><div>'+esc(o.x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(o.x.rock.title||'')+(o.x.sub.portco?' · '+esc(o.x.sub.portco):'')+'</div></div><span class="tag '+(o.d<0?'over':'soon')+'">'+(o.d<0?(-o.d)+'d overdue':o.d===0?'due today':'in '+o.d+'d')+'</span></div>';}).join(''):'<div class="empty" style="padding:18px">Nothing overdue or due soon.</div>')+'</div></div>';
@@ -1438,7 +1450,7 @@ function personView(who,self){
   var vis=groups.filter(function(g){return kindOk(g.x.rock)&&closedOk(g.x.rock);});
   vis.sort(function(a,b){return SORTORD[rockStatus(a.x.rock)]-SORTORD[rockStatus(b.x.rock)];});
   var nSub=0;vis.forEach(function(g){nSub+=g.subs.filter(function(y){return _showClosed||subStatus(y.sub)!=='Done';}).length;});
-  h+='<div class="sec-head" style="margin-top:6px"><h2>'+pre+'rocks &amp; projects</h2><span class="sub">'+vis.length+' · '+nSub+(_showClosed?'':' open')+' sub-rocks</span><span class="spacer"></span><button class="btn sm" onclick="pvAll(true)">Expand all</button><button class="btn sm" onclick="pvAll(false)">Collapse all</button></div><div class="card" style="padding:4px 0">';
+  h+='<div class="sec-head" style="margin-top:6px"><h2>'+pre+'rocks &amp; projects</h2><span class="sub">'+vis.length+' · '+nSub+(_showClosed?'':' open')+' deliverables</span><span class="spacer"></span><button class="btn sm" onclick="pvAll(true)">Expand all</button><button class="btn sm" onclick="pvAll(false)">Collapse all</button></div><div class="card" style="padding:4px 0">';
   _pvLast=vis.map(function(g){return g.x.rock.id;});
   if(!vis.length)h+='<div class="empty" style="padding:14px">Nothing to show.</div>';
   vis.forEach(function(g){var rid=g.x.rock.id;var coll=!!_pvColl[rid];var ss=g.subs.filter(function(y){return _showClosed||subStatus(y.sub)!=='Done';}).sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];});
@@ -1446,8 +1458,8 @@ function personView(who,self){
     row=row.replace('<div class="drow">','<div class="drow pcrock pvrock" onclick="pvToggle(\''+rid+'\',event)">');
     if(!g.own)row=row.replace('% complete','% complete · '+(g.sup?'supporting · ':'')+esc(ownersOf(g.x.rock).join(', ')||'unassigned')+'’s rock');
     h+=row;
-    if(!coll){ss.forEach(function(y){h+=indSubRow(y).replace('<div class="drow','<div class="drow pvsub').replace('<span class="tag">Sub</span>','');});
-      if(!ss.length)h+='<div class="drow pvsub"><span class="rname">'+(g.subs.length?'All '+(self?'your':'their')+' sub-rocks here are done.':'No sub-rocks yet.')+'</span></div>';h+=pvAddRow(g.x.type,rid);}
+    if(!coll){ss.forEach(function(y){h+=indSubRow(y).replace('<div class="drow','<div class="drow pvsub').replace('<span class="tag">Deliv.</span>','');});
+      if(!ss.length)h+='<div class="drow pvsub"><span class="rname">'+(g.subs.length?'All '+(self?'your':'their')+' deliverables here are done.':'No deliverables yet.')+'</span></div>';h+=pvAddRow(g.x.type,rid);}
   });
   h+='</div>';
   ensureScorecard();var qn=activeQNum();var pi=-1;(WB.scorecard.people||[]).some(function(pp,i){if(!scRemoved(pp)&&ownerMatches(pp.name,who)){pi=i;return true;}return false;});
@@ -1461,14 +1473,14 @@ function pvToggle(id,e){if(e&&e.target.closest('select,button,input'))return;_pv
 function pvAll(open){_pvLast.forEach(function(id){_pvColl[id]=!open;});render(CUR);}
 function renderMine(){
   var p=$('#panel-mine');var me=myName();
-  if(!me){p.innerHTML=emptyState('user','Your login isn’t linked to a name yet','Link it once and this page shows your rocks, projects, sub-rocks, to-dos and KPIs.')+'<div style="text-align:center;margin-top:-10px"><button class="btn pri" onclick="openWho()">Link my login</button></div>';return;}
+  if(!me){p.innerHTML=emptyState('user','Your login isn’t linked to a name yet','Link it once and this page shows your rocks, projects, deliverables, to-dos and KPIs.')+'<div style="text-align:center;margin-top:-10px"><button class="btn pri" onclick="openWho()">Link my login</button></div>';return;}
   p.innerHTML='<div class="card mehead"><span class="avatar">'+esc(initials(me))+'</span><div><h2>'+esc(me)+'</h2><div class="em">'+esc(authEmail())+' · '+esc(WB.activeQuarter||'')+'</div></div><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="openWho()">Not you? Change</button></div>'+personView(me,true);
 }
 function goTodosOf(n){var hit=todoOwners(currentWeekStart()).find(function(x){return ownerMatches(x,n);});_todoPerson=hit||'__all';_todoAutoWait=false;switchTab('todos');}
 function goMyTodos(){goTodosOf(myName());}
 
 /* ============================================================
-   BLOCKERS & ASKS — one list (replaces Blockers + Support), attached to rocks / sub-rocks / to-dos
+   BLOCKERS & ASKS — one list (replaces Blockers + Support), attached to rocks / deliverables / to-dos
    ============================================================ */
 var BLK_STATUS=['Open','In Progress','Resolved'];
 function blkStatus(b){var s=b.status||'Open';return s==='Blocked'||s==='Needed'?'Open':s;}
@@ -1512,7 +1524,7 @@ function renderBlockers(){
   var h='<div class="kpis">'+kpi('Open blockers',nb,'something stopping a rock or to-do',null,nb?'amber':'')+kpi('Open asks',na,'help, decisions or intros needed')+kpi('Open 7+ days',old,'waiting a week or more',null,old?'amber':'')+kpi('Resolved',all.length-open.length,'this quarter')+'</div>';
   h+='<div class="filt"><button class="btn pri sm" onclick="openBlk({})">'+ic2('plus')+'New blocker or ask</button><span class="spacer" style="flex:1"></span><span class="lbl">Type:</span>'+[['','All'],['blocker','Blockers'],['ask','Asks']].map(function(x){return '<button class="btn sm'+(_blkKind===x[0]?' pri':'')+'" onclick="_blkKind=\''+x[0]+'\';render(CUR)">'+x[1]+'</button>';}).join('')+
     '<span class="lbl" style="margin-left:12px">Show:</span><button class="btn sm'+(!_blkShowAll?' pri':'')+'" onclick="_blkShowAll=false;render(CUR)">Open</button><button class="btn sm'+(_blkShowAll?' pri':'')+'" onclick="_blkShowAll=true;render(CUR)">All</button></div>';
-  h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Flag a blocker or ask right where the work is: the ⚑ button on any sub-rock or to-do. It then shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard.</div>';
+  h+='<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Flag a blocker or ask right where the work is: the ⚑ button on any deliverable or to-do. It then shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard.</div>';
   h+='<div class="card" style="padding:4px 0">'+blkRows(list,{empty:all.length?'Nothing matches this filter.':'No blockers or asks yet.'})+'</div>';
   p.innerHTML=h;
 }
@@ -1582,7 +1594,7 @@ function renderReview(){
   var tdN=0,tdD=0;Object.keys(byP).forEach(function(k){tdN+=byP[k].n;tdD+=byP[k].d;});var tdPct=tdN?Math.round(tdD/tdN*100):0;
   var d14=addDaysIso(today,-14);var ideas=(D.better||[]).filter(function(r){return r.at&&String(r.at).slice(0,10)>=d14;});var fbNew=fbList().filter(function(f){return f.status==='New';});
   var h='<div class="filt"><span class="tag">'+esc(weekLabel(ws))+'</span><span class="lbl">— for the weekly meeting · last week = '+esc(weekRangeLabel(lws))+' · '+esc(WB.activeQuarter||'')+'</span></div>';
-  h+='<div class="kpis">'+kpi('Open blockers & asks',open.length,open.filter(function(b){return (blkAge(b)||0)>=7;}).length+' open 7+ days',null,open.length?'amber':'')+kpi('Slipped this week',slipped.length,'target moved later or became overdue',null,slipped.length?'amber':'')+kpi('Overdue sub-rocks',overdue.length,'past target, not done',null,overdue.length?'amber':'')+kpi('Done last 7 days',doneLast.length,'sub-rocks completed')+kpi('Last week’s to-dos',tdPct+'%',tdD+' of '+tdN+' done','prog'+tdPct)+'</div>';
+  h+='<div class="kpis">'+kpi('Open blockers & asks',open.length,open.filter(function(b){return (blkAge(b)||0)>=7;}).length+' open 7+ days',null,open.length?'amber':'')+kpi('Slipped this week',slipped.length,'target moved later or became overdue',null,slipped.length?'amber':'')+kpi('Overdue deliverables',overdue.length,'past target, not done',null,overdue.length?'amber':'')+kpi('Done last 7 days',doneLast.length,'deliverables completed')+kpi('Last week’s to-dos',tdPct+'%',tdD+' of '+tdN+' done','prog'+tdPct)+'</div>';
   function subRow(x,tag){return '<div class="drow">'+kindChip(x.rock)+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+' · '+esc(x.rock.title||'')+(x.sub.portco?' · '+esc(x.sub.portco):'')+'</div></div>'+tag+'</div>';}
   h+='<div class="grid2"><div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Blockers &amp; asks</h2><span class="sub">'+open.length+' open</span><span class="spacer"></span><button class="btn sm" onclick="openBlk({})">'+ic2('plus')+'New</button></div>'+blkRows(open)+'</div>';
   h+='<div class="card" style="padding:16px"><div class="sec-head" style="margin:0 0 10px"><h2>Slipped since last week</h2><span class="sub">'+slipped.length+'</span></div>'+(slipped.length?slipped.map(function(z){return subRow(z.x,'<span class="tag over">'+(z.why==='target moved'?esc(fmtDate(z.from))+' → '+esc(fmtDate(z.to)):'due '+esc(fmtDate(z.from)))+'</span>');}).join(''):'<div class="empty" style="padding:16px">Nothing slipped this week.</div>')+'</div></div>';
@@ -1607,14 +1619,14 @@ function wGo(id,label){return '<button class="btn sm" onclick="switchTab(\''+id+
 function renderWelcome(){
   var h='<div class="card whero"><h2>Welcome to the DCG Operating System</h2><p>This is where DCG plans and tracks each quarter: the rocks we commit to, the projects that come up along the way, who owns what, and what is due this week. Everything saves automatically and syncs to the whole team within a few seconds. The indicator in the top right shows <b>Saved</b> when you are up to date. Use the quarter picker at the top of the sidebar to switch quarters.</p></div>';
   h+='<div class="wgrid">';
-  h+='<div class="card wcard"><h3>Overview &amp; My Items</h3><p><b>Overview</b> is the quarter at a glance: completion, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs. Rocks and projects each have their own numbers.</p><p><b>My Items</b> shows your own rocks, projects, sub-rocks, this week’s to-dos, deadlines and KPIs.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
-  h+='<div class="card wcard"><h3>Rocks &amp; Projects</h3><p>Each one lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you click <b>+ Add</b>, choose its type:</p><ul><li><b>Rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Drag the ⠿ handle to put rocks and projects in the order you want (shared with the team). <b>Move into…</b> (inside a rock) turns one into a sub-rock of another. Done and cancelled items are hidden; use <b>Show: All</b> to see them. Filter by <b>Type: All · Rocks · Projects</b>.</p><p>At the end of a quarter, anything still open is carried into the next quarter <b>as a project</b> (with its open sub-rocks and links). The owner switches it back to a rock with the Type field if it is still a committed goal.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
-  h+='<div class="card wcard"><h3>Inside a rock or project</h3><p>Click one to open it. Its tabs:</p><ul><li><b>Sub-Rocks</b>: the milestones, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Timeline</b>: every sub-rock’s target date across the quarter, so bunched-up or slipping deadlines stand out.</li><li><b>To-Dos</b>: weekly to-dos linked to it. Linking a to-do to a rock just lists it here; it does not add a sub-rock.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A sub-rock past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
+  h+='<div class="card wcard"><h3>Overview &amp; My Items</h3><p><b>Overview</b> is the quarter at a glance: completion, what needs attention, overdue items, what is due in the next 2 weeks, and the team KPIs. Rocks and projects each have their own numbers.</p><p><b>My Items</b> shows your own rocks, projects, deliverables, this week’s to-dos, deadlines and KPIs.</p><div class="wgo">'+wGo('overview','Overview')+wGo('mine','My Items')+'</div></div>';
+  h+='<div class="card wcard"><h3>Rocks &amp; Projects</h3><p>Each one lives under a category: Ideation, Talent, Build, Operations or Office CEO. <b>All Rocks</b> shows every one. When you click <b>+ Add</b>, choose its type:</p><ul><li><b>Rock</b> (purple edge): a goal we commit to for the quarter. Counts toward KPIs and completion.</li><li><b>Project</b> (dashed edge): an assignment that came up during the quarter. Tracked the same way, but not counted in KPIs or completion.</li></ul><p>Drag the ⠿ handle to put rocks and projects in the order you want (shared with the team). <b>Move into…</b> (inside a rock) turns one into a deliverable of another. Done and cancelled items are hidden; use <b>Show: All</b> to see them. Filter by <b>Type: All · Rocks · Projects</b>.</p><p>At the end of a quarter, anything still open is carried into the next quarter <b>as a project</b> (with its open deliverables and links). The owner switches it back to a rock with the Type field if it is still a committed goal.</p><div class="wgo">'+wGo('allrocks','All Rocks')+'</div></div>';
+  h+='<div class="card wcard"><h3>Inside a rock or project</h3><p>Click one to open it. Its tabs:</p><ul><li><b>Deliverables</b>: the milestones, each with owner, PortCo, target date, status and comments (click a comment to read or edit the full text). Drag the ⠿ handle to reorder.</li><li><b>Timeline</b>: every deliverable’s target date across the quarter, so bunched-up or slipping deadlines stand out.</li><li><b>To-Dos</b>: weekly to-dos linked to it. Linking a to-do to a rock just lists it here; it does not add a deliverable.</li><li><b>Comments</b>: weekly updates.</li><li><b>Links</b>: decks, docs and other relevant links.</li></ul><p>A deliverable past its target date that is not Done counts as <b>At Risk</b>.</p></div>';
   h+='<div class="card wcard"><h3>Dashboards</h3><ul><li><b>By Individual</b>: the same view as My Items for anyone on the team; pick the person at the top, or Everyone for the full list.</li><li><b>By PortCo</b>: one tab per portfolio company, with an automatic summary (rocks and projects shown separately), deadlines, this week’s to-dos, links &amp; contacts, and the full list.</li></ul><div class="wgo">'+wGo('dash-ind','By Individual')+wGo('dash-portco','By PortCo')+'</div></div>';
-  h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: to-dos for the current week, the sub-rocks due this week and open blockers. Shared items show under each person.</li><li><b>Weekly Review</b>: one page for the team meeting: open blockers &amp; asks, what slipped since last week, what’s overdue and due soon, what got done, last week’s to-do completion by person, and new ideas.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, drag to reorder, sort by status, PortCo or rock (buttons or the column headers), or import the Excel tracker. Click <b>Notes / blockers</b> to read or edit the full text. Pick a rock in the Rock column to list the to-do under that rock. The <b>PortCo</b> column fills in from the rock (shown in italics) and can be changed; it decides which PortCo dashboard the to-do appears on.</li><li><b>Reminders</b>: when one of your sub-rocks is due this week or next, a reminder to-do appears automatically. It shares its status and its notes with the sub-rock (notes = the sub-rock’s comments), so updating either one updates both.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('review','Weekly Review')+wGo('todos','To-Dos')+'</div></div>';
-  h+='<div class="card wcard"><h3>KPIs</h3><p><b>All KPIs</b> lists every KPI by area. <b>By Person</b> shows each person’s quarterly plan vs actual. The <b>Rocks Completion</b> KPI fills in by itself from the share of that person’s rock sub-rocks that are done (projects don’t count); only its target is edited by hand.</p><div class="wgo">'+wGo('allkpis','All KPIs')+wGo('scorecard','By Person')+'</div></div>';
-  h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>Blockers &amp; Asks</b>: one list for anything stopping work (blocker) or help needed (ask). Flag one with the ⚑ button on any sub-rock or to-do; it shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard until it is resolved.</li><li><b>1% Better</b>: process improvements, each with an owner and a measured result.</li><li><b>Platform feedback</b>: bugs and requests for this platform.</li></ul><p><b>Trash</b> (bottom of the sidebar) restores anything deleted recently.</p><div class="wgo">'+wGo('blockers','Blockers & Asks')+wGo('better','1% Better')+wGo('feedback','Platform feedback')+'</div></div>';
-  h+='<div class="card wcard"><h3>Account &amp; data</h3><p>Sign in with your @downingcap.com email. The first time, you pick your name so your login is linked to you: <b>My Items</b>, To-Dos, This Week and By Individual then open on your own work, and your name fills in on comments. Change the link any time in <b>Settings</b>. Your name and a <b>Sign out</b> link are at the bottom of the sidebar. <b>Export</b> downloads a full backup and <b>Import</b> restores one. <b>Theme</b> switches light and dark mode.</p></div>';
+  h+='<div class="card wcard"><h3>Weekly</h3><ul><li><b>This Week</b>: to-dos for the current week, the deliverables due this week and open blockers. Shared items show under each person.</li><li><b>Weekly Review</b>: one page for the team meeting: open blockers &amp; asks, what slipped since last week, what’s overdue and due soon, what got done, last week’s to-do completion by person, and new ideas.</li><li><b>To-Dos</b>: one tab per person (or Everyone), organised by week. Carry unfinished items forward, drag to reorder, sort by status, PortCo or rock (buttons or the column headers), or import the Excel tracker. Click <b>Notes / blockers</b> to read or edit the full text. Pick a rock in the Rock column to list the to-do under that rock. The <b>PortCo</b> column fills in from the rock (shown in italics) and can be changed; it decides which PortCo dashboard the to-do appears on.</li><li><b>Reminders</b>: when one of your deliverables is due this week or next, a reminder to-do appears automatically. It shares its status and its notes with the deliverable (notes = the deliverable’s comments), so updating either one updates both.</li></ul><div class="wgo">'+wGo('thisweek','This Week')+wGo('review','Weekly Review')+wGo('todos','To-Dos')+'</div></div>';
+  h+='<div class="card wcard"><h3>KPIs</h3><p><b>All KPIs</b> lists every KPI by area. <b>By Person</b> shows each person’s quarterly plan vs actual. The <b>Rocks Completion</b> KPI fills in by itself from the share of that person’s rock deliverables that are done (projects don’t count); only its target is edited by hand.</p><div class="wgo">'+wGo('allkpis','All KPIs')+wGo('scorecard','By Person')+'</div></div>';
+  h+='<div class="card wcard"><h3>Operations</h3><ul><li><b>Blockers &amp; Asks</b>: one list for anything stopping work (blocker) or help needed (ask). Flag one with the ⚑ button on any deliverable or to-do; it shows on the Overview, My Items, This Week, the Weekly Review and the PortCo dashboard until it is resolved.</li><li><b>1% Better</b>: process improvements, each with an owner and a measured result.</li><li><b>Platform feedback</b>: bugs and requests for this platform.</li></ul><p><b>Trash</b> (bottom of the sidebar) restores anything deleted recently.</p><div class="wgo">'+wGo('blockers','Blockers & Asks')+wGo('better','1% Better')+wGo('feedback','Platform feedback')+'</div></div>';
+  h+='<div class="card wcard"><h3>Account &amp; data</h3><p>Sign in with your @downingcap.com email. The first time, you pick your name so your login is linked to you: <b>My Items</b>, To-Dos, This Week and By Individual then open on your own work, and your name fills in on comments. Change the link any time in <b>Settings</b>. Your name and a <b>Sign out</b> link are at the bottom of the sidebar. A copy of all data is saved automatically every hour while people edit (hourly for 7 days, daily for 90); restore one from <b>Settings → Version history</b>. <b>Export</b> downloads a full backup and <b>Import</b> restores one. <b>Theme</b> switches light and dark mode.</p></div>';
   h+='</div>';
   $('#panel-welcome').innerHTML=h;
 }
@@ -1653,14 +1665,14 @@ function renderOverview(){
   html+='<div class="sec-head" style="margin-top:0"><h2>Rocks</h2><span class="sub">committed goals · count toward KPIs</span></div>';
   html+='<div class="kpis">';
   html+=kpi('Rocks completed',pctRocks+'%',total+' rocks · '+doneRocks+' completed · '+atRisk+' at risk'+(nProj?' · '+nProj+' project'+(nProj>1?'s':'')+' not counted':''),'prog'+pctRocks);
-  html+=kpi('Sub-rock completion',wPct+'%',subDone+' of '+subs.length+' sub-rocks · weighted','prog'+wPct);
+  html+=kpi('Deliverable completion',wPct+'%',subDone+' of '+subs.length+' deliverables · weighted','prog'+wPct);
   html+=kpi('Needs attention',(atRisk+unplanned),atRisk+' at risk · '+unplanned+' unplanned',null,(atRisk+unplanned)>0?'amber':'');
   html+=kpi('Blockers & asks',(openBlockers+openSupport),openBlockers+' blockers · '+openSupport+' asks open',null,(openBlockers+openSupport)>0?'amber':'');
   html+='</div>';
   html+=projectStatsRow(allRocks().map(function(x){return x.rock;}).filter(isProject),allSubsQ.filter(function(x){return isProject(x.rock);}),'Projects','not counted in KPIs or the numbers above');
 
   html+='<div class="grid3">';
-  html+='<div class="card chartbox"><h3>Sub-Rock progress by category <span class="kmini">rocks only</span></h3><div class="cv"><canvas id="ov-cat"></canvas></div></div>';
+  html+='<div class="card chartbox"><h3>Deliverable progress by category <span class="kmini">rocks only</span></h3><div class="cv"><canvas id="ov-cat"></canvas></div></div>';
   html+='<div class="card chartbox"><h3>Overall status <span class="kmini">rocks only</span></h3><div class="cv"><canvas id="ov-status"></canvas></div></div>';
   html+='</div>';
 
@@ -1698,9 +1710,9 @@ function projectStatsRow(prj,psubs,title,note){
   var over=psubs.filter(function(x){if(subStatus(x.sub)==='Done')return false;var d=daysUntil(x.sub.targetDate);return d!==null&&d<0;}).length;
   var att=c['At Risk']+c.Unplanned;
   h+='<div class="kpis">'+kpi('Projects completed',pr+'%',prj.length+' project'+(prj.length>1?'s':'')+' · '+c.Done+' completed · '+c['At Risk']+' at risk','prog'+pr)+
-    kpi('Project sub-rocks',ps+'%',sd+' of '+psubs.length+' sub-rocks · weighted','prog'+ps)+
+    kpi('Project deliverables',ps+'%',sd+' of '+psubs.length+' deliverables · weighted','prog'+ps)+
     kpi('Needs attention',att,c['At Risk']+' at risk · '+c.Unplanned+' unplanned',null,att?'amber':'')+
-    kpi('Overdue',over,'project sub-rocks past their target',null,over?'amber':'')+'</div>';
+    kpi('Overdue',over,'project deliverables past their target',null,over?'amber':'')+'</div>';
   return h;}
 function kpi(lab,big,meta,progId,tone){
   var t=tone==='amber'?'style="color:var(--amber)"':'';
@@ -1895,7 +1907,7 @@ function rockCard(type,rock,idx,readonly){
     h+='<div class="rock-bd">';
     h+=rockMeta(type,rock);
     var tab=D.srTab[key]||'subs';var nC=(rock.comments||[]).length;var nL=(rock.links||[]).length;var nT=(WB.todos||[]).filter(function(t){return t.rockId===rock.id;}).length;
-    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Sub-Rocks</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Timeline</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
+    h+='<div class="subtabs"><button class="'+(tab==='subs'?'on':'')+'" onclick="srTab(\''+key+'\',\'subs\')">Deliverables</button><button class="'+(tab==='ms'?'on':'')+'" onclick="srTab(\''+key+'\',\'ms\')">Timeline</button><button class="'+(tab==='todos'?'on':'')+'" onclick="srTab(\''+key+'\',\'todos\')">To-Dos'+(nT?' ('+nT+')':'')+'</button><button class="'+(tab==='comments'?'on':'')+'" onclick="srTab(\''+key+'\',\'comments\')">Comments'+(nC?' ('+nC+')':'')+'</button><button class="'+(tab==='links'?'on':'')+'" onclick="srTab(\''+key+'\',\'links\')">Links'+(nL?' ('+nL+')':'')+'</button></div>';
     h+='<div class="subpane'+(tab==='subs'?' on':'')+'">'+subrocksTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='ms'?' on':'')+'">'+milestonesTab(type,rock)+'</div>';
     h+='<div class="subpane'+(tab==='todos'?' on':'')+'">'+todosTab(type,rock)+'</div>';
@@ -1923,14 +1935,14 @@ function rockDrop(e,type,toId){e.preventDefault();var d=_rockDrag;rockDragEnd();
   var from=disp.findIndex(function(r){return r.id===d.id;}),to=disp.findIndex(function(r){return r.id===toId;});if(from<0||to<0)return;
   var it=disp.splice(from,1)[0];disp.splice(to,0,it);disp.forEach(function(r,i){r.ord=i;});save();rerenderCurrent();}
 
-/* ---- Move a rock/project into another one as a sub-rock ---- */
+/* ---- Move a rock/project into another one as a deliverable ---- */
 var _mv=null;
 function openMoveInto(type,id){var r=getRocks(type).find(function(x){return x.id===id;});if(!r)return;_mv={type:type,id:id};
   var opts=ROCK_TYPES.map(function(t){var rs=getRocks(t).filter(function(x){return x.id!==id;});if(!rs.length)return '';return '<optgroup label="'+esc(ROCK_LABELS[t])+'">'+rs.map(function(x){return '<option value="'+t+'|'+x.id+'">'+(isProject(x)?'[Project] ':'')+esc(rockOptLabel(x))+'</option>';}).join('')+'</optgroup>';}).join('');
   var subs=(r.subrocks||[]).length;
   $('#mv-title').textContent='Move “'+(r.title||'Untitled')+'” into…';
   $('#mv-target').innerHTML='<option value="">— pick a rock or project —</option>'+opts;
-  $('#mv-subs').innerHTML=subs?'<label style="margin-top:12px">Its '+subs+' sub-rock'+(subs>1?'s':'')+'</label><label class="mvopt"><input type="radio" name="mv-sub" value="move" checked> Move them too, as separate sub-rocks under the new one</label><label class="mvopt"><input type="radio" name="mv-sub" value="note"> Don’t move them; list them in the new sub-rock’s comments</label>':'';
+  $('#mv-subs').innerHTML=subs?'<label style="margin-top:12px">Its '+subs+' deliverable'+(subs>1?'s':'')+'</label><label class="mvopt"><input type="radio" name="mv-sub" value="move" checked> Move them too, as separate deliverables under the new one</label><label class="mvopt"><input type="radio" name="mv-sub" value="note"> Don’t move them; list them in the new deliverable’s comments</label>':'';
   openModal('modal-move');}
 function doMoveInto(){if(!_mv)return;var v=$('#mv-target').value;if(!v){$('#mv-target').focus();return;}var tt=v.split('|')[0],tid=v.split('|')[1];
   var src=getRocks(_mv.type).find(function(x){return x.id===_mv.id;}),dst=getRocks(tt).find(function(x){return x.id===tid;});if(!src||!dst)return;
@@ -1938,7 +1950,7 @@ function doMoveInto(){if(!_mv)return;var v=$('#mv-target').value;if(!v){$('#mv-t
   var st=rockStatus(src);var subSt={'Done':'Done','Cancelled':'Cancelled','At Risk':'At Risk','On Track':'On Track'}[st]||'Not Started';
   var ss=src.subrocks||[];var tds=ss.map(function(x){return x.targetDate;}).filter(Boolean).sort();var dds=ss.map(function(x){return x.doneDate;}).filter(Boolean).sort();
   var notes=[];if(src.desc)notes.push(src.desc);
-  if(mode==='note'&&ss.length)notes.push('Sub-rocks:\n'+ss.map(function(x){return '- '+(x.title||'')+' ('+subStatus(x)+(x.targetDate?', due '+x.targetDate:'')+')';}).join('\n'));
+  if(mode==='note'&&ss.length)notes.push('Deliverables:\n'+ss.map(function(x){return '- '+(x.title||'')+' ('+subStatus(x)+(x.targetDate?', due '+x.targetDate:'')+')';}).join('\n'));
   (src.comments||[]).forEach(function(c){notes.push((c.who?c.who+' ':'')+(c.ts?'('+c.ts+')':'')+': '+(c.text||''));});
   var ns={id:uid(),title:src.title||'(untitled)',kr:'',owner:src.owner||'',dept:'',portco:(src.portco||'').trim()||rockPortco(src)||(dst.portco||''),score:'',targetDate:tds.length?tds[tds.length-1]:'',doneDate:st==='Done'?(dds.length?dds[dds.length-1]:isoDate(new Date())):'',status:subSt,comment:notes.join('\n\n'),movedFrom:src.id};
   dst.subrocks=dst.subrocks||[];dst.subrocks.push(ns);
@@ -1963,7 +1975,7 @@ function rockMeta(type,rock){
     '<div class="rmeta-w" style="flex:0 0 220px"><label>Supporting</label><input list="owner-options" value="'+esc(rock.support||'')+'" placeholder="comma-separated" title="Supporting people see this rock in My Items. It does not count toward their KPIs." onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'support\',this.value);rerenderCurrent()"></div>'+
     '<div class="rmeta-w" style="flex:0 0 132px"><label>Type</label><select onclick="event.stopPropagation()" onchange="rockSet(\''+type+'\',\''+rock.id+'\',\'kind\',this.value);rerenderCurrent()"><option value="hard"'+(isProject(rock)?'':' selected')+'>Rock</option><option value="project"'+(isProject(rock)?' selected':'')+'>Project</option></select></div>'+
     '<div class="rmeta-w" style="flex:0 0 140px"><label>Category</label><select onclick="event.stopPropagation()" onchange="moveRock(\''+type+'\',\''+rock.id+'\',this.value)">'+catOpts(type)+'</select></div>'+
-    '<div class="rmeta-w" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn sm" title="Turn this into a sub-rock of another rock or project" onclick="event.stopPropagation();openMoveInto(\''+type+'\',\''+rock.id+'\')">Move into…</button></div>'+
+    '<div class="rmeta-w" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn sm" title="Turn this into a deliverable of another rock or project" onclick="event.stopPropagation();openMoveInto(\''+type+'\',\''+rock.id+'\')">Move into…</button></div>'+
     '<div class="rmeta-d"><label>Description</label><textarea rows="2" placeholder="What is this rock and why does it matter this quarter?" onclick="event.stopPropagation()" onblur="rockSet(\''+type+'\',\''+rock.id+'\',\'desc\',this.value)">'+esc(rock.desc||'')+'</textarea></div>'+
     '</div>';
 }
@@ -1997,18 +2009,18 @@ function addLink(type,rid){var l=$('#lnk-l-'+rid),u=$('#lnk-u-'+rid);var url=u?u
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;r.links=r.links||[];r.links.push({id:uid(),label:l?l.value.trim():'',url:url});save();rerenderCurrent();}
 function delLink(type,rid,id){var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;tomb(id);r.links=(r.links||[]).filter(function(x){return x.id!==id;});save();rerenderCurrent();}
 
-/* ---- Long-text viewer/editor (sub-rock comments) ---- */
+/* ---- Long-text viewer/editor (deliverable comments) ---- */
 var _txtCb=null;
 function openText(title,val,cb){$('#tx-title').textContent=title;var t=$('#tx-val');t.value=val||'';_txtCb=cb;openModal('modal-text');setTimeout(function(){t.focus();},30);}
 function saveText(){var v=$('#tx-val').value;var cb=_txtCb;_txtCb=null;closeModal('modal-text');if(cb)cb(v);}
-function editSubComment(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;openText('Comments · '+(s.title||'Sub-rock'),s.comment||'',function(v){var s2=findSub(type,rid,sid);if(!s2)return;s2.comment=v.replace(/\s+$/,'');(WB.todos||[]).forEach(function(x){if(x.subId===sid||x.id===s2.todoId)x.notes=s2.comment;});save();rerenderCurrent();});}
+function editSubComment(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;openText('Comments · '+(s.title||'Deliverable'),s.comment||'',function(v){var s2=findSub(type,rid,sid);if(!s2)return;s2.comment=v.replace(/\s+$/,'');(WB.todos||[]).forEach(function(x){if(x.subId===sid||x.id===s2.todoId)x.notes=s2.comment;});save();rerenderCurrent();});}
 
-/* ---- Sub-Rocks tab ---- */
+/* ---- Deliverables tab ---- */
 function portcoOpts(v){return '<option value=""'+(!v?' selected':'')+'>—</option>'+PORTCOS.map(function(p){return '<option'+(v===p?' selected':'')+'>'+esc(p)+'</option>';}).join('');}
 function statusOpts(v){return STATUSES.map(function(s){return '<option'+(v===s?' selected':'')+'>'+esc(s)+'</option>';}).join('');}
 function subrocksTab(type,rock){
   var subs=rock.subrocks||[];
-  var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Sub-Rock</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th style="min-width:160px">Comments</th><th></th></tr></thead><tbody>';
+  var h='<div class="tablecard"><table class="tbl"><thead><tr><th style="width:24px">#</th><th style="min-width:180px">Deliverable</th><th>Owner</th><th>PortCo</th><th>Target</th><th>Done</th><th>Status</th><th style="min-width:160px">Comments</th><th></th></tr></thead><tbody>';
   subs.forEach(function(s,si){
     var noTgt=!s.targetDate;
     var scls=srCls(s);h+='<tr class="subrow'+scls+'"'+(noTgt&&!scls?' style="background:var(--red-bg)"':'')+' ondragstart="subDragStart(event,'+si+')" ondragover="subDragOver(event)" ondragleave="this.classList.remove(\'dropto\')" ondrop="subDrop(event,\''+type+'\',\''+rock.id+'\','+si+')" ondragend="this.draggable=false;subDragEnd()"><td class="num draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span>'+(si+1)+'</td>';
@@ -2020,11 +2032,11 @@ function subrocksTab(type,rock){
     var stored=s.doneDate?'Done':(s.status||'Not Started');var pd=stored!=='At Risk'&&subStatus(s)==='At Risk';
     h+='<td><select onchange="subSet(\''+type+'\',\''+rock.id+'\',\''+s.id+'\',\'status\',this.value)">'+statusOpts(stored)+'</select>'+(pd?'<div class="pastdue" title="Past its target date and not Done, so it counts as At Risk in the rock roll-up and dashboards.">past due · counts as At Risk</div>':'')+'</td>';
     h+='<td><div class="subcmt'+(s.comment?'':' empty')+'" title="Click to read or edit" onclick="editSubComment(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">'+(s.comment?esc(s.comment):'+ add comment')+'</div></td>';
-    h+='<td style="white-space:nowrap"><button class="btn-flag'+((s.links||[]).length?' on':'')+'" title="Links / documents ('+(s.links||[]).length+')" onclick="openSubLinks(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">'+LNK_SVG+((s.links||[]).length||'')+'</button><button class="btn-flag'+(s.recurring?' on':'')+'" title="'+(s.recurring?'Recurring weekly: click to stop':'Make recurring: add a to-do for its owners every week')+'" onclick="subToggleRec(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">↻</button><button class="btn-flag" title="Flag a blocker or ask on this sub-rock" onclick="openBlk({rockId:\''+rock.id+'\',subId:\''+s.id+'\'})">⚑</button><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
+    h+='<td style="white-space:nowrap"><button class="btn-flag'+((s.links||[]).length?' on':'')+'" title="Links / documents ('+(s.links||[]).length+')" onclick="openSubLinks(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">'+LNK_SVG+((s.links||[]).length||'')+'</button><button class="btn-flag'+(s.recurring?' on':'')+'" title="'+(s.recurring?'Recurring weekly: click to stop':'Make recurring: add a to-do for its owners every week')+'" onclick="subToggleRec(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">↻</button><button class="btn-flag" title="Flag a blocker or ask on this deliverable" onclick="openBlk({rockId:\''+rock.id+'\',subId:\''+s.id+'\'})">⚑</button><button class="btn-del" onclick="delSub(\''+type+'\',\''+rock.id+'\',\''+s.id+'\')">✕</button></td></tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div style="display:flex;gap:8px;margin-top:10px"><input id="newsub-'+rock.id+'" placeholder="New sub-rock title…" style="flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px" onkeydown="if(event.key===\'Enter\')addSub(\''+type+'\',\''+rock.id+'\')"><button class="btn sm" onclick="addSub(\''+type+'\',\''+rock.id+'\')">Add sub-rock</button></div>';
-  h+='<div class="hint" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Setting a Done date auto-marks the sub-rock complete. Sub-rocks with no target date are flagged Unplanned.</div>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px"><input id="newsub-'+rock.id+'" placeholder="New deliverable title…" style="flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px" onkeydown="if(event.key===\'Enter\')addSub(\''+type+'\',\''+rock.id+'\')"><button class="btn sm" onclick="addSub(\''+type+'\',\''+rock.id+'\')">Add deliverable</button></div>';
+  h+='<div class="hint" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Setting a Done date auto-marks the deliverable complete. Deliverables with no target date are flagged Unplanned.</div>';
   return h;
 }
 function addSub(type,rid){
@@ -2036,7 +2048,7 @@ function addSub(type,rid){
 }
 /* New sub-rocks are owned by whoever creates them (editable). */
 function newSub(r,t,due){return {id:uid(),title:t,kr:'',owner:myName()||'',dept:'',portco:(r.portco||'').trim()||rockPortco(r)||'',score:'',targetDate:due||'',doneDate:'',status:'Not Started',milestones:Array(12).fill(''),msNotes:Array(12).fill('')};}
-function pvAddRow(type,rid){var a='\''+type+'\',\''+rid+'\'';return '<div class="drow pvsub pvadd" onclick="event.stopPropagation()"><input id="pvsub-'+rid+'" placeholder="New sub-rock…" onkeydown="if(event.key===\'Enter\')pvAddSub('+a+')"><input type="date" id="pvsubd-'+rid+'" title="Target date"><button class="btn sm" onclick="pvAddSub('+a+')">Add sub-rock</button></div>';}
+function pvAddRow(type,rid){var a='\''+type+'\',\''+rid+'\'';return '<div class="drow pvsub pvadd" onclick="event.stopPropagation()"><input id="pvsub-'+rid+'" placeholder="New deliverable…" onkeydown="if(event.key===\'Enter\')pvAddSub('+a+')"><input type="date" id="pvsubd-'+rid+'" title="Target date"><button class="btn sm" onclick="pvAddSub('+a+')">Add deliverable</button></div>';}
 function pvAddSub(type,rid){var inp=$('#pvsub-'+rid),dd=$('#pvsubd-'+rid);var t=inp?inp.value.trim():'';if(!t){if(inp)inp.focus();return;}
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r)return;r.subrocks=r.subrocks||[];r.subrocks.push(newSub(r,t,dd?dd.value:''));save();render(CUR);}
 
@@ -2045,11 +2057,11 @@ function subToggleRec(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;s.r
 /* ---- Sub-rock links (SharePoint folders, docs…) ---- */
 var _sl=null;
 function ensureSubLinksModal(){if($('#modal-sublinks'))return;var d=document.createElement('div');d.className='overlay';d.id='modal-sublinks';
-  d.innerHTML='<div class="modal" style="max-width:600px"><h3 id="sl-title">Links</h3><p>SharePoint folders, documents or any web link for this sub-rock.</p><div class="lnkform"><input id="sl-l" placeholder="Label, e.g. SharePoint folder"><input id="sl-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')addSubLink()"><button class="btn sm pri" onclick="addSubLink()">Add link</button></div><div id="sl-list"></div>'+
+  d.innerHTML='<div class="modal" style="max-width:600px"><h3 id="sl-title">Links</h3><p>SharePoint folders, documents or any web link for this deliverable.</p><div class="lnkform"><input id="sl-l" placeholder="Label, e.g. SharePoint folder"><input id="sl-u" placeholder="https://…" onkeydown="if(event.key===\'Enter\')addSubLink()"><button class="btn sm pri" onclick="addSubLink()">Add link</button></div><div id="sl-list"></div>'+
     '<div class="acts" style="margin-top:14px"><span style="flex:1"></span><button class="btn" onclick="closeModal(\'modal-sublinks\')">Done</button></div></div>';
   document.body.appendChild(d);d.addEventListener('click',function(e){if(e.target===d)closeModal('modal-sublinks');});}
 function slSub(){return _sl?findSub(_sl.type,_sl.rid,_sl.sid):null;}
-function openSubLinks(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;_sl={type:type,rid:rid,sid:sid};ensureSubLinksModal();$('#sl-title').textContent='Links · '+(s.title||'Sub-rock');$('#sl-l').value='';$('#sl-u').value='';renderSubLinks();openModal('modal-sublinks');}
+function openSubLinks(type,rid,sid){var s=findSub(type,rid,sid);if(!s)return;_sl={type:type,rid:rid,sid:sid};ensureSubLinksModal();$('#sl-title').textContent='Links · '+(s.title||'Deliverable');$('#sl-l').value='';$('#sl-u').value='';renderSubLinks();openModal('modal-sublinks');}
 function renderSubLinks(){var s=slSub();if(!s)return;$('#sl-list').innerHTML=linkList(s.links||[],function(id){return 'delSubLink(\''+id+'\')';});}
 function addSubLink(){var s=slSub();if(!s)return;var u=$('#sl-u').value.trim(),l=$('#sl-l').value.trim();if(!u){$('#sl-u').focus();return;}if(!normUrl(u)){alert('Please enter a web address (http/https) or mailto: link.');return;}
   s.links=(s.links||[]).concat([{id:uid(),label:l,url:u}]);$('#sl-l').value='';$('#sl-u').value='';save();renderSubLinks();rerenderCurrent();}
@@ -2063,7 +2075,7 @@ function subDragEnd(){_subDrag=null;_subArm=false;document.querySelectorAll('tr.
 function subDrop(e,type,rid,to){e.preventDefault();var from=_subDrag;subDragEnd();if(from===null||from===to)return;
   var r=getRocks(type).find(function(x){return x.id===rid;});if(!r||!r.subrocks)return;
   var it=r.subrocks.splice(from,1)[0];r.subrocks.splice(to,0,it);save();rerenderCurrent();}
-/* Record when a sub-rock's target date moves later (shown on the Weekly Review as "slipped"). */
+/* Record when a deliverable's target date moves later (shown on the Weekly Review as "slipped"). */
 function noteSlip(s,oldV,newV){if(oldV&&newV&&newV>oldV){s.slips=(s.slips||[]).concat([{from:oldV,to:newV,at:isoDate(new Date()),by:(typeof myName==='function'&&myName())||''}]).slice(-10);}}
 function subSet(type,rid,sid,k,v){var s=findSub(type,rid,sid);if(!s)return;if(k==='targetDate')noteSlip(s,s.targetDate,v);s[k]=v.trim?v.trim():v;if(k==='status'){if(s.status==='Done'&&!s.doneDate){var t=new Date();s.doneDate=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);}else if(s.status!=='Done'){s.doneDate='';}}if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
 function subDone(type,rid,sid,v){var s=findSub(type,rid,sid);if(!s)return;s.doneDate=v;if(v)s.status='Done';else if(s.status==='Done')s.status='On Track';if(s.todoId)pushSubToTodo(s);save();rerenderCurrent();}
@@ -2073,13 +2085,13 @@ function delSub(type,rid,sid){var r=getRocks(type).find(function(x){return x.id=
     if(todoStatus(t)==='Done'){t.status='Done';t.subId='';t.recurSub='';return;}gone[t.id]=1;trashPush('todo',t.desc,t,{});tomb(t.id);});
   if(Object.keys(gone).length)WB.todos=WB.todos.filter(function(t){return !gone[t.id];});if(s)trashPush('sub',s.title,s,{quarter:WB.activeQuarter,rockId:rid});tomb(sid);r.subrocks=r.subrocks.filter(function(x){return x.id!==sid;});save();rerenderCurrent();}
 
-/* ---- Timeline (read-only): each sub-rock's target date across the quarter's weeks ---- */
+/* ---- Timeline (read-only): each deliverable's target date across the quarter's weeks ---- */
 function milestonesTab(type,rock){
   var subs=(rock.subrocks||[]).filter(function(s){return subStatus(s)!=='Cancelled';});var wk=weekDates();
   /* a quarter is ~13 weeks; extend (up to 16) so today and late target/done dates stay on the chart */
   var last=today0();subs.forEach(function(s){[s.targetDate,s.doneDate].forEach(function(v){if(v){var d=new Date(v+'T00:00:00');if(!isNaN(d)&&d>last)last=d;}});});
   while(wk.length<16&&(wk.length<13||new Date(wk[wk.length-1].getTime()+7*86400000)<=last)){var nx=new Date(wk[wk.length-1]);nx.setDate(nx.getDate()+7);wk.push(nx);}
-  if(!subs.length)return '<div class="empty">Add sub-rocks first to see them on the timeline.</div>';
+  if(!subs.length)return '<div class="empty">Add deliverables first to see them on the timeline.</div>';
   var t0=wk[0].getTime(),t1=wk[wk.length-1].getTime()+7*86400000,span=t1-t0;
   function pos(iso){var d=new Date(iso+'T00:00:00');if(isNaN(d))return null;return Math.max(0,Math.min(100,(d.getTime()-t0)/span*100));}
   var now=today0().getTime();var nowP=(now>=t0&&now<=t1)?(now-t0)/span*100:null;
@@ -2096,7 +2108,7 @@ function milestonesTab(type,rock){
     if(tp===null&&dp===null)h+='<span class="tlnone">no target date</span>';
     h+='</div></div>';
   });
-  h+='</div><div class="hint" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Each marker is a sub-rock’s target date, coloured by status; a filled green dot is when it was done, and a red bar shows how far past due it is. The blue line is today. Change dates in the Sub-Rocks tab.</div>';
+  h+='</div><div class="hint" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Each marker is a deliverable’s target date, coloured by status; a filled green dot is when it was done, and a red bar shows how far past due it is. The blue line is today. Change dates in the Deliverables tab.</div>';
   return h;
 }
 function isoOf(i){var d=weekDates()[i];return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -2123,7 +2135,7 @@ function addRock(type){
 function delRock(type,id,e){
   if(e)e.stopPropagation();
   var r=getRocks(type).find(function(x){return x.id===id;});
-  confirmDelete('Delete Rock?','Move “'+(r?r.title:'this rock')+'” (and its sub-rocks) to Trash. You can restore it from the Trash page.',function(){
+  confirmDelete('Delete Rock?','Move “'+(r?r.title:'this rock')+'” (and its deliverables) to Trash. You can restore it from the Trash page.',function(){
     if(r)trashPush('rock',r.title,r,{quarter:WB.activeQuarter,cat:(r.cat||type)});
     tomb(id);D[ROCK_ARR[type]]=getRocks(type).filter(function(x){return x.id!==id;});
     save();render(CUR);updateBadges();
@@ -2144,7 +2156,7 @@ function indRockRow(x){
 function indSubRow(x){
   var d=daysUntil(x.sub.targetDate);var tag='';
   if(subStatus(x.sub)!=='Done'&&d!==null){if(d<0)tag='<span class="tag over">'+(-d)+'d over</span>';else if(d<=14)tag='<span class="tag soon">in '+d+'d</span>';}
-  return '<div class="drow'+srCls(x.sub)+'"><span class="tag">Sub</span><div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(x.rock.title||'')+(x.sub.portco?' · '+esc(x.sub.portco):'')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+subLinksInline(x.sub)+'</div></div>'+tag+statusSelectMini('subSet(\''+x.type+'\',\''+x.rock.id+'\',\''+x.sub.id+'\',\'status\',this.value)',subStatus(x.sub))+'</div>';
+  return '<div class="drow'+srCls(x.sub)+'"><span class="tag">Deliv.</span><div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(x.rock.title||'')+(x.sub.portco?' · '+esc(x.sub.portco):'')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+subLinksInline(x.sub)+'</div></div>'+tag+statusSelectMini('subSet(\''+x.type+'\',\''+x.rock.id+'\',\''+x.sub.id+'\',\'status\',this.value)',subStatus(x.sub))+'</div>';
 }
 function statusSelectMini(handler,cur,rockLevel){
   var opts=['Not Started','On Track','At Risk','Done','Cancelled'];var cls=PILLCLS[cur]||(rockLevel?'p-up':'p-ns');
@@ -2161,7 +2173,7 @@ function renderDashInd(){
   if(sel&&sel!=='__all'){p.innerHTML=bar+'<div class="card mehead"><span class="avatar">'+esc(initials(sel))+'</span><div><h2>'+esc(sel)+'</h2><div class="em">'+esc(WB.activeQuarter||'')+'</div></div></div>'+personView(sel,isMe(sel));return;}
   renderDashIndAll(p,bar);
 }
-/* People for the By Individual picker: rock/sub-rock owners, to-do people and scorecard, active this quarter. */
+/* People for the By Individual picker: rock/deliverable owners, to-do people and scorecard, active this quarter. */
 function indPeople(){var out=[];function add(n){n=String(n||'').trim();if(n&&n!=='Unassigned'&&!out.some(function(x){return ownerMatches(x,n);}))out.push(n);}
   try{todoOwners(currentWeekStart()).forEach(add);}catch(e){}((WB.scorecard&&WB.scorecard.people)||[]).forEach(function(pp){if(!scRemoved(pp))add(pp.name);});
   allRocks().forEach(function(x){ownersOf(x.rock).forEach(add);(x.rock.subrocks||[]).forEach(function(s){ownersOf(s).forEach(add);});});
@@ -2176,7 +2188,7 @@ function renderDashIndAll(p,bar){
   var sel='';
   var h=bar+'<div class="filt">'+kindFilterBar()+
     '<span class="lbl" style="margin-left:12px">Sort:</span><button class="btn sm'+(_indSort!=='due'?' pri':'')+'" onclick="setIndSort(\'\')">Status</button><button class="btn sm'+(_indSort==='due'?' pri':'')+'" onclick="setIndSort(\'due\')">Due date</button><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'ind\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'ind\',false)">Collapse all</button></div>';
-  if(!names.length){h+=emptyState('user','No owners yet','Assign owners to rocks or sub-rocks to see workload here.');p.innerHTML=h;return;}
+  if(!names.length){h+=emptyState('user','No owners yet','Assign owners to rocks or deliverables to see workload here.');p.innerHTML=h;return;}
   h=h.replace('<div class="filt">'+kindFilterBar(),'<div class="filt">'+kindFilterBar()+closedFilterBar(allRocks().filter(function(x){return isClosed(x.rock);}).length));
   names.filter(function(n){return !sel||sel===n;}).forEach(function(n){
     var rk=rby[n]||[],sb=sby[n]||[];
@@ -2187,7 +2199,7 @@ function renderDashIndAll(p,bar){
     var key='ind-'+n;var open=D.indCollapsed[key]!==true;var nq=esc(n).replace(/'/g,"\\'");
     h+='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="toggleGrp(\'ind\',\''+nq+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
     h+='<span class="avatar">'+esc(initials(n))+'</span><span class="nm">'+esc(n)+'</span>';
-    h+='<span class="ct">'+rk.length+' rocks · '+sb.length+' sub-rocks · '+pct+'% done'+(atRisk?' · '+atRisk+' at risk':'')+'</span><span class="spacer"></span>';
+    h+='<span class="ct">'+rk.length+' rocks · '+sb.length+' deliverables · '+pct+'% done'+(atRisk?' · '+atRisk+' at risk':'')+'</span><span class="spacer"></span>';
     h+='<div style="width:120px"><div class="prog"><span style="width:'+pct+'%"></span></div></div></div>';
     h+='<div class="dgrp-bd"><div class="card" style="padding:4px 0">';
     if(_indSort==='due'){
@@ -2224,7 +2236,7 @@ function renderDashPortco(){
   var h=tabs+'<div class="filt">'+kindFilterBar()+closedFilterBar(0)+'<span class="lbl" style="margin-left:12px">Filter:</span><select id="filt-portco" onchange="setDashFilter(\'portco\',this.value)"><option value="">All PortCos</option>'+
     order.map(function(n){return '<option'+(sel===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select><span class="spacer" style="flex:1"></span><button class="btn sm" onclick="setAllGrp(\'portco\',true)">Expand all</button><button class="btn sm" onclick="setAllGrp(\'portco\',\'rocks\')">Rocks only</button><button class="btn sm" onclick="setAllGrp(\'portco\',false)">Collapse all</button></div>';
   _pcLast=order.map(function(pc){var ids={};groups[pc].forEach(function(x){ids[x.rock.id]=1;});return {pc:pc,ids:Object.keys(ids)};});
-  if(!order.length){h+=emptyState('grid','No PortCo sub-rocks yet','Assign a PortCo to sub-rocks to see them grouped here.');p.innerHTML=h;return;}
+  if(!order.length){h+=emptyState('grid','No PortCo deliverables yet','Assign a PortCo to deliverables to see them grouped here.');p.innerHTML=h;return;}
   order.filter(function(n){return !sel||sel===n;}).forEach(function(pc){
     var items=groups[pc];var itH=items.filter(function(x){return !isProject(x.rock);});var done=itH.filter(function(x){return subStatus(x.sub)==='Done';}).length;
     var pct=itH.length?Math.round(done/itH.length*100):0;
@@ -2232,11 +2244,11 @@ function renderDashPortco(){
     items.forEach(function(x){var id=x.rock.id;if(!rg[id]){rg[id]={rock:x.rock,type:x.type,subs:[]};rorder.push(id);}rg[id].subs.push(x);});
     var key='portco-'+pc;var open=D.portcoCollapsed[key]!==true;var pq=esc(pc).replace(/'/g,"\\'");
     h+='<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="toggleGrp(\'portco\',\''+pq+'\')" style="background:var(--teal-bg);border-color:var(--teal)"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
-    h+='<span class="nm" style="color:var(--teal-tx)">'+esc(pc)+'</span><span class="ct">'+rorder.length+' rocks · '+items.length+' sub-rocks · '+pct+'% done</span><span class="spacer"></span>';
+    h+='<span class="nm" style="color:var(--teal-tx)">'+esc(pc)+'</span><span class="ct">'+rorder.length+' rocks · '+items.length+' deliverables · '+pct+'% done</span><span class="spacer"></span>';
     h+='<div style="width:120px"><div class="prog"><span style="width:'+pct+'%"></span></div></div></div>';
     h+='<div class="dgrp-bd"><div class="card" style="padding:4px 0">';
     rorder.forEach(function(id){var g=rg[id];var ck=pc+'|'+id;var coll=_pcCollapse[ck];
-      h+='<div class="drow pcrock" onclick="pcToggle(\''+pq+'\',\''+id+'\')"><svg class="chev'+(coll?'':' open')+'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'+kindChip(g.rock)+'<div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
+      h+='<div class="drow pcrock" onclick="pcToggle(\''+pq+'\',\''+id+'\')"><svg class="chev'+(coll?'':' open')+'" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'+kindChip(g.rock)+'<div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' deliverables</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
       if(!coll)g.subs.sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).forEach(function(x){
         h+='<div class="drow'+srCls(x.sub)+'" style="padding-left:34px">'+avatarStack(ownersOf(x.sub))+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+'</div></div>'+chip(subStatus(x.sub))+'</div>';
       });
@@ -2266,18 +2278,18 @@ function pcSummary(title,groups,proj){
   var wp=weightedPct(rocks);
   var h='<div class="card pcsum"><h3>'+title+'<span class="spacer" style="flex:1"></span>'+(proj?'<span class="kmini">not counted in KPIs</span>':'')+'</h3>';
   if(!groups.length)return h+'<div class="empty" style="padding:14px">None this quarter.</div></div>';
-  h+='<div class="pcnums"><div><b>'+rocks.length+'</b><span>'+(proj?'projects':'rocks')+'</span></div><div><b>'+wp+'%</b><span>weighted completion</span></div><div><b>'+done+'/'+subs.length+'</b><span>sub-rocks done</span></div>'+
+  h+='<div class="pcnums"><div><b>'+rocks.length+'</b><span>'+(proj?'projects':'rocks')+'</span></div><div><b>'+wp+'%</b><span>weighted completion</span></div><div><b>'+done+'/'+subs.length+'</b><span>deliverables done</span></div>'+
     '<div class="'+(risk?'warn':'')+'"><b>'+risk+'</b><span>at risk</span></div><div class="'+(over?'bad':'')+'"><b>'+over+'</b><span>overdue</span></div><div><b>'+soon+'</b><span>due in 2 weeks</span></div></div>';
   h+='<div class="prog" style="margin-top:12px"><span style="width:'+wp+'%"></span></div>';
   var on=Object.keys(ows).sort();h+='<div class="pcown">'+(on.length?'Owners: '+esc(on.join(', ')):'No owners assigned')+'</div></div>';return h;}
 function pcRockRows(groups){if(!groups.length)return '<div class="empty" style="padding:14px">None.</div>';var h='';
-  groups.forEach(function(g){h+='<div class="drow pcrock"><span class="tag">Rock</span><div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' sub-rocks</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
+  groups.forEach(function(g){h+='<div class="drow pcrock"><span class="tag">Rock</span><div class="grow"><div>'+esc(g.rock.title||'(untitled)')+'</div><div class="rname">'+esc(ROCK_LABELS[g.type].replace(' Rocks',''))+' · '+esc(g.rock.owner||'unassigned')+' · '+g.subs.length+' deliverables</div></div><span class="pct">'+rockPct(g.rock)+'%</span>'+chip(rockStatus(g.rock))+'</div>';
     g.subs.slice().sort(function(a,b){return SORTORD[subStatus(a.sub)]-SORTORD[subStatus(b.sub)];}).forEach(function(x){var d=daysUntil(x.sub.targetDate);var tag='';if(subStatus(x.sub)!=='Done'&&d!==null){if(d<0)tag='<span class="tag over">'+(-d)+'d over</span>';else if(d<=14)tag='<span class="tag soon">in '+d+'d</span>';}
       h+='<div class="drow'+srCls(x.sub)+'" style="padding-left:34px">'+avatarStack(ownersOf(x.sub))+'<div class="grow"><div>'+esc(x.sub.title||'(untitled)')+'</div><div class="rname">'+esc(ownersOf(x.sub).join(', ')||'unassigned')+(x.sub.targetDate?' · due '+esc(fmtDate(x.sub.targetDate)):'')+(x.sub.comment?' · '+esc(x.sub.comment.length>80?x.sub.comment.slice(0,78)+'…':x.sub.comment):'')+'</div></div>'+tag+chip(subStatus(x.sub))+'</div>';});});return h;}
 var _pcSecOpen={};
 function pcSecToggle(i,k){var key=_pcNames[i]+'|'+k;_pcSecOpen[key]=!_pcSecOpen[key];render(CUR);}
 function pcSection(i,k,title,groups){var open=!!_pcSecOpen[_pcNames[i]+'|'+k];var ns=groups.reduce(function(a,g){return a+g.subs.length;},0);
-  return '<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="pcSecToggle('+i+',\''+k+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><span class="nm">'+title+'</span><span class="ct">'+groups.length+' '+(k==='proj'?'projects':'rocks')+' · '+ns+' sub-rocks</span></div><div class="dgrp-bd"><div class="card" style="padding:4px 0">'+pcRockRows(groups)+'</div></div></div>';}
+  return '<div class="dgrp'+(open?' open':'')+'"><div class="dgrp-hd" onclick="pcSecToggle('+i+',\''+k+'\')"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg><span class="nm">'+title+'</span><span class="ct">'+groups.length+' '+(k==='proj'?'projects':'rocks')+' · '+ns+' deliverables</span></div><div class="dgrp-bd"><div class="card" style="padding:4px 0">'+pcRockRows(groups)+'</div></div></div>';}
 var PC_STATUS=[['','— not set —',''],['ok','On track','pcst-ok'],['watch','Watch','pcst-watch'],['concern','Concern','pcst-bad']];
 function renderPortcoTab(pc){
   var i=pcIdx(pc),info=pcInfo(pc),all=pcRocks(pc);
@@ -2343,32 +2355,32 @@ function allRocksAllQuarters(){var a=[];Object.keys(WB.quarters||{}).forEach(fun
 function findRockById(id){var f=allRocksAllQuarters().filter(function(x){return x.rock.id===id;})[0];return f?f.rock:null;}
 function td2sub(s){return {'To Do':'Not Started','In Progress':'On Track','Done':'Done','Not Done':'At Risk','Cancelled':'Cancelled'}[s]||'Not Started';}
 function sub2td(s){return {'Not Started':'To Do','On Track':'In Progress','Done':'Done','At Risk':'Not Done','Cancelled':'Cancelled','Unplanned':'To Do'}[s]||'To Do';}
-/* A to-do linked to a sub-rock always shows the sub-rock's status (single source of truth). */
-/* A linked to-do shows the status the person chose (stored on the sub-rock). Being past due does NOT force it:
-   the sub-rock rolls up as At Risk in the Rocks views, and the to-do gets a "past due" tag instead. */
+/* A to-do linked to a deliverable always shows the deliverable's status (single source of truth). */
+/* A linked to-do shows the status the person chose (stored on the deliverable). Being past due does NOT force it:
+   the deliverable rolls up as At Risk in the Rocks views, and the to-do gets a "past due" tag instead. */
 function todoStatus(t){var s=todoSubOf(t);return s?sub2td(s.doneDate?'Done':(s.status||'Not Started')):(t.status||'To Do');}
 function todoPastDue(t){var s=todoSubOf(t);if(!s)return '';var st=subStatus(s);return (st==='At Risk'&&isPastDue(s)&&(s.status||'')!=='At Risk')?s.targetDate:'';}
-/* A to-do linked to a sub-rock (e.g. a due-date reminder) shares its notes with the sub-rock's Comments. */
+/* A to-do linked to a deliverable (e.g. a due-date reminder) shares its notes with the deliverable's Comments. */
 function todoNotes(t){var s=todoSubOf(t);return s?(s.comment||''):(t.notes||'');}
 function editTodoNotes(id){var t=(WB.todos||[]).find(function(x){return x.id===id;});if(!t)return;var s=todoSubOf(t);
-  openText((s?'Notes / blockers · shared with the sub-rock’s comments':'Notes / blockers')+' · '+(t.desc||'To-do'),todoNotes(t),function(v){var t2=(WB.todos||[]).find(function(x){return x.id===id;});if(!t2)return;v=v.replace(/\s+$/,'');t2.notes=v;var s2=todoSubOf(t2);if(s2)s2.comment=v;save();render(CUR);});}
-function notesCell(t){var n=todoNotes(t);return '<div class="subcmt'+(n?'':' empty')+'" title="Click to read or edit'+(todoSubOf(t)?' (same text as the sub-rock’s comments)':'')+'" onclick="editTodoNotes(\''+t.id+'\')">'+(n?esc(n):'+ add')+'</div>';}
-/* A to-do's PortCo: set by hand, else taken from its linked sub-rock, else from its rock. */
+  openText((s?'Notes / blockers · shared with the deliverable’s comments':'Notes / blockers')+' · '+(t.desc||'To-do'),todoNotes(t),function(v){var t2=(WB.todos||[]).find(function(x){return x.id===id;});if(!t2)return;v=v.replace(/\s+$/,'');t2.notes=v;var s2=todoSubOf(t2);if(s2)s2.comment=v;save();render(CUR);});}
+function notesCell(t){var n=todoNotes(t);return '<div class="subcmt'+(n?'':' empty')+'" title="Click to read or edit'+(todoSubOf(t)?' (same text as the deliverable’s comments)':'')+'" onclick="editTodoNotes(\''+t.id+'\')">'+(n?esc(n):'+ add')+'</div>';}
+/* A to-do's PortCo: set by hand, else taken from its linked deliverable, else from its rock. */
 function todoAutoPortco(t){var s=todoSubOf(t);if(s&&(s.portco||'').trim())return s.portco.trim();var r=t.rockId?findRockById(t.rockId):null;return r?rockPortco(r):'';}
 function todoPortco(t){return (t.portco||'').trim()||todoAutoPortco(t);}
 function todoPortcoSel(t){var cur=todoPortco(t),auto=!(t.portco||'').trim()&&!!cur;var opts=PORTCOS.slice();if(cur&&opts.indexOf(cur)<0)opts.push(cur);
   return '<select class="'+(auto?'pcauto':'')+'" title="'+(auto?'From the linked rock. Pick another to override.':'PortCo for this to-do')+'" onchange="todoSet(\''+t.id+'\',\'portco\',this.value)"><option value=""'+(!cur?' selected':'')+'>—</option>'+opts.map(function(p){return '<option'+(p===cur?' selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select>';}
 function todoSubOf(t){if(!t.subId||!t.rockId)return null;var r=findRockById(t.rockId);if(!r)return null;return (r.subrocks||[]).find(function(s){return s.id===t.subId;})||null;}
-/* Sync an edit on a linked to-do to its sub-rock. Only the edited field is copied (no field = full sync when first linking),
-   so e.g. editing notes on a carried-forward to-do doesn't silently move the sub-rock's target date. */
+/* Sync an edit on a linked to-do to its deliverable. Only the edited field is copied (no field = full sync when first linking),
+   so e.g. editing notes on a carried-forward to-do doesn't silently move the deliverable's target date. */
 function pushTodoToSub(t,field){var s=todoSubOf(t);if(!s)return;var all=!field;
   if(all||field==='desc')s.title=t.desc;if(all||field==='owner')s.owner=t.owner;if((all||field==='weekStart')&&t.weekStart){var nt=addDaysIso(t.weekStart,4);noteSlip(s,s.targetDate,nt);s.targetDate=nt;}
   if(all||field==='status'){var st=td2sub(t.status);s.status=st;if(st==='Done'){if(!s.doneDate)s.doneDate=t.weekStart||currentWeekStart();}else{s.doneDate='';}}
   if(field==='notes')s.comment=t.notes||'';else if(all){if(t.notes)s.comment=t.notes;else t.notes=s.comment||'';}}
 function pushSubToTodo(s){if(!s.todoId)return;var t=(WB.todos||[]).find(function(x){return x.id===s.todoId;});if(!t)return;t.desc=s.title;t.owner=s.owner;if(s.targetDate)t.weekStart=isoDate(mondayOf(new Date(s.targetDate+'T00:00:00')));t.status=sub2td((s.doneDate?'Done':(s.status||'Not Started')));t.notes=s.comment||'';}
-/* Linking a to-do to a rock/project just lists it in that rock's To-Dos tab (no sub-rock is created).
-   A to-do already tied to a sub-rock (a due-date reminder, or one linked by an earlier version) keeps that link
-   while it stays on the same rock; moving it to another rock unlinks it and leaves the sub-rock in place. */
+/* Linking a to-do to a rock/project just lists it in that rock's To-Dos tab (no deliverable is created).
+   A to-do already tied to a deliverable (a due-date reminder, or one linked by an earlier version) keeps that link
+   while it stays on the same rock; moving it to another rock unlinks it and leaves the deliverable in place. */
 function relinkTodo(t,newRockId){
   if(t.subId&&t.rockId!==newRockId){var s0=todoSubOf(t);if(s0&&s0.todoId===t.id)s0.todoId='';t.subId='';}
   t.rockId=newRockId||'';
@@ -2381,7 +2393,7 @@ function delTodo(id){var t=(WB.todos||[]).find(function(x){return x.id===id;});i
   if(t&&t.subId&&prev){var s0=todoSubOf(t);if(s0){prev.rockId=t.rockId;prev.subId=t.subId;s0.todoId=prev.id;}t.subId='';}
   if(t&&t.subId){var s1=todoSubOf(t);if(s1&&s1.todoId===t.id)s1.todoId='';}if(t)trashPush('todo',t.desc,t,{});tomb(id);WB.todos=(WB.todos||[]).filter(function(x){return x.id!==id;});save();render(CUR);updateBadges();}
 function scToggle2(key){_scOpen[key]=_scOpen[key]===false?true:false;render(CUR);}
-/* A rock's PortCo: its own PortCo field, else "PortCo: X" in the description, else the most common PortCo among its sub-rocks. */
+/* A rock's PortCo: its own PortCo field, else "PortCo: X" in the description, else the most common PortCo among its deliverables. */
 function rockPortco(r){if(!r)return '';var pc=(r.portco||'').trim();if(pc)return pc;
   var m=/PortCo:\s*([^\n,;|]+)/i.exec(r.desc||'');if(m)return m[1].trim();
   var c={},best='',bn=0;(r.subrocks||[]).forEach(function(s){var p=(s.portco||'').trim();if(p){c[p]=(c[p]||0)+1;if(c[p]>bn){bn=c[p];best=p;}}});return best;}
@@ -2457,7 +2469,7 @@ function carryItemsTo(list,week){
   list.forEach(function(t){if(t.carriedTo)return;var st=todoStatus(t);var sub=todoSubOf(t);var open=st!=='Done'&&st!=='Cancelled';
     var n={id:uid(),owner:t.owner,weekStart:week,desc:t.desc,status:st==='In Progress'?'In Progress':'To Do',time:t.time||'',notes:t.notes||'',rockId:t.rockId||'',portco:t.portco||'',subId:'',carriedFrom:t.id};
     if(isRecurring(t))n.recurring=true;
-    if(sub&&open){/* hand the sub-rock over: one sub-rock, followed week to week by its latest to-do */t.status=st;t.subId='';n.subId=sub.id;sub.todoId=n.id;}
+    if(sub&&open){/* hand the deliverable over: one deliverable, followed week to week by its latest to-do */t.status=st;t.subId='';n.subId=sub.id;sub.todoId=n.id;}
     WB.todos.push(n);t.carriedTo=n.id;});}
 /* non-interactive default (pre-ticked items) — used by tests and "carry all suggested" */
 function carryForward(owner,week,e){if(e)e.stopPropagation();var c=carryCandidates(owner,week);if(!c.items.length)return;carryItemsTo(c.items,week);save();render(CUR);}
@@ -2489,12 +2501,12 @@ function carryConfirm(){if(!_carry)return;var byId={};(WB.todos||[]).forEach(fun
   var pick=[];document.querySelectorAll('#cy-list .cy-pick:checked').forEach(function(x){if(byId[x.dataset.id])pick.push(byId[x.dataset.id]);});
   carryItemsTo(pick,_carry.week);closeModal('modal-carry');_carry=null;save();render(CUR);}
 
-/* ---- Sub-rocks due in a week become reminder to-dos for their owners ----
-   One per owner, linked to the sub-rock (status stays in sync). Deterministic ids, so two open tabs never duplicate;
-   deleting one removes only the reminder (tombstoned, so it isn't re-added) — never the sub-rock. */
+/* ---- Deliverables due in a week become reminder to-dos for their owners ----
+   One per owner, linked to the deliverable (status stays in sync). Deterministic ids, so two open tabs never duplicate;
+   deleting one removes only the reminder (tombstoned, so it isn't re-added) — never the deliverable. */
 function splitOwners(s){return String(s||'').split(/\s*[,\/&]\s*/).map(function(x){return x.trim();}).filter(Boolean);}
 function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureTodos();
-  /* clean-up: a reminder is redundant when the same person already has a real to-do linked to that sub-rock this week */
+  /* clean-up: a reminder is redundant when the same person already has a real to-do linked to that deliverable this week */
   var redundant=WB.todos.filter(function(t){return t.autoDue&&t.weekStart===week&&t.subId&&WB.todos.some(function(u){return u!==t&&!u.autoDue&&u.weekStart===week&&u.subId===t.subId&&todoHasOwner(u,t.owner);});});
   redundant.forEach(function(t){tomb(t.id);});if(redundant.length){var rid={};redundant.forEach(function(t){rid[t.id]=1;});WB.todos=WB.todos.filter(function(t){return !rid[t.id];});}
   var end=addDaysIso(week,6),del={},have={},linked={};(WB.deleted||[]).forEach(function(x){del[x]=1;});
@@ -2504,7 +2516,7 @@ function ensureDueTodos(week){if(!week||week<currentWeekStart())return 0;ensureT
     if(!s.targetDate||s.targetDate<week||s.targetDate>end)return;var st=s.doneDate?'Done':(s.status||'Not Started');if(st==='Done'||st==='Cancelled')return;
     splitOwners(s.owner||x.rock.owner).forEach(function(o){var id='due_'+strHash(s.id+'|'+week+'|'+o);
       if(have[id]||del[id]||linked[s.id+'|'+o.toLowerCase()]||!todoActiveIn(o,week))return;
-      WB.todos.push({id:id,owner:o,weekStart:week,desc:s.title||'(untitled sub-rock)',status:sub2td(st),time:'',notes:'',rockId:x.rock.id,subId:s.id,autoDue:true});
+      WB.todos.push({id:id,owner:o,weekStart:week,desc:s.title||'(untitled deliverable)',status:sub2td(st),time:'',notes:'',rockId:x.rock.id,subId:s.id,autoDue:true});
       have[id]=1;added++;});
   });});
   /* recurring sub-rocks: one to-do per owner per week (not linked to the sub-rock's status, so ticking it off doesn't finish the sub-rock) */
@@ -2526,8 +2538,8 @@ function todoTable(items,owner,week){
   items.forEach(function(t,ti){
     h+='<tr class="todorow" ondragstart="todoDragStart(event,\''+oq+'\',\''+week+'\','+ti+')" ondragover="todoDragOver(event,\''+oq+'\',\''+week+'\')" ondragleave="this.classList.remove(\'dropto\')" ondrop="todoDrop(event,\''+oq+'\',\''+week+'\','+ti+')" ondragend="todoDragEnd()">'+
       (_todoSortBy?'<td></td>':'<td class="draghandle" title="Drag to reorder" onmousedown="_subArm=true;this.parentNode.draggable=true" onmouseup="_subArm=false;this.parentNode.draggable=false"><span class="grip">⠿</span></td>')+
-      '<td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this sub-rock is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
-      '<td>'+rockLinkSelect(t)+'</td><td>'+todoPortcoSel(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked sub-rock was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
+      '<td><input class="todoin" value="'+esc(t.desc)+'" placeholder="What needs to get done" onchange="todoSet(\''+t.id+'\',\'desc\',this.value)">'+(t.carriedFrom?'<span class="tag" title="Carried forward from a previous week" style="margin-left:4px">carried</span>':'')+(todoOwnerList(t).length>1?'<span class="tag" title="Shared to-do: shows for '+esc(todoOwnerList(t).join(', '))+'" style="margin-left:4px">with '+esc(todoOwnerList(t).filter(function(o){return !sameName(o,owner);}).join(', '))+'</span>':'')+(isRecurring(t)?'<span class="tag" title="Recurring: pre-selected when carrying forward" style="margin-left:4px">recurring</span>':'')+(t.autoDue&&todoSubOf(t)?'<span class="tag soon" title="Added automatically: this deliverable is due this week. Delete the row if you don\'t need the reminder." style="margin-left:4px">due '+esc(fmtDate(todoSubOf(t).targetDate))+'</span>':'')+'</td>'+
+      '<td>'+rockLinkSelect(t)+'</td><td>'+todoPortcoSel(t)+'</td><td>'+todoStatusSel(t.id,todoStatus(t))+(todoPastDue(t)?'<div class="pastdue" title="Linked deliverable was due '+esc(fmtDate(todoPastDue(t)))+'. It shows as At Risk on the rock until it is Done or its target date moves.">past due '+esc(fmtDate(todoPastDue(t)))+'</div>':'')+'</td><td>'+todoTimeInput(t)+'</td>'+
       '<td>'+notesCell(t)+blkFlagTag(openBlkFor(function(b){return b.todoId===t.id||(t.subId&&b.subId===t.subId&&!b.todoId);}))+'</td>'+
       '<td style="white-space:nowrap"><button class="btn-flag" title="Flag a blocker or ask on this to-do" onclick="openBlk({todoId:\''+t.id+'\',rockId:\''+(t.rockId||'')+'\',subId:\''+(t.subId||'')+'\'})">⚑</button><button class="btn-del" onclick="delTodo(\''+t.id+'\')" title="Delete">✕</button></td></tr>';
   });
@@ -2640,7 +2652,7 @@ function importTrackerFile(file){
       save();render(CUR);updateBadges();setSync('load','Saving '+add.length+' to-dos…');});
   }).catch(function(e){alert('Import failed: '+(e&&e.message?e.message:e));});
 }
-/* Shared to-dos / sub-rocks ("Renata, Ygor") are listed under each person, never as a combined name. */
+/* Shared to-dos / deliverables ("Renata, Ygor") are listed under each person, never as a combined name. */
 function canonPerson(o){var hit=todoAllOwners().find(function(n){return sameName(n,o);});return hit||o;}
 function personSort(a,b){if(a==='Unassigned')return 1;if(b==='Unassigned')return -1;return a.localeCompare(b);}
 var _twMine=null;
@@ -2655,7 +2667,7 @@ function renderThisWeek(){
   if(mine){Object.keys(by).forEach(function(n){if(!isMe(n))delete by[n];});Object.keys(dueBy).forEach(function(n){if(!isMe(n))delete dueBy[n];});nDue=Object.keys(dueBy).reduce(function(a,n){return a+dueBy[n].length;},0);}
   var people=Object.keys(by).sort(personSort);
   var h='<div class="filt"><span class="tag">'+esc(weekLabel(ws))+'</span><span class="lbl">— current week · shared items appear under each person</span>'+(myName()?'<span class="spacer" style="flex:1"></span><button class="btn sm'+(mine?' pri':'')+'" onclick="_twMine=true;render(CUR)">Me</button><button class="btn sm'+(!mine?' pri':'')+'" onclick="_twMine=false;render(CUR)">Everyone</button>':'')+'</div>';
-  if(!people.length&&!nDue){h+=emptyState('spark','Nothing scheduled this week','Add to-dos in the To-Dos tab, or set sub-rock due dates.');p.innerHTML=h;return;}
+  if(!people.length&&!nDue){h+=emptyState('spark','Nothing scheduled this week','Add to-dos in the To-Dos tab, or set deliverable due dates.');p.innerHTML=h;return;}
   people.forEach(function(n){
     h+='<div class="sec-head"><h2>'+esc(n)+'</h2><span class="sub">'+by[n].length+' to-dos</span></div><div class="card" style="padding:4px 0">';
     by[n].slice().sort(function(a,b){return TODO_STATUS.indexOf(todoStatus(a))-TODO_STATUS.indexOf(todoStatus(b));}).forEach(function(t){
@@ -2668,7 +2680,7 @@ function renderThisWeek(){
   if(twb.length)h+='<div class="sec-head"><h2>Open blockers &amp; asks</h2><span class="sub">'+twb.length+'</span></div><div class="card" style="padding:4px 0">'+blkRows(twb)+'</div>';
   var dp=Object.keys(dueBy).sort(personSort);
   if(dp.length){
-    h+='<div class="sec-head"><h2>Sub-rocks due this week</h2><span class="sub">'+nDue+'</span></div><div class="card" style="padding:4px 0">';
+    h+='<div class="sec-head"><h2>Deliverables due this week</h2><span class="sub">'+nDue+'</span></div><div class="card" style="padding:4px 0">';
     dp.forEach(function(n){dueBy[n].forEach(function(x){h+='<div class="drow"><span class="avatar" title="'+esc(n)+'">'+esc(initials(n==='Unassigned'?'':n))+'</span><div class="grow"><div>'+esc(x.s.title||'(untitled)')+'</div><div class="rname">'+esc(n)+' · '+esc(x.rock.title||'')+' · '+esc(x.q)+(x.s.portco?' · '+esc(x.s.portco):'')+'</div></div><span class="tag soon">due '+esc(fmtDate(x.s.targetDate))+'</span>'+chip(subStatus(x.s))+'</div>';});});
     h+='</div>';
   }
@@ -2707,7 +2719,7 @@ function importBuildRocksQ2(){
     var ex=byId[b.id];
     if(!ex){
       var r=JSON.parse(JSON.stringify(b));
-      r.weight=b.score||'';r.score='';r.status='';r.cat='build';   // ClickUp Rock Score -> weight; status managed via sub-rocks
+      r.weight=b.score||'';r.score='';r.status='';r.cat='build';   // ClickUp Rock Score -> weight; status managed via deliverables
       q.buildRocks.push(r);changed=true;
     } else if(ex.score&&!ex.weight){                 // fix rocks imported by an earlier version (score was duplicated)
       ex.weight=ex.score;ex.score='';changed=true;
@@ -2725,7 +2737,7 @@ function aggregate(vals,method){var nums=vals.filter(function(v){return typeof v
 function defaultAgg(k){var u=(k.unit||'').toLowerCase();if(u==='#')return 'Sum';return 'Average';}
 function kpiAgg(k){return k.agg||defaultAgg(k);}
 /* ---- Automatic "Rocks Completion" KPI ----
-   Value = share of the person's sub-rocks (in that quarter, not Cancelled) that are Done.
+   Value = share of the person's deliverables (in that quarter, not Cancelled) that are Done.
    Monthly value = done by the end of that month (months not started yet stay blank).
    Status = actual vs target pro-rated to how far through the quarter we are:
    On Track if at or above that pace, Behind if within 80% of it, Off Track below. Only the target (Plan) is editable. */
@@ -2737,7 +2749,7 @@ function quarterYear(){var m=/(\d{4})/.exec(WB.activeQuarter||'');return m?+m[1]
 function quarterLabelFor(qn,year){var want=qOrd('Q'+qn+' '+year);var hit=null;Object.keys(WB.quarters||{}).forEach(function(k){if(qOrd(k)===want)hit=k;});return hit;}
 function personSubsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
   quarterRockList(q).forEach(function(r){if(isProject(r))return;(r.subrocks||[]).forEach(function(s){if((s.status||'')==='Cancelled')return;if(splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);}))out.push(s);});});return out;}
-/* Weighted by rock: each rock counts by its weight; within a rock, the share of the person's sub-rocks done. */
+/* Weighted by rock: each rock counts by its weight; within a rock, the share of the person's deliverables done. */
 function personRockGroupsIn(qlabel,name){var q=WB.quarters[qlabel];if(!q)return [];var out=[];
   quarterRockList(q).forEach(function(r){if(isProject(r))return;var ss=(r.subrocks||[]).filter(function(s){return (s.status||'')!=='Cancelled'&&splitOwners(s.owner||r.owner).some(function(o){return ownerMatches(o,name);});});if(ss.length)out.push({w:rockWeight(r),subs:ss});});return out;}
 function weightedDone(groups,iso){var tw=0,acc=0;groups.forEach(function(g){tw+=g.w;acc+=g.w*g.subs.filter(function(s){return doneBy(s,iso);}).length/g.subs.length;});return tw?acc/tw:0;}
@@ -2792,14 +2804,14 @@ function kpiCard(pi,ki,qn,showPerson){
   if(showPerson)h+='<span class="kperson">'+esc(pp.name)+(pp.area?' · '+esc(pp.area):'')+'</span>';
   h+='<span class="spacer"></span>';
   h+='<button class="kc-btn kc-star'+(isPrim?' on':'')+'" onclick="scSetPrimary('+pi+','+ki+')" title="'+(isPrim?'Shown in Overview dashboard':'Show this KPI in the Overview')+'">'+(isPrim?'★':'☆')+'</button>';
-  if(au)h+='<span class="kstatus kauto" style="color:'+stcol+'" title="Automatic: actual vs target pro-rated to today ('+au.done+' of '+au.total+' sub-rocks done)">'+(st||'—')+' · auto</span>';
+  if(au)h+='<span class="kstatus kauto" style="color:'+stcol+'" title="Automatic: actual vs target pro-rated to today ('+au.done+' of '+au.total+' deliverables done)">'+(st||'—')+' · auto</span>';
   else h+='<select class="kstatus" style="color:'+stcol+'" onchange="scQ('+pi+','+ki+',\'status\',this.value)"><option value="">— status —</option>'+['On Track','Behind','Off Track'].map(function(s){return '<option'+(st===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
   if(k.proof)h+='<a class="kc-btn" href="'+esc(k.proof)+'" target="_blank" rel="noopener" title="Open proof">🔗</a>';
   if(!au)h+='<button class="kc-btn kc-chev'+(dopen?' open':'')+'" onclick="scKpiDetail('+pi+','+ki+')" title="Enter monthly actuals, aggregation & proof"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>';
   h+='<button class="kc-btn" onclick="delScKpi('+pi+','+ki+')" title="Delete KPI">✕</button></div>';
   h+='<div class="kc-meta">';
   h+='<span class="kpv">Plan <input value="'+esc(plan)+'" onchange="scQ('+pi+','+ki+',\'plan\',this.value)"></span><span class="arrow">→</span>';
-  h+='<span class="kpv">Actual '+(au?'<b class="autoval" style="cursor:default" title="Automatic from the Rocks: '+au.done+' of '+au.total+' of '+esc(pp.name)+'\'s sub-rocks done this quarter">'+fmtKPI(actual,k.unit)+'</b>':hasMon?'<b class="autoval" onclick="scKpiDetail('+pi+','+ki+')" title="Auto: '+kpiAgg(k)+' of months. Click to edit months.">'+fmtKPI(actual,k.unit)+'</b>':'<input value="'+esc(q.actual)+'" placeholder="enter…" onchange="scQ('+pi+','+ki+',\'actual\',this.value)">')+'</span>';
+  h+='<span class="kpv">Actual '+(au?'<b class="autoval" style="cursor:default" title="Automatic from the Rocks: '+au.done+' of '+au.total+' of '+esc(pp.name)+'\'s deliverables done this quarter">'+fmtKPI(actual,k.unit)+'</b>':hasMon?'<b class="autoval" onclick="scKpiDetail('+pi+','+ki+')" title="Auto: '+kpiAgg(k)+' of months. Click to edit months.">'+fmtKPI(actual,k.unit)+'</b>':'<input value="'+esc(q.actual)+'" placeholder="enter…" onchange="scQ('+pi+','+ki+',\'actual\',this.value)">')+'</span>';
   h+='<div class="kbar"><span class="f-'+sc+'" style="width:'+(att===''?0:att)+'%"></span></div><span class="kvar">'+varv+'</span>';
   var mini=qi.map(function(i){var mv=kpiMonth(k,i);var v=(mv!=null&&mv!=='')?fmtKPI(mv,k.unit):'·';return MONTHS_ABBR[i].charAt(0)+' '+v;}).join('  ');
   h+='<span class="kmini">'+esc(mini)+'</span></div>';
@@ -2959,8 +2971,8 @@ function emptyState(icon,title,sub){
 }
 function renderTrash(){
   var p=$('#panel-trash');var items=(WB.trash||[]);
-  if(!items.length){p.innerHTML=emptyState('trash','Trash is empty','Deleted rocks, sub-rocks, to-dos, comments and log entries land here so you can restore them.');return;}
-  var KIND={rock:'Rock',sub:'Sub-Rock',todo:'To-Do',comment:'Comment',log:'Log'};
+  if(!items.length){p.innerHTML=emptyState('trash','Trash is empty','Deleted rocks, deliverables, to-dos, comments and log entries land here so you can restore them.');return;}
+  var KIND={rock:'Rock',sub:'Deliverable',todo:'To-Do',comment:'Comment',log:'Log'};
   var h='<div class="filt"><span class="lbl">'+items.length+' deleted item'+(items.length===1?'':'s')+'</span><span style="flex:1"></span><button class="btn sm" onclick="emptyTrash()">Empty trash</button></div>';
   h+='<div class="card" style="padding:6px 0">';
   items.forEach(function(e){
@@ -2980,7 +2992,7 @@ function doSearch(q){
     if((r.title||'').toLowerCase().indexOf(q)>=0||(r.owner||'').toLowerCase().indexOf(q)>=0)hits.push({kind:'Rock',type:x.type,title:r.title,meta:ROCK_LABELS[x.type]+' · '+(r.owner||'unassigned'),go:x.type});
     (r.subrocks||[]).forEach(function(s){
       if((s.title||'').toLowerCase().indexOf(q)>=0||(s.owner||'').toLowerCase().indexOf(q)>=0||(s.portco||'').toLowerCase().indexOf(q)>=0)
-        hits.push({kind:'Sub-Rock',type:x.type,title:s.title,meta:r.title+' · '+(s.owner||'')+(s.portco?' · '+s.portco:''),go:x.type});
+        hits.push({kind:'Deliverable',type:x.type,title:s.title,meta:r.title+' · '+(s.owner||'')+(s.portco?' · '+s.portco:''),go:x.type});
     });
   });
   var p=$('#panel-overview');
@@ -3008,7 +3020,12 @@ function importData(file){
     var wb=null;try{wb=toWB(JSON.parse(fr.result));}catch(e){}
     if(!wb||!wb.quarters||!Object.keys(wb.quarters).length){alert('That file is not a Rocks export.');return;}
     var n=0;Object.keys(wb.quarters).forEach(function(k){n+=quarterRockList(wb.quarters[k]).length;});
-    confirmAction('Restore from file?','Replace ALL current data for everyone with "'+file.name+'" ('+Object.keys(wb.quarters).length+' quarters, '+n+' rocks)? Export first if you want a backup of the current data.','Restore',function(){
+    confirmAction('Restore from file?','Replace ALL current data for everyone with "'+file.name+'" ('+Object.keys(wb.quarters).length+' quarters, '+n+' rocks)? A snapshot of the current data is saved to Version history first.','Restore',function(){snapshotNow('before file restore').then(function(){applyFullRestore(wb);});});
+  };
+  fr.readAsText(file);
+}
+/* Replace everything with a full workbook (file import or version-history restore) and push it. */
+function applyFullRestore(wb){
       if(_saveTimer){clearTimeout(_saveTimer);_saveTimer=null;}
       setWB(wb);WB._v=DATA_VERSION;WB.deleted=wb.deleted||[];WB.trash=wb.trash||[];
       try{localStorage.setItem(STORE,JSON.stringify(WB));}catch(e){}
@@ -3025,14 +3042,27 @@ function importData(file){
         });
       }
       attempt(0);
-    });
-  };
-  fr.readAsText(file);
 }
 
 /* ---- Modals / settings / theme ---- */
 function openModal(id){$('#'+id).classList.add('on');}
 function closeModal(id){$('#'+id).classList.remove('on');}
+/* ---- Version history (Supabase table rocks_history: hourly while editing, 7 days hourly then daily, 90 days) ---- */
+function snapshotNow(src){if(!SB_ENABLED||!_auth)return Promise.resolve(false);
+  return sbFetch(SB_URL+'/rest/v1/rpc/rocks_snapshot_now',{method:'POST',body:JSON.stringify({p_source:src||'manual'}),extraHeaders:{'Content-Type':'application/json'}}).then(function(r){return r.ok;}).catch(function(){return false;});}
+function openHistory(){closeModal('modal-settings');$('#hist-list').innerHTML='<div class="empty" style="padding:18px">Loading…</div>';openModal('modal-hist');
+  sbFetch(SB_URL+'/rest/v1/rocks_history?workbook_id=eq.'+encodeURIComponent(SB_ID)+'&select=id,snap_at,source,by_email&order=snap_at.desc&limit=400',{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(r.status);}).then(function(rows){
+    if(!rows.length){$('#hist-list').innerHTML='<div class="empty" style="padding:18px">No snapshots yet. The first one is taken automatically on the next edit.</div>';return;}
+    var SRC={auto:'automatic',initial:'first snapshot','before restore':'before a restore','before file restore':'before a file import',manual:'saved by hand'};
+    $('#hist-list').innerHTML=rows.map(function(x){var d=new Date(x.snap_at);return '<div class="drow"><div class="grow"><div>'+esc(d.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</div><div class="rname">'+esc(SRC[x.source]||x.source)+(x.by_email?' · edit by '+esc(x.by_email.split('@')[0]):'')+'</div></div><button class="btn sm" onclick="restoreSnapshot('+x.id+')">Restore…</button></div>';}).join('');
+  }).catch(function(e){$('#hist-list').innerHTML='<div class="empty" style="padding:18px">Could not load version history ('+esc(String(e))+').</div>';});}
+function saveSnapshotManual(){snapshotNow('manual').then(function(ok){if(ok)openHistory();else alert('Could not save a snapshot. Are you signed in?');});}
+function restoreSnapshot(id){sbFetch(SB_URL+'/rest/v1/rocks_history?id=eq.'+id+'&select=data,snap_at',{cache:'no-store'}).then(function(r){return r.json();}).then(function(rows){
+  var row=rows&&rows[0];var wb=row&&toWB(row.data);if(!wb||!wb.quarters){alert('That snapshot could not be read.');return;}
+  var n=0,td=(wb.todos||[]).length;Object.keys(wb.quarters).forEach(function(k){n+=quarterRockList(wb.quarters[k]).length;});
+  closeModal('modal-hist');
+  confirmAction('Restore this version?','Replace ALL current data for everyone with the version from '+new Date(row.snap_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ('+Object.keys(wb.quarters).length+' quarters, '+n+' rocks, '+td+' to-dos)? Anything changed after that is replaced. The current data is saved as a snapshot first, so you can undo this.','Restore',function(){
+    snapshotNow('before restore').then(function(){applyFullRestore(wb);});});}).catch(function(){alert('Could not load that snapshot.');});}
 function openSettings(){$('#set-q').value=D.quarter||WB.activeQuarter||'';$('#set-start').value=D.qStart||'';renderAccounts();openModal('modal-settings');}
 function saveSettings(){
   var newName=$('#set-q').value.trim();var newStart=$('#set-start').value;var old=WB.activeQuarter;
@@ -3054,7 +3084,7 @@ function renderQuarterSel(){
     setActiveQuarter(this.value);save();renderQuarterSel();switchTab('overview');
   };
 }
-/* Open rocks & projects (not Done/Cancelled) move to the next quarter as projects, with their open sub-rocks and links.
+/* Open rocks & projects (not Done/Cancelled) move to the next quarter as projects, with their open deliverables and links.
    The owner decides whether to turn one back into a rock (Type field). Idempotent: each item is carried once. */
 function openRocksOf(ql){return quarterRockList(WB.quarters[ql]).filter(function(r){return !isClosed(r);});}
 function quarterAfter(ql){var o=qOrd(ql);if(o===null)return '';var best='',bo=null;Object.keys(WB.quarters).forEach(function(k){var x=qOrd(k);if(x!==null&&x>o&&(bo===null||x<bo)){bo=x;best=k;}});return best;}
@@ -3070,7 +3100,7 @@ function carryOpenRocks(fromQ,toQ){var list=uncarried(fromQ,toQ);var dst=WB.quar
     var cat=(r.cat&&ROCK_ARR[r.cat])?r.cat:'build';dst[ROCK_ARR[cat]]=dst[ROCK_ARR[cat]]||[];dst[ROCK_ARR[cat]].push(c);r.carriedTo=toQ;});
   return list.length;}
 function askCarry(fromQ,toQ){var n=uncarried(fromQ,toQ).length;if(!n)return;
-  confirmAction('Carry open items to '+toQ+'?',n+' rock'+(n>1?'s':'')+' and projects from '+fromQ+' are not Done or Cancelled. Copy them into '+toQ+' as projects, with their open sub-rocks and links? Each owner can switch one back to a rock with the Type field. '+fromQ+' is left as it is.','Carry '+n,function(){var k=carryOpenRocks(fromQ,toQ);save();render(CUR);updateBadges();setSync('load','Carried '+k+' items to '+toQ+'…');});}
+  confirmAction('Carry open items to '+toQ+'?',n+' rock'+(n>1?'s':'')+' and projects from '+fromQ+' are not Done or Cancelled. Copy them into '+toQ+' as projects, with their open deliverables and links? Each owner can switch one back to a rock with the Type field. '+fromQ+' is left as it is.','Carry '+n,function(){var k=carryOpenRocks(fromQ,toQ);save();render(CUR);updateBadges();setSync('load','Carried '+k+' items to '+toQ+'…');});}
 function carryBanner(){var q=WB.activeQuarter;var nx=quarterAfter(q),pv=quarterBefore(q);var h='';
   if(nx){var n=uncarried(q,nx).length;if(n)h+='<div class="hint" style="align-items:center"><span style="flex:1">'+n+' open rock'+(n>1?'s':'')+' &amp; projects here are not in '+esc(nx)+' yet.</span><button class="btn sm pri" onclick="askCarry(\''+esc(q)+'\',\''+esc(nx)+'\')">Carry to '+esc(nx)+' as projects</button></div>';}
   if(pv){var m=uncarried(pv,q).length;if(m)h+='<div class="hint" style="align-items:center"><span style="flex:1">'+m+' open rock'+(m>1?'s':'')+' &amp; projects from '+esc(pv)+' have not been brought into this quarter.</span><button class="btn sm pri" onclick="askCarry(\''+esc(pv)+'\',\''+esc(q)+'\')">Bring them in as projects</button></div>';}
@@ -3202,7 +3232,7 @@ function boot(){
       renderQuarterSel();render(CUR);setSync('ok');
     });
   },4000);
-  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');closeModal('modal-blk');closeModal('modal-move');}});
+  document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('#search').focus();}if(e.key==='Escape'){$('#search').value='';if(CUR==='__search')switchTab('overview');closeModal('modal-settings');closeModal('modal-confirm');_txtCb=null;closeModal('modal-text');closeModal('modal-who');closeModal('modal-blk');closeModal('modal-move');closeModal('modal-hist');}});
 
   // load local cache first (migrates legacy single-workbook format into a quarter)
   var localWB=null;
